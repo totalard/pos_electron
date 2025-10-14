@@ -94,7 +94,13 @@ export const usePinStore = create<PinState>((set, get) => ({
 
     // Don't submit if PIN is empty
     if (!pin) {
-      set({ error: 'Please enter a PIN' })
+      set({ error: 'Please enter a 6-digit PIN' })
+      return
+    }
+
+    // Validate PIN is exactly 6 digits
+    if (pin.length !== 6) {
+      set({ error: 'PIN must be exactly 6 digits' })
       return
     }
 
@@ -198,5 +204,5 @@ export const getPinDisplay = (pin: string, showPin: boolean): string => {
 
 // Helper function to check if PIN is complete (for auto-submit)
 export const isPinComplete = (pin: string): boolean => {
-  return pin.length >= 4 // Minimum PIN length for auto-submit
+  return pin.length === 6 // Exactly 6 digits required for auto-submit
 }

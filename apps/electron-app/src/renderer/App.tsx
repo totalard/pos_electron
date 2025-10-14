@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useAppStore, usePinStore } from './stores'
 import { SplashScreen } from './components/SplashScreen'
-import { PINInput } from './components/PINInput'
+import { Login } from './components/Login'
 import { Dashboard } from './components/Dashboard'
 import { SaleScreen } from './components/SaleScreen'
 
@@ -58,7 +58,7 @@ function App() {
       )}
 
       {currentScreen === 'pin' && (
-        <PINInput onAuthenticated={handlePinAuthenticated} />
+        <Login onAuthenticated={handlePinAuthenticated} />
       )}
 
       {currentScreen === 'dashboard' && (

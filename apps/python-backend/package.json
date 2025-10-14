@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Python backend for POS application",
   "scripts": {
-    "dev": "bash -c 'cd /home/midlogic/dev/pos_electron/apps/python-backend && source venv/bin/activate && python -m uvicorn src.main:app --reload --host 0.0.0.0 --port 8000'",
+    "dev": "bash -c 'cd /home/midlogic/dev/pos_electron/apps/python-backend && source venv/bin/activate && python -m uvicorn src.main:app --reload --host 0.0.0.0 --port 8001'",
     "build": "echo 'Python backend does not require build step'",
     "lint": "bash -c 'cd /home/midlogic/dev/pos_electron/apps/python-backend && source venv/bin/activate && python -m pylint src/'",
     "type-check": "bash -c 'cd /home/midlogic/dev/pos_electron/apps/python-backend && source venv/bin/activate && python -m mypy src/'",

@@ -27,21 +27,21 @@ logger = logging.getLogger(__name__)
 async def initialize_primary_user():
     """
     Initialize the primary user on first app launch.
-    
-    This endpoint creates a default primary user with PIN '1234' if no users exist.
+
+    This endpoint creates a default primary user with PIN '123456' if no users exist.
     Should only be called once during initial setup.
     """
     # Check if any users exist
     user_count = await User.all().count()
-    
+
     if user_count > 0:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Primary user already exists. Cannot initialize again."
         )
-    
-    # Create primary user with default PIN
-    default_pin = "1234"
+
+    # Create primary user with default 6-digit PIN
+    default_pin = "123456"
     pin_hash = hash_pin(default_pin)
     
     try:

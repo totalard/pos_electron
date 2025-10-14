@@ -11,18 +11,18 @@ class UserCreate(BaseModel):
     """Schema for creating a new user"""
     full_name: str = Field(..., min_length=1, max_length=255)
     mobile_number: Optional[str] = Field(None, max_length=20)
-    pin: str = Field(..., min_length=4, max_length=6, pattern=r'^\d+$')
+    pin: str = Field(..., min_length=6, max_length=6, pattern=r'^\d{6}$')
     email: Optional[str] = Field(None, max_length=255)
     notes: Optional[str] = None
-    
+
     @field_validator('pin')
     @classmethod
     def validate_pin(cls, v: str) -> str:
-        """Validate PIN is numeric and correct length"""
+        """Validate PIN is numeric and exactly 6 digits"""
         if not v.isdigit():
             raise ValueError('PIN must contain only digits')
-        if len(v) < 4 or len(v) > 6:
-            raise ValueError('PIN must be between 4 and 6 digits')
+        if len(v) != 6:
+            raise ValueError('PIN must be exactly 6 digits')
         return v
 
 
@@ -37,17 +37,17 @@ class UserUpdate(BaseModel):
 
 class UserChangePIN(BaseModel):
     """Schema for changing user PIN"""
-    old_pin: str = Field(..., min_length=4, max_length=6)
-    new_pin: str = Field(..., min_length=4, max_length=6, pattern=r'^\d+$')
-    
+    old_pin: str = Field(..., min_length=6, max_length=6)
+    new_pin: str = Field(..., min_length=6, max_length=6, pattern=r'^\d{6}$')
+
     @field_validator('new_pin')
     @classmethod
     def validate_new_pin(cls, v: str) -> str:
-        """Validate new PIN is numeric and correct length"""
+        """Validate new PIN is numeric and exactly 6 digits"""
         if not v.isdigit():
             raise ValueError('PIN must contain only digits')
-        if len(v) < 4 or len(v) > 6:
-            raise ValueError('PIN must be between 4 and 6 digits')
+        if len(v) != 6:
+            raise ValueError('PIN must be exactly 6 digits')
         return v
 
 
@@ -70,7 +70,17 @@ class UserResponse(BaseModel):
 
 class UserLogin(BaseModel):
     """Schema for user login"""
-    pin: str = Field(..., min_length=4, max_length=6)
+    pin: str = Field(..., min_length=6, max_length=6, pattern=r'^\d{6}$')
+
+    @field_validator('pin')
+    @classmethod
+    def validate_pin(cls, v: str) -> str:
+        """Validate PIN is numeric and exactly 6 digits"""
+        if not v.isdigit():
+            raise ValueError('PIN must contain only digits')
+        if len(v) != 6:
+            raise ValueError('PIN must be exactly 6 digits')
+        return v
 
 
 class UserLoginResponse(BaseModel):

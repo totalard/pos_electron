@@ -1,0 +1,303 @@
+import { useState, useEffect } from 'react'
+import { FeatureCarousel } from './FeatureCarousel'
+import { NumericKeypad } from './NumericKeypad'
+import { usePinStore } from '../stores'
+import { authAPI, type User } from '../services/api'
+
+interface LoginProps {
+  onAuthenticated?: () => void
+}
+
+export function Login({ onAuthenticated }: LoginProps) {
+  const [users, setUsers] = useState<User[]>([])
+  const [selectedUser, setSelectedUser] = useState<User | null>(null)
+  const [isLoadingUsers, setIsLoadingUsers] = useState(true)
+  const [userLoadError, setUserLoadError] = useState<string | null>(null)
+
+  const {
+    pin,
+    isAuthenticated,
+    isLoading,
+    error,
+    attempts,
+    maxAttempts,
+    showPin,
+    addDigit,
+    removeDigit,
+    clearPin,
+    submitPin,
+    toggleShowPin
+  } = usePinStore()
+
+  // Load users on mount
+  useEffect(() => {
+    const loadUsers = async () => {
+      try {
+        setIsLoadingUsers(true)
+        setUserLoadError(null)
+        const fetchedUsers = await authAPI.getAllUsers()
+        setUsers(fetchedUsers.filter(u => u.is_active))
+      } catch (err) {
+        console.error('Failed to load users:', err)
+        setUserLoadError('Failed to load users. Please check backend connection.')
+      } finally {
+        setIsLoadingUsers(false)
+      }
+    }
+
+    loadUsers()
+  }, [])
+
+  // Call onAuthenticated when authentication succeeds
+  useEffect(() => {
+    if (isAuthenticated && onAuthenticated) {
+      onAuthenticated()
+    }
+  }, [isAuthenticated, onAuthenticated])
+
+  // Reset PIN when user changes
+  useEffect(() => {
+    clearPin()
+  }, [selectedUser, clearPin])
+
+  const handleUserSelect = (user: User) => {
+    setSelectedUser(user)
+    clearPin()
+  }
+
+  const handleBackToUserSelection = () => {
+    setSelectedUser(null)
+    clearPin()
+  }
+
+  const remainingAttempts = maxAttempts - attempts
+
+  // Get user initials for avatar
+  const getUserInitials = (name: string): string => {
+    const parts = name.trim().split(' ')
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+    }
+    return name.substring(0, 2).toUpperCase()
+  }
+
+  // Get avatar color based on user ID
+  const getAvatarColor = (userId: number): string => {
+    const colors = [
+      'bg-gradient-to-br from-blue-500 to-blue-600',
+      'bg-gradient-to-br from-green-500 to-green-600',
+      'bg-gradient-to-br from-purple-500 to-purple-600',
+      'bg-gradient-to-br from-pink-500 to-pink-600',
+      'bg-gradient-to-br from-yellow-500 to-yellow-600',
+      'bg-gradient-to-br from-red-500 to-red-600',
+      'bg-gradient-to-br from-indigo-500 to-indigo-600',
+      'bg-gradient-to-br from-teal-500 to-teal-600',
+    ]
+    return colors[userId % colors.length]
+  }
+
+  return (
+    <div className="h-screen w-screen flex overflow-hidden">
+      {/* Left Side - Feature Carousel */}
+      <div className="hidden lg:flex lg:w-1/2 xl:w-3/5">
+        <FeatureCarousel />
+      </div>
+
+      {/* Right Side - User Selection / PIN Entry */}
+      <div className="w-full lg:w-1/2 xl:w-2/5 flex items-center justify-center bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+        <div className="w-full max-w-md px-8 py-12">
+          {/* Loading State */}
+          {isLoadingUsers && (
+            <div className="text-center">
+              <div className="inline-flex items-center justify-center w-16 h-16 mb-4">
+                <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary-600"></div>
+              </div>
+              <p className="text-gray-600 dark:text-gray-400">Loading users...</p>
+            </div>
+          )}
+
+          {/* Error Loading Users */}
+          {userLoadError && !isLoadingUsers && (
+            <div className="text-center">
+              <div className="mb-6 p-4 rounded-lg bg-red-50 border border-red-200 text-red-700 dark:bg-red-900/50 dark:border-red-800 dark:text-red-300">
+                <div className="flex items-center justify-center gap-2 mb-2">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span className="font-semibold">Connection Error</span>
+                </div>
+                <p className="text-sm">{userLoadError}</p>
+              </div>
+              <button
+                onClick={() => window.location.reload()}
+                className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+              >
+                Retry
+              </button>
+            </div>
+          )}
+
+          {/* User Selection Screen */}
+          {!isLoadingUsers && !userLoadError && !selectedUser && (
+            <div className="text-center">
+              <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
+                Welcome Back
+              </h1>
+              <p className="text-gray-600 dark:text-gray-400 mb-12">
+                Select your account to continue
+              </p>
+
+              {/* User Grid */}
+              <div className="grid grid-cols-2 gap-6 mb-8">
+                {users.map((user) => (
+                  <button
+                    key={user.id}
+                    onClick={() => handleUserSelect(user)}
+                    className="group flex flex-col items-center p-6 rounded-2xl bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 hover:border-primary-500 dark:hover:border-primary-500 hover:shadow-lg transition-all duration-200 transform hover:scale-105"
+                  >
+                    {/* Avatar */}
+                    <div className={`
+                      w-20 h-20 rounded-full flex items-center justify-center text-white text-2xl font-bold mb-3 shadow-lg
+                      ${getAvatarColor(user.id)}
+                      group-hover:scale-110 transition-transform duration-200
+                    `}>
+                      {getUserInitials(user.full_name)}
+                    </div>
+
+                    {/* Name */}
+                    <span className="text-sm font-medium text-gray-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
+                      {user.full_name}
+                    </span>
+
+                    {/* Role Badge */}
+                    <span className={`
+                      mt-2 px-2 py-1 text-xs rounded-full
+                      ${user.role === 'primary' 
+                        ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400' 
+                        : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
+                      }
+                    `}>
+                      {user.role === 'primary' ? 'Admin' : 'Staff'}
+                    </span>
+                  </button>
+                ))}
+              </div>
+
+              {/* No Users Message */}
+              {users.length === 0 && (
+                <div className="text-center py-8">
+                  <p className="text-gray-500 dark:text-gray-400">No active users found</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* PIN Entry Screen */}
+          {!isLoadingUsers && !userLoadError && selectedUser && (
+            <div>
+              {/* Back Button */}
+              <button
+                onClick={handleBackToUserSelection}
+                className="mb-6 flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+                Back
+              </button>
+
+              {/* User Info */}
+              <div className="text-center mb-8">
+                <div className={`
+                  inline-flex items-center justify-center w-24 h-24 rounded-full text-white text-3xl font-bold mb-4 shadow-xl
+                  ${getAvatarColor(selectedUser.id)}
+                `}>
+                  {getUserInitials(selectedUser.full_name)}
+                </div>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
+                  {selectedUser.full_name}
+                </h2>
+                <p className="text-gray-600 dark:text-gray-400">
+                  Enter your 6-digit PIN
+                </p>
+              </div>
+
+              {/* PIN Display */}
+              <div className="mb-8">
+                <div className="flex justify-center items-center gap-4 mb-4 p-6 rounded-2xl bg-white/80 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 backdrop-blur-sm shadow-lg">
+                  {Array.from({ length: 6 }).map((_, index) => (
+                    <div
+                      key={index}
+                      className={`
+                        w-4 h-4 rounded-full transition-all duration-300
+                        ${index < pin.length
+                          ? 'bg-primary-600 dark:bg-primary-400 scale-110' 
+                          : 'bg-gray-200 dark:bg-gray-600 border-2 border-gray-300 dark:border-gray-500'
+                        }
+                      `}
+                    />
+                  ))}
+                </div>
+
+                {/* Show/Hide PIN Toggle */}
+                <div className="flex justify-center">
+                  <button
+                    onClick={toggleShowPin}
+                    disabled={isLoading}
+                    className="text-sm px-4 py-2 rounded-lg transition-colors duration-200 text-gray-600 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-50"
+                  >
+                    {showPin ? 'Hide PIN' : 'Show PIN'}
+                  </button>
+                </div>
+
+                {/* PIN Value Display (when show is enabled) */}
+                {showPin && pin && (
+                  <div className="text-center mt-2 text-2xl font-mono tracking-widest text-gray-700 dark:text-gray-300">
+                    {pin}
+                  </div>
+                )}
+              </div>
+
+              {/* Error Message */}
+              {error && (
+                <div className="mb-6 p-4 rounded-lg text-center bg-red-50 dark:bg-red-900/50 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300">
+                  <div className="flex items-center justify-center gap-2">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    {error}
+                  </div>
+                </div>
+              )}
+
+              {/* Attempts Remaining */}
+              {attempts > 0 && remainingAttempts > 0 && (
+                <div className="mb-6 text-center text-sm text-gray-600 dark:text-gray-400">
+                  {remainingAttempts} attempt{remainingAttempts === 1 ? '' : 's'} remaining
+                </div>
+              )}
+
+              {/* Loading State */}
+              {isLoading && (
+                <div className="mb-6 flex justify-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 dark:border-primary-400" />
+                </div>
+              )}
+
+              {/* Numeric Keypad */}
+              <NumericKeypad
+                onDigitPress={addDigit}
+                onBackspace={removeDigit}
+                onClear={clearPin}
+                onSubmit={submitPin}
+                disabled={isLoading || attempts >= maxAttempts}
+                className="justify-center"
+              />
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+

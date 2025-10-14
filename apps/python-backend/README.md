@@ -26,13 +26,13 @@ pip install -r requirements.txt
 pnpm --filter python-backend dev
 
 # Or directly
-python -m uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
+python -m uvicorn src.main:app --reload --host 0.0.0.0 --port 8001
 ```
 
 The API will be available at:
-- API: http://localhost:8000
-- Interactive docs: http://localhost:8000/docs
-- Alternative docs: http://localhost:8000/redoc
+- API: http://localhost:8001
+- Interactive docs: http://localhost:8001/docs
+- Alternative docs: http://localhost:8001/redoc
 
 ## API Endpoints
 
