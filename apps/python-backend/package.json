@@ -1,0 +1,13 @@
+{
+  "name": "python-backend",
+  "version": "1.0.0",
+  "description": "Python backend for POS application",
+  "scripts": {
+    "dev": "python -m uvicorn src.main:app --reload --host 0.0.0.0 --port 8000",
+    "build": "echo 'Python backend does not require build step'",
+    "lint": "python -m pylint src/",
+    "type-check": "python -m mypy src/",
+    "clean": "find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true"
+  }
+}
+

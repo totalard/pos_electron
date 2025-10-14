@@ -1,0 +1,61 @@
+@import "tailwindcss";
+
+@theme {
+  /* Custom color palette for POS application */
+  --color-primary-50: oklch(0.98 0.02 250);
+  --color-primary-100: oklch(0.95 0.05 250);
+  --color-primary-200: oklch(0.90 0.10 250);
+  --color-primary-300: oklch(0.82 0.15 250);
+  --color-primary-400: oklch(0.72 0.20 250);
+  --color-primary-500: oklch(0.62 0.25 250);
+  --color-primary-600: oklch(0.52 0.25 250);
+  --color-primary-700: oklch(0.42 0.20 250);
+  --color-primary-800: oklch(0.32 0.15 250);
+  --color-primary-900: oklch(0.22 0.10 250);
+  --color-primary-950: oklch(0.15 0.05 250);
+
+  /* Custom fonts */
+  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
+  --font-display: "Inter", system-ui, -apple-system, sans-serif;
+
+  /* Custom spacing */
+  --spacing-18: 4.5rem;
+  --spacing-22: 5.5rem;
+}
+
+/* Base styles */
+@layer base {
+  * {
+    @apply border-gray-200;
+  }
+
+  body {
+    @apply bg-gray-50 text-gray-900 antialiased;
+    font-family: var(--font-sans);
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+    @apply font-semibold;
+  }
+}
+
+/* Custom utilities */
+@utility card {
+  @apply rounded-lg bg-white shadow-sm border border-gray-200 p-6;
+}
+
+@utility btn-primary {
+  @apply px-4 py-2 bg-primary-600 text-white rounded-lg font-medium;
+  @apply hover:bg-primary-700 active:bg-primary-800;
+  @apply transition-colors duration-200;
+  @apply focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2;
+}
+
+@utility btn-secondary {
+  @apply px-4 py-2 bg-gray-100 text-gray-900 rounded-lg font-medium;
+  @apply hover:bg-gray-200 active:bg-gray-300;
+  @apply transition-colors duration-200;
+  @apply focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2;
+}
+
