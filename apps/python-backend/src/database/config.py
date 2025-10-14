@@ -29,7 +29,9 @@ TORTOISE_ORM = {
     "apps": {
         "models": {
             "models": [
-                "src.database.models.base",
+                "src.database.models.user",
+                "src.database.models.product",
+                "src.database.models.inventory",
                 "aerich.models"  # Required for Aerich migrations
             ],
             "default_connection": "default",

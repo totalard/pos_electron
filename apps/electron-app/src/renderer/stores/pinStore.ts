@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { authAPI, type User } from '../services/api'
 
 // Define the PIN store state interface
 export interface PinState {
@@ -9,10 +10,13 @@ export interface PinState {
   error: string | null
   attempts: number
   maxAttempts: number
-  
+
+  // User state
+  currentUser: User | null
+
   // UI state
   showPin: boolean
-  
+
   // Actions
   addDigit: (_digit: string) => void
   removeDigit: () => void
@@ -20,11 +24,11 @@ export interface PinState {
   submitPin: () => Promise<void>
   toggleShowPin: () => void
   reset: () => void
+  initializeSystem: () => Promise<void>
 }
 
 // Configuration
-const CORRECT_PIN = '1234' // In production, this should be configurable/encrypted
-const MAX_ATTEMPTS = 3
+const MAX_ATTEMPTS = 5
 const MAX_PIN_LENGTH = 6
 
 // Initial state
@@ -35,6 +39,7 @@ const initialState = {
   error: null,
   attempts: 0,
   maxAttempts: MAX_ATTEMPTS,
+  currentUser: null,
   showPin: false
 }
 
@@ -86,48 +91,57 @@ export const usePinStore = create<PinState>((set, get) => ({
   
   submitPin: async () => {
     const { pin, attempts, maxAttempts } = get()
-    
+
     // Don't submit if PIN is empty
     if (!pin) {
       set({ error: 'Please enter a PIN' })
       return
     }
-    
+
     // Check if max attempts reached
     if (attempts >= maxAttempts) {
       set({ error: 'Maximum attempts reached. Please restart the application.' })
       return
     }
-    
+
     set({ isLoading: true, error: null })
-    
+
     try {
-      // Simulate authentication delay
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      
-      if (pin === CORRECT_PIN) {
-        set({ 
+      // Call backend API for authentication
+      const response = await authAPI.login({ pin })
+
+      if (response.success && response.user) {
+        set({
           isAuthenticated: true,
           isLoading: false,
-          error: null
+          error: null,
+          currentUser: response.user,
+          pin: '' // Clear PIN after successful login
         })
       } else {
         const newAttempts = attempts + 1
         const remainingAttempts = maxAttempts - newAttempts
-        
-        set({ 
+
+        set({
           isLoading: false,
           attempts: newAttempts,
           pin: '', // Clear PIN on failed attempt
-          error: remainingAttempts > 0 
+          error: remainingAttempts > 0
             ? `Incorrect PIN. ${remainingAttempts} attempt${remainingAttempts === 1 ? '' : 's'} remaining.`
             : 'Maximum attempts reached. Please restart the application.'
         })
       }
-    } catch {
+    } catch (error) {
+      const newAttempts = attempts + 1
+      const remainingAttempts = maxAttempts - newAttempts
+
       set({
         isLoading: false,
-        error: 'Authentication failed. Please try again.'
+        attempts: newAttempts,
+        pin: '',
+        error: remainingAttempts > 0
+          ? `Incorrect PIN. ${remainingAttempts} attempt${remainingAttempts === 1 ? '' : 's'} remaining.`
+          : 'Maximum attempts reached. Please restart the application.'
       })
     }
   },
@@ -135,9 +149,44 @@ export const usePinStore = create<PinState>((set, get) => ({
   toggleShowPin: () => {
     set(state => ({ showPin: !state.showPin }))
   },
-  
+
   reset: () => {
     set(initialState)
+  },
+
+  initializeSystem: async () => {
+    set({ isLoading: true, error: null })
+
+    try {
+      // Try to get all users to check if system is initialized
+      const users = await authAPI.getAllUsers()
+
+      if (users.length === 0) {
+        // No users exist, initialize primary user
+        await authAPI.initializePrimaryUser()
+        set({
+          isLoading: false,
+          error: null
+        })
+      } else {
+        // System already initialized
+        set({ isLoading: false })
+      }
+    } catch (error) {
+      // If error is 404, try to initialize
+      try {
+        await authAPI.initializePrimaryUser()
+        set({
+          isLoading: false,
+          error: null
+        })
+      } catch (initError) {
+        set({
+          isLoading: false,
+          error: 'Failed to initialize system. Please check backend connection.'
+        })
+      }
+    }
   }
 }))
 
