@@ -1,4 +1,4 @@
-import { contextBridge, ipcRenderer } from 'electron'
+import { contextBridge } from 'electron'
 
 // Define the API interface
 export interface IElectronAPI {

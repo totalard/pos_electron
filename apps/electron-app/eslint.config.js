@@ -14,6 +14,16 @@ export default [
         ecmaFeatures: {
           jsx: true
         }
+      },
+      globals: {
+        // Browser globals
+        window: 'readonly',
+        document: 'readonly',
+        setTimeout: 'readonly',
+        clearTimeout: 'readonly',
+        // Node.js globals
+        process: 'readonly',
+        NodeJS: 'readonly'
       }
     },
     plugins: {
@@ -22,7 +32,8 @@ export default [
     rules: {
       '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
       '@typescript-eslint/no-explicit-any': 'warn',
-      'no-console': ['warn', { allow: ['warn', 'error'] }]
+      'no-console': ['warn', { allow: ['warn', 'error'] }],
+      'no-unused-vars': ['warn', { argsIgnorePattern: '^_' }]
     }
   },
   {

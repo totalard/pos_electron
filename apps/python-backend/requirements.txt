@@ -2,9 +2,10 @@
 fastapi==0.115.6
 uvicorn[standard]==0.34.0
 
-# Database (optional - add when needed)
-# sqlalchemy==2.0.36
-# alembic==1.14.0
+# Database - Tortoise ORM
+tortoise-orm==0.21.7
+aerich==0.7.2
+aiosqlite==0.20.0
 
 # Validation
 pydantic==2.10.5

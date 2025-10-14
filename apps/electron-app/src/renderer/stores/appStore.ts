@@ -11,10 +11,10 @@ export interface AppState {
   theme: 'light' | 'dark'
   
   // Actions
-  setLoading: (loading: boolean) => void
-  setCurrentUser: (user: string | null) => void
+  setLoading: (_loading: boolean) => void
+  setCurrentUser: (_user: string | null) => void
   toggleSidebar: () => void
-  setTheme: (theme: 'light' | 'dark') => void
+  setTheme: (_theme: 'light' | 'dark') => void
   reset: () => void
 }
 
@@ -30,13 +30,13 @@ const initialState = {
 export const useAppStore = create<AppState>((set) => ({
   ...initialState,
   
-  setLoading: (loading) => set({ isLoading: loading }),
-  
-  setCurrentUser: (user) => set({ currentUser: user }),
-  
+  setLoading: (loading: boolean) => set({ isLoading: loading }),
+
+  setCurrentUser: (user: string | null) => set({ currentUser: user }),
+
   toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
-  
-  setTheme: (theme) => set({ theme }),
+
+  setTheme: (theme: 'light' | 'dark') => set({ theme }),
   
   reset: () => set(initialState)
 }))

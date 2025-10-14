@@ -26,36 +26,76 @@
 /* Base styles */
 @layer base {
   * {
-    @apply border-gray-200;
+    @apply border-gray-200 dark:border-gray-700;
   }
 
   body {
     @apply bg-gray-50 text-gray-900 antialiased;
+    @apply dark:bg-gray-900 dark:text-gray-100;
     font-family: var(--font-sans);
+    transition: background-color 0.3s ease, color 0.3s ease;
   }
 
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-display);
     @apply font-semibold;
+    @apply text-gray-900 dark:text-gray-100;
   }
 }
 
 /* Custom utilities */
 @utility card {
   @apply rounded-lg bg-white shadow-sm border border-gray-200 p-6;
+  @apply dark:bg-gray-800 dark:border-gray-700 dark:shadow-gray-900/20;
 }
 
 @utility btn-primary {
   @apply px-4 py-2 bg-primary-600 text-white rounded-lg font-medium;
   @apply hover:bg-primary-700 active:bg-primary-800;
+  @apply dark:bg-primary-500 dark:hover:bg-primary-600 dark:active:bg-primary-700;
   @apply transition-colors duration-200;
   @apply focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2;
+  @apply dark:focus:ring-primary-400 dark:focus:ring-offset-gray-900;
 }
 
 @utility btn-secondary {
   @apply px-4 py-2 bg-gray-100 text-gray-900 rounded-lg font-medium;
   @apply hover:bg-gray-200 active:bg-gray-300;
+  @apply dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600 dark:active:bg-gray-500;
   @apply transition-colors duration-200;
   @apply focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2;
+  @apply dark:focus:ring-gray-400 dark:focus:ring-offset-gray-900;
+}
+
+/* Splash screen specific animations */
+@utility splash-fade-in {
+  @apply opacity-0 animate-[fadeIn_0.5s_ease-in-out_forwards];
+}
+
+@utility splash-scale-in {
+  @apply scale-95 animate-[scaleIn_0.8s_ease-out_forwards];
+}
+
+@utility splash-slide-up {
+  @apply translate-y-8 animate-[slideUp_0.6s_ease-out_forwards];
+}
+
+/* Custom keyframes for splash screen */
+@keyframes fadeIn {
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scaleIn {
+  to {
+    transform: scale(1);
+  }
+}
+
+@keyframes slideUp {
+  to {
+    transform: translateY(0);
+  }
 }
 

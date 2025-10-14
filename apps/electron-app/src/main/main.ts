@@ -7,20 +7,33 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 let mainWindow: BrowserWindow | null = null
 
 const createWindow = () => {
-  // Create the browser window
+  // Create the browser window in fullscreen mode without decorations
   mainWindow = new BrowserWindow({
-    width: 1200,
-    height: 800,
-    minWidth: 800,
-    minHeight: 600,
+    // Remove window decorations and enable fullscreen
+    frame: false,
+    fullscreen: true,
+    autoHideMenuBar: true,
+
+    // Window properties (will be overridden by fullscreen)
+    width: 1920,
+    height: 1080,
+
     webPreferences: {
       preload: path.join(__dirname, '../preload/preload.js'),
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: false
     },
-    titleBarStyle: 'default',
-    show: false
+
+    // Window appearance
+    backgroundColor: '#ffffff',
+    show: false,
+
+    // Disable window controls
+    minimizable: false,
+    maximizable: false,
+    closable: true, // Keep closable for development, can be disabled in production
+    resizable: false
   })
 
   // Load the index.html of the app
@@ -35,6 +48,10 @@ const createWindow = () => {
   // Show window when ready to prevent visual flash
   mainWindow.once('ready-to-show', () => {
     mainWindow?.show()
+    // Ensure fullscreen mode is active
+    if (mainWindow && !mainWindow.isFullScreen()) {
+      mainWindow.setFullScreen(true)
+    }
   })
 
   mainWindow.on('closed', () => {

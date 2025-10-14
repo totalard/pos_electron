@@ -9,4 +9,3 @@ router = APIRouter()
 
 # Include sub-routers
 router.include_router(products_router, prefix="/products", tags=["products"])
-

@@ -1,9 +1,10 @@
 """
 Products API endpoints
 """
+from typing import List, Optional
+
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from typing import List, Optional
 
 router = APIRouter()
 
@@ -65,4 +66,3 @@ async def delete_product(product_id: int):
             PRODUCTS_DB.pop(idx)
             return {"message": "Product deleted successfully"}
     raise HTTPException(status_code=404, detail="Product not found")
-
