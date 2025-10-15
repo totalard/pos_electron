@@ -91,7 +91,31 @@ class CompanySettings(BaseModel):
     auto_reorder_enabled = fields.BooleanField(default=False)
     auto_reorder_threshold = fields.IntField(default=5)
     default_reorder_quantity = fields.IntField(default=50)
-    
+
+    # Inventory Adjustment Permissions
+    allow_negative_stock = fields.BooleanField(default=False)
+    require_approval_for_adjustments = fields.BooleanField(default=True)
+    inventory_adjustment_reasons = fields.JSONField(
+        default=lambda: ["Damaged", "Lost", "Expired", "Theft", "Correction", "Other"],
+        description="Predefined reasons for inventory adjustments"
+    )
+
+    # Price Management
+    price_decimal_precision = fields.IntField(
+        default=2,
+        description="Number of decimal places for prices"
+    )
+    allow_zero_price = fields.BooleanField(default=False)
+    require_cost_price = fields.BooleanField(default=True)
+
+    # Product Image Settings
+    max_images_per_product = fields.IntField(default=10)
+    max_image_size_mb = fields.IntField(default=5)
+    allowed_image_formats = fields.JSONField(
+        default=lambda: ["jpg", "jpeg", "png", "webp"],
+        description="Allowed image file formats"
+    )
+
     # Barcode Settings
     barcode_format = fields.CharField(
         max_length=20,
@@ -99,6 +123,11 @@ class CompanySettings(BaseModel):
         description="Default barcode format: EAN13, UPC, CODE128, etc."
     )
     auto_generate_barcodes = fields.BooleanField(default=False)
+    barcode_prefix = fields.CharField(
+        max_length=10,
+        default="",
+        description="Prefix for auto-generated barcodes"
+    )
     
     # Unit of Measure
     enable_uom_conversions = fields.BooleanField(default=False)

@@ -279,9 +279,25 @@ class CompanySettingsUpdate(BaseModel):
     auto_reorder_threshold: Optional[int] = None
     default_reorder_quantity: Optional[int] = None
 
+    # Inventory Adjustment Permissions
+    allow_negative_stock: Optional[bool] = None
+    require_approval_for_adjustments: Optional[bool] = None
+    inventory_adjustment_reasons: Optional[list] = None
+
+    # Price Management
+    price_decimal_precision: Optional[int] = None
+    allow_zero_price: Optional[bool] = None
+    require_cost_price: Optional[bool] = None
+
+    # Product Image Settings
+    max_images_per_product: Optional[int] = None
+    max_image_size_mb: Optional[int] = None
+    allowed_image_formats: Optional[list] = None
+
     # Barcode Settings
     barcode_format: Optional[str] = None
     auto_generate_barcodes: Optional[bool] = None
+    barcode_prefix: Optional[str] = None
 
     # Unit of Measure
     enable_uom_conversions: Optional[bool] = None
@@ -338,9 +354,25 @@ class CompanySettingsResponse(BaseModel):
     auto_reorder_threshold: int
     default_reorder_quantity: int
 
+    # Inventory Adjustment Permissions
+    allow_negative_stock: bool
+    require_approval_for_adjustments: bool
+    inventory_adjustment_reasons: list
+
+    # Price Management
+    price_decimal_precision: int
+    allow_zero_price: bool
+    require_cost_price: bool
+
+    # Product Image Settings
+    max_images_per_product: int
+    max_image_size_mb: int
+    allowed_image_formats: list
+
     # Barcode Settings
     barcode_format: str
     auto_generate_barcodes: bool
+    barcode_prefix: str
 
     # Unit of Measure
     enable_uom_conversions: bool

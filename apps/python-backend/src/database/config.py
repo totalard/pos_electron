@@ -31,6 +31,7 @@ TORTOISE_ORM = {
             "models": [
                 "src.database.models.user",
                 "src.database.models.product",
+                "src.database.models.enhanced_product",
                 "src.database.models.inventory",
                 "src.database.models.settings",
                 "aerich.models"  # Required for Aerich migrations
