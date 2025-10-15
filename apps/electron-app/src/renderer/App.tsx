@@ -4,6 +4,7 @@ import { SplashScreen } from './components/SplashScreen'
 import { Login } from './components/Login'
 import { Dashboard } from './components/Dashboard'
 import { SaleScreen } from './components/SaleScreen'
+import { UserManagement } from './components/UserManagement'
 
 type AppScreen = 'splash' | 'pin' | 'dashboard' | 'sales' | 'products' | 'inventory' | 'users'
 
@@ -100,18 +101,7 @@ function App() {
       )}
 
       {currentScreen === 'users' && (
-        <div className="flex items-center justify-center h-screen">
-          <div className="text-center">
-            <h1 className="text-3xl font-bold mb-4">User Management</h1>
-            <p className="text-gray-600 mb-4">Coming soon...</p>
-            <button
-              onClick={handleBackToDashboard}
-              className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
-            >
-              Back to Dashboard
-            </button>
-          </div>
-        </div>
+        <UserManagement onBack={handleBackToDashboard} />
       )}
     </div>
   )
