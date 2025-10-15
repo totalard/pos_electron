@@ -16,6 +16,7 @@ export interface User {
   role: 'primary' | 'staff'
   is_active: boolean
   notes?: string
+  recovery_pin?: string
   last_login?: string
   created_at: string
   updated_at: string
@@ -31,6 +32,7 @@ export interface UserCreate {
 
 export interface UserLogin {
   pin: string
+  user_id?: number
 }
 
 export interface LoginResponse {
@@ -298,6 +300,168 @@ export const productsAPI = {
       method: 'DELETE'
     })
     return handleResponse<void>(response)
+  }
+}
+
+// ============================================================================
+// Settings Types
+// ============================================================================
+
+export interface CompanySettings {
+  id: number
+  // General Settings
+  business_type: string
+  language: string
+  timezone: string
+  number_format: string
+
+  // Company Information
+  company_name?: string
+  company_email?: string
+  company_phone?: string
+  company_address_street?: string
+  company_address_city?: string
+  company_address_state?: string
+  company_address_zip?: string
+  company_address_country?: string
+  currency: string
+
+  // Multiple Locations/Branches
+  enable_multi_location: boolean
+  locations: any[]
+
+  // Fiscal Year Settings
+  fiscal_year_start_month: number
+  fiscal_year_start_day: number
+
+  // Business Hours
+  business_hours: Record<string, any>
+
+  // Tax Settings
+  tax_rates: any[]
+  enable_tax_exemptions: boolean
+  tax_exemption_codes: any[]
+  enable_compound_tax: boolean
+  tax_reporting_frequency: string
+
+  // Inventory Settings
+  track_inventory: boolean
+  low_stock_threshold: number
+  enable_low_stock_alerts: boolean
+  auto_reorder_enabled: boolean
+  auto_reorder_threshold: number
+  default_reorder_quantity: number
+
+  // Barcode Settings
+  barcode_format: string
+  auto_generate_barcodes: boolean
+
+  // Unit of Measure
+  enable_uom_conversions: boolean
+  uom_conversions: any[]
+
+  // Batch/Serial Number Tracking
+  enable_batch_tracking: boolean
+  enable_serial_tracking: boolean
+
+  created_at: string
+  updated_at: string
+}
+
+export interface UserSettings {
+  id: number
+  user_id: number
+
+  // Accessibility Settings
+  date_format: string
+  font_size: string
+  high_contrast: boolean
+  reduced_motion: boolean
+
+  // Color Blind Modes
+  color_blind_mode: string
+
+  // Screen Reader Support
+  enable_screen_reader: boolean
+
+  // Keyboard Shortcuts
+  keyboard_shortcuts: Record<string, any>
+  enable_keyboard_shortcuts: boolean
+
+  // Language Override
+  language_override?: string
+
+  // Timezone Override
+  timezone_override?: string
+
+  // Notification Preferences
+  enable_notifications: boolean
+  notification_sound: boolean
+
+  // Dashboard Preferences
+  dashboard_layout: Record<string, any>
+
+  created_at: string
+  updated_at: string
+}
+
+// ============================================================================
+// Settings API
+// ============================================================================
+
+export const settingsAPI = {
+  /**
+   * Get company settings
+   */
+  async getCompanySettings(): Promise<CompanySettings> {
+    const response = await fetch(`${API_BASE_URL}/settings/company`)
+    return handleResponse<CompanySettings>(response)
+  },
+
+  /**
+   * Update company settings
+   */
+  async updateCompanySettings(settings: Partial<CompanySettings>): Promise<CompanySettings> {
+    const response = await fetch(`${API_BASE_URL}/settings/company`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(settings)
+    })
+    return handleResponse<CompanySettings>(response)
+  },
+
+  /**
+   * Get user settings by user ID
+   */
+  async getUserSettings(userId: number): Promise<UserSettings> {
+    const response = await fetch(`${API_BASE_URL}/settings/user/${userId}`)
+    return handleResponse<UserSettings>(response)
+  },
+
+  /**
+   * Update user settings by user ID
+   */
+  async updateUserSettings(userId: number, settings: Partial<UserSettings>): Promise<UserSettings> {
+    const response = await fetch(`${API_BASE_URL}/settings/user/${userId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(settings)
+    })
+    return handleResponse<UserSettings>(response)
+  },
+
+  /**
+   * Reset user settings to defaults
+   */
+  async resetUserSettings(userId: number): Promise<{ message: string; settings: UserSettings }> {
+    const response = await fetch(`${API_BASE_URL}/settings/user/${userId}`, {
+      method: 'DELETE'
+    })
+    return handleResponse<{ message: string; settings: UserSettings }>(response)
   }
 }
 

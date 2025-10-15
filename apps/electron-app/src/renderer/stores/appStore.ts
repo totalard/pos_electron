@@ -17,6 +17,7 @@ export interface AppState {
   setCurrentUser: (_user: User | null) => void
   toggleSidebar: () => void
   setTheme: (_theme: 'light' | 'dark') => void
+  toggleTheme: () => void
   reset: () => void
 }
 
@@ -41,6 +42,8 @@ export const useAppStore = create<AppState>()(
       toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
 
       setTheme: (theme: 'light' | 'dark') => set({ theme }),
+
+      toggleTheme: () => set((state) => ({ theme: state.theme === 'light' ? 'dark' : 'light' })),
 
       reset: () => set(initialState)
     }),

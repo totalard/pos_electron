@@ -37,6 +37,12 @@ class User(BaseModel):
         max_length=255,
         description="Hashed PIN for authentication"
     )
+
+    recovery_pin = fields.CharField(
+        max_length=6,
+        null=True,
+        description="Recovery PIN for account recovery (6 digits)"
+    )
     
     # Role and permissions
     role = fields.CharEnumField(

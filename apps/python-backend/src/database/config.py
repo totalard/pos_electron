@@ -32,6 +32,7 @@ TORTOISE_ORM = {
                 "src.database.models.user",
                 "src.database.models.product",
                 "src.database.models.inventory",
+                "src.database.models.settings",
                 "aerich.models"  # Required for Aerich migrations
             ],
             "default_connection": "default",

@@ -289,7 +289,7 @@ export function Login({ onAuthenticated }: LoginProps) {
                 onDigitPress={addDigit}
                 onBackspace={removeDigit}
                 onClear={clearPin}
-                onSubmit={submitPin}
+                onSubmit={() => submitPin(selectedUser.id)}
                 disabled={isLoading || attempts >= maxAttempts}
                 className="justify-center"
               />

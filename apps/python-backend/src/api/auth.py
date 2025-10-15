@@ -8,7 +8,7 @@ from fastapi import APIRouter, HTTPException, status
 from tortoise.exceptions import DoesNotExist, IntegrityError
 
 from ..database.models import User, UserRole
-from ..utils.auth import hash_pin, verify_pin
+from ..utils.auth import hash_pin, verify_pin, generate_recovery_pin
 from .schemas import (
     UserCreate,
     UserUpdate,
@@ -43,11 +43,13 @@ async def initialize_primary_user():
     # Create primary user with default 6-digit PIN
     default_pin = "123456"
     pin_hash = hash_pin(default_pin)
-    
+    recovery_pin = generate_recovery_pin()
+
     try:
         primary_user = await User.create(
             full_name="Primary User",
             pin_hash=pin_hash,
+            recovery_pin=recovery_pin,
             role=UserRole.PRIMARY,
             is_active=True
         )
@@ -68,37 +70,62 @@ async def initialize_primary_user():
 async def login(credentials: UserLogin):
     """
     Authenticate a user with PIN.
-    
+
+    If user_id is provided, authenticates that specific user.
+    Otherwise, tries to find the first user with matching PIN (legacy behavior).
+
     Returns user information if authentication is successful.
     """
-    # Get all active users
-    users = await User.filter(is_active=True).all()
-    
-    if not users:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="No users found. Please initialize the system first."
-        )
-    
-    # Try to authenticate with each user's PIN
     authenticated_user = None
-    for user in users:
-        if verify_pin(credentials.pin, user.pin_hash):
-            authenticated_user = user
-            break
-    
-    if not authenticated_user:
-        logger.warning("Failed login attempt with invalid PIN")
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid PIN"
-        )
-    
+
+    # If user_id is provided, authenticate that specific user
+    if credentials.user_id is not None:
+        try:
+            user = await User.get(id=credentials.user_id, is_active=True)
+
+            # Verify PIN for this specific user
+            if verify_pin(credentials.pin, user.pin_hash):
+                authenticated_user = user
+            else:
+                logger.warning(f"Failed login attempt for user {user.full_name} (ID: {user.id}) with invalid PIN")
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Invalid PIN"
+                )
+        except DoesNotExist:
+            logger.warning(f"Login attempt for non-existent or inactive user ID: {credentials.user_id}")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found or inactive"
+            )
+    else:
+        # Legacy behavior: Try to authenticate with any user's PIN
+        users = await User.filter(is_active=True).all()
+
+        if not users:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="No users found. Please initialize the system first."
+            )
+
+        # Try to authenticate with each user's PIN
+        for user in users:
+            if verify_pin(credentials.pin, user.pin_hash):
+                authenticated_user = user
+                break
+
+        if not authenticated_user:
+            logger.warning("Failed login attempt with invalid PIN")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid PIN"
+            )
+
     # Update last login timestamp
     authenticated_user.last_login = datetime.utcnow()
-    await authenticated_user.save()
-    
-    logger.info(f"User {authenticated_user.full_name} logged in successfully")
+    await authenticated_user.save(update_fields=['last_login'])
+
+    logger.info(f"User {authenticated_user.full_name} (ID: {authenticated_user.id}) logged in successfully")
 
     user_response = user_to_response(authenticated_user)
 
@@ -156,11 +183,15 @@ async def create_user(user_data: UserCreate, created_by_id: int = 1):
                 detail="Only primary users can create new users"
             )
         
+        # Generate recovery PIN
+        recovery_pin = generate_recovery_pin()
+
         # Create new user (always as STAFF role)
         new_user = await User.create(
             full_name=user_data.full_name,
             mobile_number=user_data.mobile_number,
             pin_hash=pin_hash,
+            recovery_pin=recovery_pin,
             email=user_data.email,
             notes=user_data.notes,
             role=UserRole.STAFF,

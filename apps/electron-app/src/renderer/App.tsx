@@ -5,8 +5,9 @@ import { Login } from './components/Login'
 import { Dashboard } from './components/Dashboard'
 import { SaleScreen } from './components/SaleScreen'
 import { UserManagement } from './components/UserManagement'
+import { Settings } from './components/Settings'
 
-type AppScreen = 'splash' | 'pin' | 'dashboard' | 'sales' | 'products' | 'inventory' | 'users'
+type AppScreen = 'splash' | 'pin' | 'dashboard' | 'sales' | 'products' | 'inventory' | 'users' | 'settings'
 
 function App() {
   const [currentScreen, setCurrentScreen] = useState<AppScreen>('splash')
@@ -24,13 +25,19 @@ function App() {
   }
 
   // Handle navigation from dashboard
-  const handleNavigate = (screen: 'sales' | 'products' | 'inventory' | 'users') => {
+  const handleNavigate = (screen: 'sales' | 'products' | 'inventory' | 'users' | 'settings') => {
     setCurrentScreen(screen)
   }
 
   // Handle back to dashboard
   const handleBackToDashboard = () => {
     setCurrentScreen('dashboard')
+  }
+
+  // Handle logout
+  const handleLogout = () => {
+    resetPin()
+    setCurrentScreen('pin')
   }
 
   // Apply theme to document
@@ -63,11 +70,11 @@ function App() {
       )}
 
       {currentScreen === 'dashboard' && (
-        <Dashboard onNavigate={handleNavigate} />
+        <Dashboard onNavigate={handleNavigate} onLogout={handleLogout} />
       )}
 
       {currentScreen === 'sales' && (
-        <SaleScreen onBack={handleBackToDashboard} />
+        <SaleScreen onBack={handleBackToDashboard} onLogout={handleLogout} />
       )}
 
       {currentScreen === 'products' && (
@@ -101,7 +108,11 @@ function App() {
       )}
 
       {currentScreen === 'users' && (
-        <UserManagement onBack={handleBackToDashboard} />
+        <UserManagement onBack={handleBackToDashboard} onLogout={handleLogout} />
+      )}
+
+      {currentScreen === 'settings' && (
+        <Settings onBack={handleBackToDashboard} onLogout={handleLogout} />
       )}
     </div>
   )

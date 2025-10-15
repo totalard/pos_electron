@@ -9,9 +9,10 @@ interface Tab {
 
 interface SaleScreenProps {
   onBack: () => void
+  onLogout?: () => void
 }
 
-export function SaleScreen({ onBack }: SaleScreenProps) {
+export function SaleScreen({ onBack, onLogout }: SaleScreenProps) {
   const { theme } = useAppStore()
   const [tabs, setTabs] = useState<Tab[]>([
     { id: '1', name: 'Tab 1', items: 0 }
@@ -155,11 +156,32 @@ export function SaleScreen({ onBack }: SaleScreenProps) {
             <span className="font-medium">New Tab</span>
           </button>
         </div>
+
+        {/* Logout Button */}
+        {onLogout && (
+          <button
+            onClick={onLogout}
+            className={`
+              px-6 py-4 flex items-center gap-2 border-l
+              transition-colors duration-200
+              ${theme === 'dark'
+                ? 'border-gray-700 hover:bg-gray-700 text-gray-300'
+                : 'border-gray-200 hover:bg-gray-100 text-gray-700'
+              }
+            `}
+            title="Logout"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+            <span className="font-medium">Logout</span>
+          </button>
+        )}
       </header>
 
       {/* Main Content - Coming Soon Placeholder */}
-      <main className="flex-1 flex items-center justify-center">
-        <div className="text-center max-w-md mx-auto px-6">
+      <main className="flex-1 flex items-center justify-center w-full px-8">
+        <div className="text-center max-w-2xl mx-auto">
           {/* Icon */}
           <div className={`
             inline-flex items-center justify-center w-32 h-32 rounded-full mb-8
@@ -246,9 +268,9 @@ export function SaleScreen({ onBack }: SaleScreenProps) {
 
       {/* Footer */}
       <footer className={`
-        border-t px-6 py-4
-        ${theme === 'dark' 
-          ? 'bg-gray-800 border-gray-700' 
+        border-t px-8 py-4 w-full
+        ${theme === 'dark'
+          ? 'bg-gray-800 border-gray-700'
           : 'bg-white border-gray-200'
         }
       `}>

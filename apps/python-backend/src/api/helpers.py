@@ -15,6 +15,7 @@ def user_to_response(user: User) -> UserResponse:
         role=user.role.value,
         is_active=user.is_active,
         notes=user.notes,
+        recovery_pin=getattr(user, 'recovery_pin', None),
         last_login=user.last_login,
         created_at=user.created_at,
         updated_at=user.updated_at

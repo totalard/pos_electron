@@ -21,7 +21,7 @@ export interface PinState {
   addDigit: (_digit: string) => void
   removeDigit: () => void
   clearPin: () => void
-  submitPin: () => Promise<void>
+  submitPin: (_userId?: number) => Promise<void>
   toggleShowPin: () => void
   reset: () => void
   initializeSystem: () => Promise<void>
@@ -89,7 +89,7 @@ export const usePinStore = create<PinState>((set, get) => ({
     })
   },
   
-  submitPin: async () => {
+  submitPin: async (userId?: number) => {
     const { pin, attempts, maxAttempts } = get()
 
     // Don't submit if PIN is empty
@@ -113,8 +113,11 @@ export const usePinStore = create<PinState>((set, get) => ({
     set({ isLoading: true, error: null })
 
     try {
-      // Call backend API for authentication
-      const response = await authAPI.login({ pin })
+      // Call backend API for authentication with user_id if provided
+      const response = await authAPI.login({
+        pin,
+        user_id: userId
+      })
 
       if (response.success && response.user) {
         set({
