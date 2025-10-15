@@ -3,7 +3,6 @@ Authentication utilities for PIN-based authentication
 """
 import hashlib
 import secrets
-import random
 
 
 def hash_pin(pin: str) -> str:
@@ -51,14 +50,4 @@ def verify_pin(pin: str, pin_hash: str) -> bool:
     except (ValueError, AttributeError):
         # Invalid hash format
         return False
-
-
-def generate_recovery_pin() -> str:
-    """
-    Generate a random 6-digit recovery PIN.
-
-    Returns:
-        A 6-digit numeric string
-    """
-    return ''.join([str(random.randint(0, 9)) for _ in range(6)])
 

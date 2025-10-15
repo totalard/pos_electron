@@ -4,19 +4,20 @@
   "private": true,
   "description": "POS Electron Application Monorepo",
   "scripts": {
-    "dev": "turbo run dev",
-    "build": "turbo run build",
-    "lint": "turbo run lint",
-    "type-check": "turbo run type-check",
-    "clean": "turbo run clean"
-  },
-  "devDependencies": {
-    "turbo": "^2.3.3"
+    "dev": "concurrently --kill-others --names \"ELECTRON,PYTHON\" --prefix-colors \"cyan,magenta\" \"pnpm --filter electron-app dev\" \"pnpm --filter python-backend dev\"",
+    "build": "pnpm --filter electron-app build && pnpm --filter python-backend build",
+    "lint": "concurrently --names \"ELECTRON,PYTHON\" --prefix-colors \"cyan,magenta\" \"pnpm --filter electron-app lint\" \"pnpm --filter python-backend lint\"",
+    "type-check": "concurrently --names \"ELECTRON,PYTHON\" --prefix-colors \"cyan,magenta\" \"pnpm --filter electron-app type-check\" \"pnpm --filter python-backend type-check\"",
+    "clean": "concurrently --names \"ELECTRON,PYTHON\" --prefix-colors \"cyan,magenta\" \"pnpm --filter electron-app clean\" \"pnpm --filter python-backend clean\"",
+    "dev:electron": "pnpm --filter electron-app dev",
+    "dev:python": "pnpm --filter python-backend dev"
   },
   "packageManager": "pnpm@9.15.4",
   "engines": {
     "node": ">=20.0.0",
     "pnpm": ">=9.0.0"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
   }
 }
-

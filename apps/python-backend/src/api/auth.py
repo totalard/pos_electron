@@ -8,7 +8,7 @@ from fastapi import APIRouter, HTTPException, status
 from tortoise.exceptions import DoesNotExist, IntegrityError
 
 from ..database.models import User, UserRole
-from ..utils.auth import hash_pin, verify_pin, generate_recovery_pin
+from ..utils.auth import hash_pin, verify_pin
 from .schemas import (
     UserCreate,
     UserUpdate,
@@ -43,13 +43,11 @@ async def initialize_primary_user():
     # Create primary user with default 6-digit PIN
     default_pin = "123456"
     pin_hash = hash_pin(default_pin)
-    recovery_pin = generate_recovery_pin()
 
     try:
         primary_user = await User.create(
             full_name="Primary User",
             pin_hash=pin_hash,
-            recovery_pin=recovery_pin,
             role=UserRole.PRIMARY,
             is_active=True
         )
@@ -182,16 +180,12 @@ async def create_user(user_data: UserCreate, created_by_id: int = 1):
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Only primary users can create new users"
             )
-        
-        # Generate recovery PIN
-        recovery_pin = generate_recovery_pin()
 
         # Create new user (always as STAFF role)
         new_user = await User.create(
             full_name=user_data.full_name,
             mobile_number=user_data.mobile_number,
             pin_hash=pin_hash,
-            recovery_pin=recovery_pin,
             email=user_data.email,
             notes=user_data.notes,
             role=UserRole.STAFF,

@@ -60,7 +60,6 @@ class UserResponse(BaseModel):
     role: str
     is_active: bool
     notes: Optional[str]
-    recovery_pin: Optional[str]
     last_login: Optional[datetime]
     created_at: datetime
     updated_at: datetime

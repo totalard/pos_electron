@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { authAPI, type User } from '../services/api'
 import { useAppStore, usePinStore } from '../stores'
 import { AddUserModal } from './AddUserModal'
+import { Navbar } from './Navbar'
 
 interface UserManagementProps {
   onBack: () => void
@@ -26,14 +27,7 @@ export function UserManagement({ onBack, onLogout }: UserManagementProps) {
   const [selectedUsers, setSelectedUsers] = useState<Set<number>>(new Set())
   const [filterRole, setFilterRole] = useState<'all' | 'primary' | 'staff'>('all')
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive'>('all')
-  const [currentTime, setCurrentTime] = useState(new Date())
   const [showAddUserModal, setShowAddUserModal] = useState(false)
-
-  // Update time every second
-  useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date()), 1000)
-    return () => clearInterval(timer)
-  }, [])
 
   // Function to load users
   const loadUsers = async () => {
@@ -253,131 +247,59 @@ export function UserManagement({ onBack, onLogout }: UserManagementProps) {
       }
     `}>
       {/* Enhanced Header */}
-      <header className={`
-        border-b
-        ${theme === 'dark'
-          ? 'bg-gray-800/50 border-gray-700'
-          : 'bg-white/80 border-gray-200'
+      <Navbar
+        title="User Management"
+        subtitle="Manage system users and permissions"
+        icon={
+          <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+          </svg>
         }
-        backdrop-blur-sm
-      `}>
-        <div className="w-full px-8 py-4">
-          <div className="flex items-center justify-between">
-            {/* Left Section - Logo and Navigation */}
-            <div className="flex items-center gap-6">
-              <button
-                onClick={onBack}
-                className={`
-                  flex items-center p-2 rounded-lg transition-colors
-                  ${theme === 'dark'
-                    ? 'text-gray-300 hover:text-white hover:bg-gray-700/50'
-                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                  }
-                `}
-                title="Back to Dashboard"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-              </button>
-
-              <div className="flex items-center gap-3">
-                <div className={`
-                  w-10 h-10 rounded-lg flex items-center justify-center
-                  ${theme === 'dark'
-                    ? 'bg-gradient-to-br from-primary-600 to-primary-800'
-                    : 'bg-gradient-to-br from-primary-500 to-primary-700'
-                  }
-                `}>
-                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                  </svg>
-                </div>
-                <div>
-                  <h1 className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                    User Management
-                  </h1>
-                  <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-                    Manage system users and permissions
-                  </p>
-                </div>
-              </div>
+        onBack={onBack}
+        onLogout={onLogout}
+      >
+        {/* Center Section - Search and Add User Button */}
+        <div className="flex items-center gap-4 w-full">
+          {/* Search */}
+          <div className="relative flex-1">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <svg className={`w-5 h-5 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
             </div>
-
-            {/* Center Section - Search */}
-            <div className="flex-1 max-w-md mx-8">
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <svg className={`w-5 h-5 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                </div>
-                <input
-                  type="text"
-                  placeholder="Search users by name, email, or phone..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className={`
-                    w-full pl-10 pr-4 py-2 rounded-lg border
-                    ${theme === 'dark'
-                      ? 'bg-gray-700/50 border-gray-600 text-white placeholder-gray-400 focus:border-primary-500'
-                      : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-primary-500'
-                    }
-                    focus:outline-none focus:ring-2 focus:ring-primary-500/20
-                  `}
-                />
-              </div>
-            </div>
-
-            {/* Right Section - Actions and Time */}
-            <div className="flex items-center gap-4">
-              {/* Add User Button - Only for Admin Users */}
-              {currentUser?.role === 'primary' && (
-                <button
-                  onClick={() => setShowAddUserModal(true)}
-                  className={`
-                    px-4 py-2 rounded-lg font-medium transition-colors
-                    ${theme === 'dark'
-                      ? 'bg-primary-600 hover:bg-primary-700 text-white'
-                      : 'bg-primary-500 hover:bg-primary-600 text-white'
-                    }
-                  `}
-                >
-                  Add User
-                </button>
-              )}
-
-              <div className={`
-                px-3 py-2 rounded-lg text-sm
+            <input
+              type="text"
+              placeholder="Search users by name, email, or phone..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className={`
+                w-full pl-10 pr-4 py-2 rounded-lg border
                 ${theme === 'dark'
-                  ? 'bg-gray-700/50 text-gray-300'
-                  : 'bg-gray-100 text-gray-700'
+                  ? 'bg-gray-700/50 border-gray-600 text-white placeholder-gray-400 focus:border-primary-500'
+                  : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-primary-500'
                 }
-              `}>
-                {currentTime.toLocaleTimeString()}
-              </div>
-
-              {/* Logout Button */}
-              <button
-                onClick={onLogout}
-                className={`
-                  flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors
-                  ${theme === 'dark'
-                    ? 'text-gray-300 hover:text-white hover:bg-gray-700/50 border border-gray-600'
-                    : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100 border border-gray-300'
-                  }
-                `}
-                title="Logout"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                </svg>
-                Logout
-              </button>
-            </div>
+                focus:outline-none focus:ring-2 focus:ring-primary-500/20
+              `}
+            />
           </div>
+
+          {/* Add User Button - Only for Admin Users */}
+          {currentUser?.role === 'primary' && (
+            <button
+              onClick={() => setShowAddUserModal(true)}
+              className={`
+                px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap
+                ${theme === 'dark'
+                  ? 'bg-primary-600 hover:bg-primary-700 text-white'
+                  : 'bg-primary-500 hover:bg-primary-600 text-white'
+                }
+              `}
+            >
+              Add User
+            </button>
+          )}
         </div>
-      </header>
+      </Navbar>
 
       {/* Main Content */}
       <main className="w-full px-8 py-8">

@@ -16,7 +16,6 @@ export interface User {
   role: 'primary' | 'staff'
   is_active: boolean
   notes?: string
-  recovery_pin?: string
   last_login?: string
   created_at: string
   updated_at: string

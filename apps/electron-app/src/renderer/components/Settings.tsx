@@ -11,6 +11,7 @@ import { PaymentTab } from './settings/PaymentTab'
 import { ReceiptTab } from './settings/ReceiptTab'
 import { HardwareTab } from './settings/HardwareTab'
 import { TableManagementTab } from './settings/TableManagementTab'
+import { Navbar } from './Navbar'
 
 interface SettingsProps {
   onBack: () => void
@@ -20,10 +21,9 @@ interface SettingsProps {
 type SettingsTab = 'general' | 'company' | 'payment' | 'receipt' | 'hardware' | 'tables' | 'tax' | 'inventory' | 'accessibility' | 'pin' | 'about'
 
 export function Settings({ onBack, onLogout }: SettingsProps) {
-  const { theme, toggleTheme } = useAppStore()
+  const { theme } = useAppStore()
   const { currentUser } = usePinStore()
   const [activeTab, setActiveTab] = useState<SettingsTab>('general')
-  const [currentTime, setCurrentTime] = useState(new Date())
   const [businessType, setBusinessType] = useState<'restaurant' | 'retail'>('retail')
 
   // Load business type from general settings
@@ -62,12 +62,6 @@ export function Settings({ onBack, onLogout }: SettingsProps) {
       window.removeEventListener('storage', handleStorageChange)
       window.removeEventListener('generalSettingsChanged', handleSettingsChange)
     }
-  }, [])
-
-  // Update time every second
-  useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date()), 1000)
-    return () => clearInterval(timer)
   }, [])
 
   const tabs = [
@@ -183,135 +177,18 @@ export function Settings({ onBack, onLogout }: SettingsProps) {
       }
     `}>
       {/* Header */}
-      <header className={`
-        border-b flex-shrink-0
-        ${theme === 'dark'
-          ? 'bg-gray-800/50 border-gray-700'
-          : 'bg-white/80 border-gray-200'
+      <Navbar
+        title="Settings"
+        subtitle="Configure your system preferences"
+        icon={
+          <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
         }
-        backdrop-blur-sm
-      `}>
-        <div className="w-full px-8 py-4">
-          <div className="flex items-center justify-between">
-            {/* Left Section - Back Button and Title */}
-            <div className="flex items-center gap-4">
-              {/* Touch-safe back button: 48x48px */}
-              <button
-                onClick={onBack}
-                className={`
-                  p-3 rounded-lg transition-colors min-w-[48px] min-h-[48px] flex items-center justify-center
-                  ${theme === 'dark'
-                    ? 'hover:bg-gray-700/50 text-gray-300 hover:text-white'
-                    : 'hover:bg-gray-100 text-gray-600 hover:text-gray-900'
-                  }
-                `}
-                title="Back to Dashboard"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                </svg>
-              </button>
-              <div>
-                <h1 className={`
-                  text-2xl font-bold
-                  ${theme === 'dark' ? 'text-white' : 'text-gray-900'}
-                `}>
-                  Settings
-                </h1>
-                <p className={`
-                  text-sm
-                  ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}
-                `}>
-                  Configure your system preferences
-                </p>
-              </div>
-            </div>
-
-            {/* Right Section - System Status, User Info and Time */}
-            <div className="flex items-center gap-6">
-              {/* System Status */}
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                <span className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-                  System Online
-                </span>
-              </div>
-
-              {/* User Info */}
-              <div className="text-right">
-                <p className={`
-                  text-sm font-medium
-                  ${theme === 'dark' ? 'text-white' : 'text-gray-900'}
-                `}>
-                  {currentUser?.full_name || 'User'}
-                </p>
-                <p className={`
-                  text-xs
-                  ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}
-                `}>
-                  {currentUser?.role === 'primary' ? 'Primary User' : 'Staff'}
-                </p>
-              </div>
-
-              {/* Time and Date */}
-              <div className={`
-                px-4 py-2 rounded-lg
-                ${theme === 'dark'
-                  ? 'bg-gray-700/50 text-gray-300'
-                  : 'bg-gray-100 text-gray-700'
-                }
-              `}>
-                <p className="text-sm font-mono">
-                  {currentTime.toLocaleTimeString()}
-                </p>
-                <p className="text-xs">
-                  {currentTime.toLocaleDateString()}
-                </p>
-              </div>
-
-              {/* Theme Toggle - Touch-safe: 48x48px */}
-              <button
-                onClick={toggleTheme}
-                className={`
-                  p-3 rounded-lg transition-colors min-w-[48px] min-h-[48px] flex items-center justify-center
-                  ${theme === 'dark'
-                    ? 'hover:bg-gray-700/50 text-gray-300 hover:text-white'
-                    : 'hover:bg-gray-100 text-gray-600 hover:text-gray-900'
-                  }
-                `}
-                title={theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  {theme === 'dark' ? (
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-                  ) : (
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-                  )}
-                </svg>
-              </button>
-
-              {/* Logout Button - Touch-safe: 48x48px */}
-              {onLogout && (
-                <button
-                  onClick={onLogout}
-                  className={`
-                    p-3 rounded-lg transition-colors min-w-[48px] min-h-[48px] flex items-center justify-center
-                    ${theme === 'dark'
-                      ? 'hover:bg-red-900/30 text-red-400'
-                      : 'hover:bg-red-50 text-red-600'
-                    }
-                  `}
-                  title="Logout"
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                  </svg>
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      </header>
+        onBack={onBack}
+        onLogout={onLogout}
+      />
 
       {/* Main Content */}
       <main className="flex-1 overflow-hidden">
