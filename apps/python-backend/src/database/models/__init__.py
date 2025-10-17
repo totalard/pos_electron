@@ -11,6 +11,7 @@ from .inventory import (
     TransactionType
 )
 from .settings import Settings
+from .tax_rule import TaxRule, TaxType
 
 __all__ = [
     "BaseModel",
@@ -24,5 +25,7 @@ __all__ = [
     "StockAdjustmentLine",
     "TransactionType",
     "Settings",
+    "TaxRule",
+    "TaxType",
 ]
 

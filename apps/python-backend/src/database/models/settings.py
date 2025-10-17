@@ -17,9 +17,25 @@ class Settings(BaseModel):
     general_settings = fields.JSONField(
         default={
             'storeName': 'MidLogic POS',
+            'businessName': '',
             'storeAddress': '',
+            'storeCity': '',
+            'storeState': '',
+            'storeZip': '',
+            'storeCountry': '',
             'storePhone': '',
             'storeEmail': '',
+            'storeWebsite': '',
+            'logoUrl': '',
+            'operatingHours': {
+                'monday': {'open': '09:00', 'close': '18:00', 'closed': False},
+                'tuesday': {'open': '09:00', 'close': '18:00', 'closed': False},
+                'wednesday': {'open': '09:00', 'close': '18:00', 'closed': False},
+                'thursday': {'open': '09:00', 'close': '18:00', 'closed': False},
+                'friday': {'open': '09:00', 'close': '18:00', 'closed': False},
+                'saturday': {'open': '10:00', 'close': '16:00', 'closed': False},
+                'sunday': {'open': '10:00', 'close': '16:00', 'closed': True}
+            },
             'currency': 'USD',
             'language': 'en',
             'timezone': 'UTC'
@@ -36,7 +52,29 @@ class Settings(BaseModel):
             'enableKitchenDisplay': False,
             'enableBarcodeScanner': True,
             'enableLoyaltyProgram': False,
-            'enableQuickCheckout': True
+            'enableQuickCheckout': True,
+            'currencyConfig': {
+                'code': 'USD',
+                'symbol': '$',
+                'symbolPosition': 'before',
+                'decimalPlaces': 2,
+                'thousandSeparator': ',',
+                'decimalSeparator': '.',
+                'showCurrencyCode': False,
+                'regionSpecific': {
+                    'india': {
+                        'enabled': False,
+                        'gstEnabled': True,
+                        'showPaisa': True,
+                        'useIndianNumbering': True
+                    },
+                    'middleEast': {
+                        'enabled': False,
+                        'currency': 'AED',
+                        'decimalPlaces': 2
+                    }
+                }
+            }
         },
         description="Business mode and feature settings"
     )
@@ -71,8 +109,12 @@ class Settings(BaseModel):
             'logoUrl': '',
             'headerText': 'Thank you for your purchase!',
             'footerText': 'Please come again!',
+            'customHeader': '',
+            'customFooter': '',
             'showTaxBreakdown': True,
-            'showBarcode': False
+            'showBarcode': False,
+            'showQRCode': False,
+            'paperSize': 'A4'
         },
         description="Receipt template and printing settings"
     )

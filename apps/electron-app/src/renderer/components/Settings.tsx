@@ -11,6 +11,7 @@ import { IntegrationPanel } from './settings/IntegrationPanel'
 import { BackupPanel } from './settings/BackupPanel'
 import { DisplayPanel } from './settings/DisplayPanel'
 import { SecurityPanel } from './settings/SecurityPanel'
+import { UserManagementPanel } from './settings/UserManagementPanel'
 import { AboutPanel } from './settings/AboutPanel'
 
 interface SettingsProps {
@@ -49,6 +50,8 @@ export function Settings({ onBack }: SettingsProps) {
         return <DisplayPanel />
       case 'security':
         return <SecurityPanel />
+      case 'users':
+        return <UserManagementPanel />
       case 'about':
         return <AboutPanel />
       default:

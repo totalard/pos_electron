@@ -162,6 +162,7 @@ async def create_user(user_data: UserCreate, created_by_id: int = 1):
             mobile_number=user_data.mobile_number,
             pin_hash=pin_hash,
             email=user_data.email,
+            avatar_color=user_data.avatar_color,
             notes=user_data.notes,
             role=UserRole.USER,
             is_active=True,

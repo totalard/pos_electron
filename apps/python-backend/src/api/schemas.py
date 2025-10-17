@@ -13,6 +13,7 @@ class UserCreate(BaseModel):
     mobile_number: Optional[str] = Field(None, max_length=20)
     pin: str = Field(..., min_length=6, max_length=6, pattern=r'^\d{6}$')
     email: Optional[str] = Field(None, max_length=255)
+    avatar_color: Optional[str] = Field(None, max_length=50)
     notes: Optional[str] = None
 
     @field_validator('pin')
@@ -31,6 +32,7 @@ class UserUpdate(BaseModel):
     full_name: Optional[str] = Field(None, min_length=1, max_length=255)
     mobile_number: Optional[str] = Field(None, max_length=20)
     email: Optional[str] = Field(None, max_length=255)
+    avatar_color: Optional[str] = Field(None, max_length=50)
     notes: Optional[str] = None
     is_active: Optional[bool] = None
 
@@ -57,13 +59,14 @@ class UserResponse(BaseModel):
     full_name: str
     mobile_number: Optional[str]
     email: Optional[str]
+    avatar_color: Optional[str]
     role: str
     is_active: bool
     notes: Optional[str]
     last_login: Optional[datetime]
     created_at: datetime
     updated_at: datetime
-    
+
     class Config:
         from_attributes = True
 
@@ -152,7 +155,7 @@ class ProductResponse(BaseModel):
     notes: Optional[str]
     created_at: datetime
     updated_at: datetime
-    
+
     class Config:
         from_attributes = True
 
@@ -181,7 +184,7 @@ class StockTransactionResponse(BaseModel):
     reference_number: Optional[str]
     notes: Optional[str]
     created_at: datetime
-    
+
     class Config:
         from_attributes = True
 
@@ -210,7 +213,7 @@ class StockAdjustmentLineResponse(BaseModel):
     actual_quantity: int
     difference: int
     notes: Optional[str]
-    
+
     class Config:
         from_attributes = True
 
@@ -224,7 +227,7 @@ class StockAdjustmentResponse(BaseModel):
     is_completed: bool
     lines: list[StockAdjustmentLineResponse]
     created_at: datetime
-    
+
     class Config:
         from_attributes = True
 
@@ -233,9 +236,17 @@ class StockAdjustmentResponse(BaseModel):
 class GeneralSettings(BaseModel):
     """Schema for general settings"""
     storeName: str = Field(default="MidLogic POS")
+    businessName: str = Field(default="")
     storeAddress: str = Field(default="")
+    storeCity: str = Field(default="")
+    storeState: str = Field(default="")
+    storeZip: str = Field(default="")
+    storeCountry: str = Field(default="")
     storePhone: str = Field(default="")
     storeEmail: str = Field(default="")
+    storeWebsite: str = Field(default="")
+    logoUrl: str = Field(default="")
+    operatingHours: dict = Field(default_factory=dict)
     currency: str = Field(default="USD")
     language: str = Field(default="en")
     timezone: str = Field(default="UTC")
@@ -250,6 +261,7 @@ class BusinessSettings(BaseModel):
     enableBarcodeScanner: bool = Field(default=True)
     enableLoyaltyProgram: bool = Field(default=False)
     enableQuickCheckout: bool = Field(default=True)
+    currencyConfig: dict = Field(default_factory=dict)
 
 
 class TaxSettings(BaseModel):
@@ -275,8 +287,12 @@ class ReceiptSettings(BaseModel):
     logoUrl: str = Field(default="")
     headerText: str = Field(default="Thank you for your purchase!")
     footerText: str = Field(default="Please come again!")
+    customHeader: str = Field(default="")
+    customFooter: str = Field(default="")
     showTaxBreakdown: bool = Field(default=True)
     showBarcode: bool = Field(default=False)
+    showQRCode: bool = Field(default=False)
+    paperSize: str = Field(default="A4")
 
 
 class InventorySettings(BaseModel):
@@ -363,6 +379,80 @@ class SettingsUpdate(BaseModel):
     security: Optional[SecuritySettings] = None
     about: Optional[SystemInfo] = None
 
+
+
+# Tax Rule Schemas
+class TaxRuleCreate(BaseModel):
+    """Schema for creating a tax rule"""
+    name: str = Field(..., min_length=1, max_length=100)
+    description: Optional[str] = None
+    tax_type: str = Field(default="simple")
+    rate: float = Field(default=0, ge=0, le=100)
+    hsn_code: Optional[str] = Field(None, max_length=20)
+    sac_code: Optional[str] = Field(None, max_length=20)
+    cgst_rate: Optional[float] = Field(None, ge=0, le=100)
+    sgst_rate: Optional[float] = Field(None, ge=0, le=100)
+    igst_rate: Optional[float] = Field(None, ge=0, le=100)
+    cess_rate: Optional[float] = Field(None, ge=0, le=100)
+    applies_to_categories: list = Field(default_factory=list)
+    min_amount: Optional[float] = Field(None, ge=0)
+    max_amount: Optional[float] = Field(None, ge=0)
+    customer_types: list = Field(default_factory=list)
+    is_compound: bool = Field(default=False)
+    compound_on_taxes: list = Field(default_factory=list)
+    is_active: bool = Field(default=True)
+    priority: int = Field(default=0)
+
+
+class TaxRuleUpdate(BaseModel):
+    """Schema for updating a tax rule"""
+    name: Optional[str] = Field(None, min_length=1, max_length=100)
+    description: Optional[str] = None
+    tax_type: Optional[str] = None
+    rate: Optional[float] = Field(None, ge=0, le=100)
+    hsn_code: Optional[str] = Field(None, max_length=20)
+    sac_code: Optional[str] = Field(None, max_length=20)
+    cgst_rate: Optional[float] = Field(None, ge=0, le=100)
+    sgst_rate: Optional[float] = Field(None, ge=0, le=100)
+    igst_rate: Optional[float] = Field(None, ge=0, le=100)
+    cess_rate: Optional[float] = Field(None, ge=0, le=100)
+    applies_to_categories: Optional[list] = None
+    min_amount: Optional[float] = Field(None, ge=0)
+    max_amount: Optional[float] = Field(None, ge=0)
+    customer_types: Optional[list] = None
+    is_compound: Optional[bool] = None
+    compound_on_taxes: Optional[list] = None
+    is_active: Optional[bool] = None
+    priority: Optional[int] = None
+
+
+class TaxRuleResponse(BaseModel):
+    """Schema for tax rule response"""
+    id: int
+    name: str
+    description: Optional[str]
+    tax_type: str
+    rate: float
+    hsn_code: Optional[str]
+    sac_code: Optional[str]
+    cgst_rate: Optional[float]
+    sgst_rate: Optional[float]
+    igst_rate: Optional[float]
+    cess_rate: Optional[float]
+    applies_to_categories: list
+    min_amount: Optional[float]
+    max_amount: Optional[float]
+    customer_types: list
+    is_compound: bool
+    compound_on_taxes: list
+    is_active: bool
+    priority: int
+    created_at: str
+    updated_at: str
+    created_by: Optional[int]
+
+    class Config:
+        from_attributes = True
 
 class BackupRequest(BaseModel):
     """Schema for backup request"""

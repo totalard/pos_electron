@@ -1,8 +1,10 @@
+import { useState } from 'react'
 import { useAppStore, useSettingsStore, BusinessMode } from '../../stores'
 
 export function BusinessPanel() {
   const { theme } = useAppStore()
   const { business, setBusinessMode, updateBusinessSettings } = useSettingsStore()
+  const [previewAmount] = useState(1234.56)
 
   const handleModeChange = (mode: BusinessMode) => {
     setBusinessMode(mode)
@@ -11,6 +13,52 @@ export function BusinessPanel() {
   const handleToggle = (field: keyof typeof business, value: boolean) => {
     updateBusinessSettings({ [field]: value })
   }
+
+  const handleCurrencyChange = (field: string, value: any) => {
+    const keys = field.split('.')
+    if (keys.length === 1) {
+      updateBusinessSettings({
+        currencyConfig: {
+          ...business.currencyConfig,
+          [field]: value
+        }
+      })
+    } else if (keys.length === 3) {
+      updateBusinessSettings({
+        currencyConfig: {
+          ...business.currencyConfig,
+          regionSpecific: {
+            ...business.currencyConfig.regionSpecific,
+            [keys[1]]: {
+              ...business.currencyConfig.regionSpecific[keys[1] as 'india' | 'middleEast'],
+              [keys[2]]: value
+            }
+          }
+        }
+      })
+    }
+  }
+
+  const formatPreview = () => {
+    const { symbol, symbolPosition, decimalPlaces, thousandSeparator, decimalSeparator } = business.currencyConfig
+    const parts = previewAmount.toFixed(decimalPlaces).split('.')
+    const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, thousandSeparator)
+    const formatted = parts[1] ? `${integerPart}${decimalSeparator}${parts[1]}` : integerPart
+    return symbolPosition === 'before' ? `${symbol}${formatted}` : `${formatted}${symbol}`
+  }
+
+  const currencies = [
+    { code: 'USD', symbol: '$', name: 'US Dollar', decimals: 2 },
+    { code: 'EUR', symbol: '€', name: 'Euro', decimals: 2 },
+    { code: 'GBP', symbol: '£', name: 'British Pound', decimals: 2 },
+    { code: 'INR', symbol: '₹', name: 'Indian Rupee', decimals: 2 },
+    { code: 'AED', symbol: 'د.إ', name: 'UAE Dirham', decimals: 2 },
+    { code: 'SAR', symbol: 'ر.س', name: 'Saudi Riyal', decimals: 2 },
+    { code: 'KWD', symbol: 'د.ك', name: 'Kuwaiti Dinar', decimals: 3 },
+    { code: 'BHD', symbol: 'د.ب', name: 'Bahraini Dinar', decimals: 3 },
+    { code: 'OMR', symbol: 'ر.ع', name: 'Omani Rial', decimals: 3 },
+    { code: 'QAR', symbol: 'ر.ق', name: 'Qatari Riyal', decimals: 2 }
+  ]
 
   return (
     <div className="p-6 space-y-6">
@@ -334,6 +382,204 @@ export function BusinessPanel() {
           </div>
         </div>
       )}
+
+      {/* Currency Configuration Section */}
+      <div className={`p-4 rounded-lg ${theme === 'dark' ? 'bg-gray-700/30' : 'bg-gray-50'}`}>
+        <h3 className={`text-lg font-semibold mb-4 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+          Currency Configuration
+        </h3>
+
+        <div className="space-y-4">
+          {/* Currency Selection */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className={`block text-sm font-medium mb-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                Currency
+              </label>
+              <select
+                value={business.currencyConfig.code}
+                onChange={(e) => {
+                  const selected = currencies.find(c => c.code === e.target.value)
+                  if (selected) {
+                    handleCurrencyChange('code', selected.code)
+                    handleCurrencyChange('symbol', selected.symbol)
+                    handleCurrencyChange('decimalPlaces', selected.decimals)
+                  }
+                }}
+                className={`w-full px-4 py-2 rounded-lg min-h-[44px] ${theme === 'dark' ? 'bg-gray-800 border border-gray-600 text-white focus:border-blue-500' : 'bg-white border border-gray-300 text-gray-900 focus:border-blue-500'} focus:outline-none focus:ring-2 focus:ring-blue-500/20`}
+              >
+                {currencies.map(curr => (
+                  <option key={curr.code} value={curr.code}>{curr.code} - {curr.name}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className={`block text-sm font-medium mb-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                Symbol Position
+              </label>
+              <select
+                value={business.currencyConfig.symbolPosition}
+                onChange={(e) => handleCurrencyChange('symbolPosition', e.target.value)}
+                className={`w-full px-4 py-2 rounded-lg min-h-[44px] ${theme === 'dark' ? 'bg-gray-800 border border-gray-600 text-white focus:border-blue-500' : 'bg-white border border-gray-300 text-gray-900 focus:border-blue-500'} focus:outline-none focus:ring-2 focus:ring-blue-500/20`}
+              >
+                <option value="before">Before Amount ({business.currencyConfig.symbol}100)</option>
+                <option value="after">After Amount (100{business.currencyConfig.symbol})</option>
+              </select>
+            </div>
+
+            <div>
+              <label className={`block text-sm font-medium mb-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                Decimal Places
+              </label>
+              <input
+                type="number"
+                min="0"
+                max="3"
+                value={business.currencyConfig.decimalPlaces}
+                onChange={(e) => handleCurrencyChange('decimalPlaces', parseInt(e.target.value))}
+                className={`w-full px-4 py-2 rounded-lg min-h-[44px] ${theme === 'dark' ? 'bg-gray-800 border border-gray-600 text-white focus:border-blue-500' : 'bg-white border border-gray-300 text-gray-900 focus:border-blue-500'} focus:outline-none focus:ring-2 focus:ring-blue-500/20`}
+              />
+            </div>
+
+            <div>
+              <label className={`block text-sm font-medium mb-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                Thousand Separator
+              </label>
+              <select
+                value={business.currencyConfig.thousandSeparator}
+                onChange={(e) => handleCurrencyChange('thousandSeparator', e.target.value)}
+                className={`w-full px-4 py-2 rounded-lg min-h-[44px] ${theme === 'dark' ? 'bg-gray-800 border border-gray-600 text-white focus:border-blue-500' : 'bg-white border border-gray-300 text-gray-900 focus:border-blue-500'} focus:outline-none focus:ring-2 focus:ring-blue-500/20`}
+              >
+                <option value=",">Comma (1,234.56)</option>
+                <option value=".">Period (1.234,56)</option>
+                <option value=" ">Space (1 234.56)</option>
+                <option value="">None (1234.56)</option>
+              </select>
+            </div>
+
+            <div>
+              <label className={`block text-sm font-medium mb-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                Decimal Separator
+              </label>
+              <select
+                value={business.currencyConfig.decimalSeparator}
+                onChange={(e) => handleCurrencyChange('decimalSeparator', e.target.value)}
+                className={`w-full px-4 py-2 rounded-lg min-h-[44px] ${theme === 'dark' ? 'bg-gray-800 border border-gray-600 text-white focus:border-blue-500' : 'bg-white border border-gray-300 text-gray-900 focus:border-blue-500'} focus:outline-none focus:ring-2 focus:ring-blue-500/20`}
+              >
+                <option value=".">Period (1,234.56)</option>
+                <option value=",">Comma (1.234,56)</option>
+              </select>
+            </div>
+
+            <div className="flex items-center">
+              <label className="flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={business.currencyConfig.showCurrencyCode}
+                  onChange={(e) => handleCurrencyChange('showCurrencyCode', e.target.checked)}
+                  className="w-5 h-5 rounded"
+                />
+                <span className={`ml-3 text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                  Show Currency Code
+                </span>
+              </label>
+            </div>
+          </div>
+
+          {/* Preview */}
+          <div className={`p-4 rounded-lg border-2 ${theme === 'dark' ? 'bg-gray-800 border-gray-600' : 'bg-white border-gray-200'}`}>
+            <div className="flex items-center justify-between">
+              <span className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+                Preview:
+              </span>
+              <span className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                {formatPreview()}
+                {business.currencyConfig.showCurrencyCode && ` ${business.currencyConfig.code}`}
+              </span>
+            </div>
+          </div>
+
+          {/* India-Specific Settings */}
+          {business.currencyConfig.code === 'INR' && (
+            <div className={`p-4 rounded-lg border-2 ${theme === 'dark' ? 'bg-blue-500/10 border-blue-500/30' : 'bg-blue-50 border-blue-200'}`}>
+              <h4 className={`text-md font-semibold mb-3 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-900'}`}>
+                India-Specific Settings
+              </h4>
+              <div className="space-y-3">
+                <label className="flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={business.currencyConfig.regionSpecific.india.enabled}
+                    onChange={(e) => handleCurrencyChange('regionSpecific.india.enabled', e.target.checked)}
+                    className="w-5 h-5 rounded"
+                  />
+                  <span className={`ml-3 text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                    Enable India-Specific Features
+                  </span>
+                </label>
+                {business.currencyConfig.regionSpecific.india.enabled && (
+                  <>
+                    <label className="flex items-center cursor-pointer ml-8">
+                      <input
+                        type="checkbox"
+                        checked={business.currencyConfig.regionSpecific.india.gstEnabled}
+                        onChange={(e) => handleCurrencyChange('regionSpecific.india.gstEnabled', e.target.checked)}
+                        className="w-5 h-5 rounded"
+                      />
+                      <span className={`ml-3 text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+                        Enable GST
+                      </span>
+                    </label>
+                    <label className="flex items-center cursor-pointer ml-8">
+                      <input
+                        type="checkbox"
+                        checked={business.currencyConfig.regionSpecific.india.showPaisa}
+                        onChange={(e) => handleCurrencyChange('regionSpecific.india.showPaisa', e.target.checked)}
+                        className="w-5 h-5 rounded"
+                      />
+                      <span className={`ml-3 text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+                        Show Paisa (Decimal Places)
+                      </span>
+                    </label>
+                    <label className="flex items-center cursor-pointer ml-8">
+                      <input
+                        type="checkbox"
+                        checked={business.currencyConfig.regionSpecific.india.useIndianNumbering}
+                        onChange={(e) => handleCurrencyChange('regionSpecific.india.useIndianNumbering', e.target.checked)}
+                        className="w-5 h-5 rounded"
+                      />
+                      <span className={`ml-3 text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+                        Use Indian Numbering System (Lakhs/Crores)
+                      </span>
+                    </label>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Middle East Settings */}
+          {['AED', 'SAR', 'KWD', 'BHD', 'OMR', 'QAR'].includes(business.currencyConfig.code) && (
+            <div className={`p-4 rounded-lg border-2 ${theme === 'dark' ? 'bg-green-500/10 border-green-500/30' : 'bg-green-50 border-green-200'}`}>
+              <h4 className={`text-md font-semibold mb-3 ${theme === 'dark' ? 'text-green-400' : 'text-green-900'}`}>
+                Middle East Settings
+              </h4>
+              <label className="flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={business.currencyConfig.regionSpecific.middleEast.enabled}
+                  onChange={(e) => handleCurrencyChange('regionSpecific.middleEast.enabled', e.target.checked)}
+                  className="w-5 h-5 rounded"
+                />
+                <span className={`ml-3 text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                  Enable Middle East-Specific Features
+                </span>
+              </label>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   )
 }

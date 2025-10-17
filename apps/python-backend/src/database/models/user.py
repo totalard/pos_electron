@@ -56,7 +56,13 @@ class User(BaseModel):
         null=True,
         description="Email address (optional)"
     )
-    
+
+    avatar_color = fields.CharField(
+        max_length=50,
+        null=True,
+        description="Avatar color identifier (e.g., 'blue', 'green', 'purple')"
+    )
+
     notes = fields.TextField(
         null=True,
         description="Additional notes about the user"

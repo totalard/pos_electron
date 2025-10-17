@@ -94,7 +94,7 @@ export function NumericKeypad({
 
   return (
     <div
-      className={`grid grid-cols-3 gap-2 ${className}`}
+      className={`grid grid-cols-3 gap-1.5 ${className}`}
       tabIndex={0}
     >
       {/* Row 1: 1, 2, 3 */}

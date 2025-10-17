@@ -13,6 +13,7 @@ export interface User {
   full_name: string
   mobile_number?: string
   email?: string
+  avatar_color?: string
   role: 'admin' | 'user'
   is_active: boolean
   notes?: string
@@ -26,6 +27,7 @@ export interface UserCreate {
   mobile_number?: string
   pin: string
   email?: string
+  avatar_color?: string
   notes?: string
 }
 

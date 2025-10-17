@@ -17,14 +17,23 @@ export type SettingsSection =
   | 'backup'
   | 'display'
   | 'security'
+  | 'users'
   | 'about'
 
 // Settings data interfaces
 export interface GeneralSettings {
   storeName: string
+  businessName: string
   storeAddress: string
+  storeCity: string
+  storeState: string
+  storeZip: string
+  storeCountry: string
   storePhone: string
   storeEmail: string
+  storeWebsite: string
+  logoUrl: string
+  operatingHours: Record<string, { open: string; close: string; closed: boolean }>
   currency: string
   language: string
   timezone: string
@@ -38,6 +47,28 @@ export interface BusinessSettings {
   enableBarcodeScanner: boolean // Retail mode
   enableLoyaltyProgram: boolean // Retail mode
   enableQuickCheckout: boolean // Retail mode
+  currencyConfig: {
+    code: string
+    symbol: string
+    symbolPosition: 'before' | 'after'
+    decimalPlaces: number
+    thousandSeparator: string
+    decimalSeparator: string
+    showCurrencyCode: boolean
+    regionSpecific: {
+      india: {
+        enabled: boolean
+        gstEnabled: boolean
+        showPaisa: boolean
+        useIndianNumbering: boolean
+      }
+      middleEast: {
+        enabled: boolean
+        currency: string
+        decimalPlaces: number
+      }
+    }
+  }
 }
 
 export interface TaxSettings {
@@ -60,8 +91,12 @@ export interface ReceiptSettings {
   logoUrl: string
   headerText: string
   footerText: string
+  customHeader: string
+  customFooter: string
   showTaxBreakdown: boolean
   showBarcode: boolean
+  showQRCode: boolean
+  paperSize: string
 }
 
 export interface InventorySettings {
@@ -157,9 +192,25 @@ const initialState = {
 
   general: {
     storeName: 'MidLogic POS',
+    businessName: '',
     storeAddress: '',
+    storeCity: '',
+    storeState: '',
+    storeZip: '',
+    storeCountry: '',
     storePhone: '',
     storeEmail: '',
+    storeWebsite: '',
+    logoUrl: '',
+    operatingHours: {
+      monday: { open: '09:00', close: '18:00', closed: false },
+      tuesday: { open: '09:00', close: '18:00', closed: false },
+      wednesday: { open: '09:00', close: '18:00', closed: false },
+      thursday: { open: '09:00', close: '18:00', closed: false },
+      friday: { open: '09:00', close: '18:00', closed: false },
+      saturday: { open: '10:00', close: '16:00', closed: false },
+      sunday: { open: '10:00', close: '16:00', closed: true }
+    },
     currency: 'USD',
     language: 'en',
     timezone: 'UTC'
@@ -172,7 +223,29 @@ const initialState = {
     enableKitchenDisplay: false,
     enableBarcodeScanner: true,
     enableLoyaltyProgram: false,
-    enableQuickCheckout: true
+    enableQuickCheckout: true,
+    currencyConfig: {
+      code: 'USD',
+      symbol: '$',
+      symbolPosition: 'before' as const,
+      decimalPlaces: 2,
+      thousandSeparator: ',',
+      decimalSeparator: '.',
+      showCurrencyCode: false,
+      regionSpecific: {
+        india: {
+          enabled: false,
+          gstEnabled: true,
+          showPaisa: true,
+          useIndianNumbering: true
+        },
+        middleEast: {
+          enabled: false,
+          currency: 'AED',
+          decimalPlaces: 2
+        }
+      }
+    }
   },
 
   taxes: {
@@ -195,8 +268,12 @@ const initialState = {
     logoUrl: '',
     headerText: 'Thank you for your purchase!',
     footerText: 'Please come again!',
+    customHeader: '',
+    customFooter: '',
     showTaxBreakdown: true,
-    showBarcode: false
+    showBarcode: false,
+    showQRCode: false,
+    paperSize: 'A4'
   },
 
   inventory: {

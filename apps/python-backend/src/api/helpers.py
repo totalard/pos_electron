@@ -28,6 +28,7 @@ def user_to_response(user: User) -> UserResponse:
         full_name=user.full_name,
         mobile_number=user.mobile_number,
         email=user.email,
+        avatar_color=user.avatar_color,
         role=user.role.value,
         is_active=user.is_active,
         notes=user.notes,
