@@ -296,11 +296,69 @@ class ReceiptSettings(BaseModel):
 
 
 class InventorySettings(BaseModel):
-    """Schema for inventory settings"""
-    enableLowStockAlerts: bool = Field(default=True)
-    lowStockThreshold: int = Field(default=10, ge=0)
-    enableAutoReorder: bool = Field(default=False)
-    autoReorderThreshold: int = Field(default=5, ge=0)
+    """Schema for comprehensive inventory settings"""
+    # Stock Tracking Configuration
+    enableStockTracking: bool = Field(default=True, description="Enable global inventory tracking")
+    trackBySerialNumber: bool = Field(default=False, description="Track items by serial number")
+    trackByBatchNumber: bool = Field(default=False, description="Track items by batch/lot number")
+    trackByExpiryDate: bool = Field(default=False, description="Track items by expiry date")
+
+    # Alert & Notification Settings
+    enableLowStockAlerts: bool = Field(default=True, description="Enable low stock alerts")
+    lowStockThreshold: int = Field(default=10, ge=0, description="Low stock threshold value")
+    lowStockThresholdType: str = Field(default='absolute', description="Threshold type: 'absolute' or 'percentage'")
+    enableOutOfStockAlerts: bool = Field(default=True, description="Enable out of stock alerts")
+    alertRecipients: list = Field(default_factory=list, description="Email addresses for alerts")
+
+    # Stock Deduction Settings
+    stockDeductionMode: str = Field(default='automatic', description="Stock deduction mode: 'automatic' or 'manual'")
+    allowNegativeStock: bool = Field(default=False, description="Allow selling items with negative stock")
+    deductOnSale: bool = Field(default=True, description="Deduct stock on sale completion")
+    deductOnOrder: bool = Field(default=False, description="Deduct stock on order placement")
+
+    # Reorder Point Settings
+    enableAutoReorder: bool = Field(default=False, description="Enable automatic reorder suggestions")
+    autoReorderThreshold: int = Field(default=5, ge=0, description="Threshold for auto reorder")
+    autoReorderQuantity: int = Field(default=20, ge=1, description="Default reorder quantity")
+    enableReorderPointCalculation: bool = Field(default=False, description="Enable automatic reorder point calculation")
+
+    # Unit of Measurement Settings
+    defaultUOM: str = Field(default='pieces', description="Default unit of measurement")
+    enableMultipleUOM: bool = Field(default=False, description="Enable multiple units of measurement")
+    uomConversionEnabled: bool = Field(default=False, description="Enable UOM conversion")
+
+    # Barcode Settings
+    enableBarcodeScanning: bool = Field(default=True, description="Enable barcode scanning")
+    barcodeFormat: str = Field(default='EAN13', description="Barcode format: EAN13, UPC, CODE128, QR")
+    autoGenerateBarcode: bool = Field(default=False, description="Auto-generate barcodes for new items")
+    barcodePrefix: str = Field(default='', description="Prefix for auto-generated barcodes")
+
+    # Multi-Location Settings
+    enableMultiLocation: bool = Field(default=False, description="Enable multiple storage locations")
+    defaultLocation: str = Field(default='Main Warehouse', description="Default storage location")
+    transferBetweenLocations: bool = Field(default=False, description="Allow stock transfers between locations")
+
+    # Stock Valuation Method
+    valuationMethod: str = Field(default='FIFO', description="Stock valuation method: FIFO, LIFO, Weighted Average")
+    enableCostTracking: bool = Field(default=True, description="Enable cost tracking for inventory")
+
+    # Waste & Adjustment Tracking
+    enableWasteTracking: bool = Field(default=False, description="Enable waste/damaged inventory tracking")
+    wasteReasons: list = Field(default_factory=lambda: ['Damaged', 'Expired', 'Lost', 'Other'], description="Predefined waste reasons")
+    requireWasteApproval: bool = Field(default=False, description="Require approval for waste entries")
+    enableStockAdjustment: bool = Field(default=True, description="Enable manual stock adjustments")
+    requireAdjustmentReason: bool = Field(default=True, description="Require reason for stock adjustments")
+
+    # Restaurant-Specific Settings
+    enableRecipeManagement: bool = Field(default=False, description="Enable recipe/ingredient management")
+    enablePortionControl: bool = Field(default=False, description="Enable portion control tracking")
+    enablePrepItemTracking: bool = Field(default=False, description="Enable prep item tracking")
+    ingredientCostTracking: bool = Field(default=True, description="Track ingredient costs")
+
+    # Retail-Specific Settings
+    enableVariantTracking: bool = Field(default=True, description="Enable product variant tracking")
+    enableSKUManagement: bool = Field(default=True, description="Enable SKU management")
+    enableSizeColorTracking: bool = Field(default=False, description="Enable size/color variant tracking")
 
 
 class IntegrationSettings(BaseModel):

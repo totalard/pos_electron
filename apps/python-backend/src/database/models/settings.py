@@ -122,12 +122,70 @@ class Settings(BaseModel):
     # Inventory Settings
     inventory_settings = fields.JSONField(
         default={
+            # Stock Tracking Configuration
+            'enableStockTracking': True,
+            'trackBySerialNumber': False,
+            'trackByBatchNumber': False,
+            'trackByExpiryDate': False,
+
+            # Alert & Notification Settings
             'enableLowStockAlerts': True,
             'lowStockThreshold': 10,
+            'lowStockThresholdType': 'absolute',  # 'absolute' or 'percentage'
+            'enableOutOfStockAlerts': True,
+            'alertRecipients': [],  # List of email addresses
+
+            # Stock Deduction Settings
+            'stockDeductionMode': 'automatic',  # 'automatic' or 'manual'
+            'allowNegativeStock': False,
+            'deductOnSale': True,
+            'deductOnOrder': False,
+
+            # Reorder Point Settings
             'enableAutoReorder': False,
-            'autoReorderThreshold': 5
+            'autoReorderThreshold': 5,
+            'autoReorderQuantity': 20,
+            'enableReorderPointCalculation': False,
+
+            # Unit of Measurement Settings
+            'defaultUOM': 'pieces',  # 'pieces', 'kg', 'liters', 'meters', etc.
+            'enableMultipleUOM': False,
+            'uomConversionEnabled': False,
+
+            # Barcode Settings
+            'enableBarcodeScanning': True,
+            'barcodeFormat': 'EAN13',  # 'EAN13', 'UPC', 'CODE128', 'QR'
+            'autoGenerateBarcode': False,
+            'barcodePrefix': '',
+
+            # Multi-Location Settings
+            'enableMultiLocation': False,
+            'defaultLocation': 'Main Warehouse',
+            'transferBetweenLocations': False,
+
+            # Stock Valuation Method
+            'valuationMethod': 'FIFO',  # 'FIFO', 'LIFO', 'Weighted Average'
+            'enableCostTracking': True,
+
+            # Waste & Adjustment Tracking
+            'enableWasteTracking': False,
+            'wasteReasons': ['Damaged', 'Expired', 'Lost', 'Other'],
+            'requireWasteApproval': False,
+            'enableStockAdjustment': True,
+            'requireAdjustmentReason': True,
+
+            # Restaurant-Specific Settings
+            'enableRecipeManagement': False,
+            'enablePortionControl': False,
+            'enablePrepItemTracking': False,
+            'ingredientCostTracking': True,
+
+            # Retail-Specific Settings
+            'enableVariantTracking': True,
+            'enableSKUManagement': True,
+            'enableSizeColorTracking': False
         },
-        description="Inventory management settings"
+        description="Comprehensive inventory management settings"
     )
     
     # Integration Settings

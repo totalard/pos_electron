@@ -100,10 +100,68 @@ export interface ReceiptSettings {
 }
 
 export interface InventorySettings {
+  // Stock Tracking Configuration
+  enableStockTracking: boolean
+  trackBySerialNumber: boolean
+  trackByBatchNumber: boolean
+  trackByExpiryDate: boolean
+
+  // Alert & Notification Settings
   enableLowStockAlerts: boolean
   lowStockThreshold: number
+  lowStockThresholdType: 'absolute' | 'percentage'
+  enableOutOfStockAlerts: boolean
+  alertRecipients: string[]
+
+  // Stock Deduction Settings
+  stockDeductionMode: 'automatic' | 'manual'
+  allowNegativeStock: boolean
+  deductOnSale: boolean
+  deductOnOrder: boolean
+
+  // Reorder Point Settings
   enableAutoReorder: boolean
   autoReorderThreshold: number
+  autoReorderQuantity: number
+  enableReorderPointCalculation: boolean
+
+  // Unit of Measurement Settings
+  defaultUOM: string
+  enableMultipleUOM: boolean
+  uomConversionEnabled: boolean
+
+  // Barcode Settings
+  enableBarcodeScanning: boolean
+  barcodeFormat: string
+  autoGenerateBarcode: boolean
+  barcodePrefix: string
+
+  // Multi-Location Settings
+  enableMultiLocation: boolean
+  defaultLocation: string
+  transferBetweenLocations: boolean
+
+  // Stock Valuation Method
+  valuationMethod: 'FIFO' | 'LIFO' | 'Weighted Average'
+  enableCostTracking: boolean
+
+  // Waste & Adjustment Tracking
+  enableWasteTracking: boolean
+  wasteReasons: string[]
+  requireWasteApproval: boolean
+  enableStockAdjustment: boolean
+  requireAdjustmentReason: boolean
+
+  // Restaurant-Specific Settings
+  enableRecipeManagement: boolean
+  enablePortionControl: boolean
+  enablePrepItemTracking: boolean
+  ingredientCostTracking: boolean
+
+  // Retail-Specific Settings
+  enableVariantTracking: boolean
+  enableSKUManagement: boolean
+  enableSizeColorTracking: boolean
 }
 
 export interface IntegrationSettings {
@@ -277,10 +335,68 @@ const initialState = {
   },
 
   inventory: {
+    // Stock Tracking Configuration
+    enableStockTracking: true,
+    trackBySerialNumber: false,
+    trackByBatchNumber: false,
+    trackByExpiryDate: false,
+
+    // Alert & Notification Settings
     enableLowStockAlerts: true,
     lowStockThreshold: 10,
+    lowStockThresholdType: 'absolute' as const,
+    enableOutOfStockAlerts: true,
+    alertRecipients: [],
+
+    // Stock Deduction Settings
+    stockDeductionMode: 'automatic' as const,
+    allowNegativeStock: false,
+    deductOnSale: true,
+    deductOnOrder: false,
+
+    // Reorder Point Settings
     enableAutoReorder: false,
-    autoReorderThreshold: 5
+    autoReorderThreshold: 5,
+    autoReorderQuantity: 20,
+    enableReorderPointCalculation: false,
+
+    // Unit of Measurement Settings
+    defaultUOM: 'pieces',
+    enableMultipleUOM: false,
+    uomConversionEnabled: false,
+
+    // Barcode Settings
+    enableBarcodeScanning: true,
+    barcodeFormat: 'EAN13',
+    autoGenerateBarcode: false,
+    barcodePrefix: '',
+
+    // Multi-Location Settings
+    enableMultiLocation: false,
+    defaultLocation: 'Main Warehouse',
+    transferBetweenLocations: false,
+
+    // Stock Valuation Method
+    valuationMethod: 'FIFO' as const,
+    enableCostTracking: true,
+
+    // Waste & Adjustment Tracking
+    enableWasteTracking: false,
+    wasteReasons: ['Damaged', 'Expired', 'Lost', 'Other'],
+    requireWasteApproval: false,
+    enableStockAdjustment: true,
+    requireAdjustmentReason: true,
+
+    // Restaurant-Specific Settings
+    enableRecipeManagement: false,
+    enablePortionControl: false,
+    enablePrepItemTracking: false,
+    ingredientCostTracking: true,
+
+    // Retail-Specific Settings
+    enableVariantTracking: true,
+    enableSKUManagement: true,
+    enableSizeColorTracking: false
   },
 
   integration: {

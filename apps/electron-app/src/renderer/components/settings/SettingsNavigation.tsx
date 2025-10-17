@@ -73,7 +73,7 @@ export function SettingsNavigation() {
       id: 'inventory',
       title: 'Inventory',
       description: 'Inventory management settings',
-      color: 'cyan',
+      color: 'emerald',
       icon: (
         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
@@ -156,6 +156,7 @@ export function SettingsNavigation() {
     const colorMap: Record<string, { bg: string; border: string; icon: string; text: string; textLight: string }> = {
       blue: { bg: 'bg-blue-500/20', border: 'border-blue-500', icon: 'bg-blue-500', text: 'text-blue-600', textLight: 'text-blue-400' },
       green: { bg: 'bg-green-500/20', border: 'border-green-500', icon: 'bg-green-500', text: 'text-green-600', textLight: 'text-green-400' },
+      emerald: { bg: 'bg-emerald-500/20', border: 'border-emerald-500', icon: 'bg-emerald-500', text: 'text-emerald-600', textLight: 'text-emerald-400' },
       purple: { bg: 'bg-purple-500/20', border: 'border-purple-500', icon: 'bg-purple-500', text: 'text-purple-600', textLight: 'text-purple-400' },
       orange: { bg: 'bg-orange-500/20', border: 'border-orange-500', icon: 'bg-orange-500', text: 'text-orange-600', textLight: 'text-orange-400' },
       pink: { bg: 'bg-pink-500/20', border: 'border-pink-500', icon: 'bg-pink-500', text: 'text-pink-600', textLight: 'text-pink-400' },
