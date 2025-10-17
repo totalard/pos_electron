@@ -49,7 +49,7 @@ export function UserManagementPanel() {
     if (!confirm('Are you sure you want to delete this user?')) return
 
     try {
-      await authAPI.deleteUser(userId, currentUser?.id || 1)
+      await authAPI.deleteUser(userId)
       await loadUsers()
     } catch (err) {
       console.error('Failed to delete user:', err)

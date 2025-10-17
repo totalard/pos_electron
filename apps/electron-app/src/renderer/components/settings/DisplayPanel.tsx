@@ -1,4 +1,5 @@
 import { useAppStore, useSettingsStore } from '../../stores'
+import { FormSection } from '../forms'
 
 export function DisplayPanel() {
   const { theme, setTheme } = useAppStore()
@@ -228,17 +229,10 @@ export function DisplayPanel() {
       </div>
 
       {/* Screen Timeout Section */}
-      <div className={`
-        p-4 rounded-lg
-        ${theme === 'dark' ? 'bg-gray-700/30' : 'bg-gray-50'}
-      `}>
-        <h3 className={`
-          text-lg font-semibold mb-4
-          ${theme === 'dark' ? 'text-white' : 'text-gray-900'}
-        `}>
-          Screen Timeout
-        </h3>
-
+      <FormSection
+        title="Screen Timeout"
+        description="Automatically dim or turn off screen after period of inactivity"
+      >
         <div className="space-y-4">
           <div>
             <label className={`
@@ -265,12 +259,6 @@ export function DisplayPanel() {
               `}
               aria-label="Screen timeout in minutes"
             />
-            <p className={`
-              text-xs mt-1
-              ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}
-            `}>
-              Automatically dim or turn off screen after period of inactivity
-            </p>
           </div>
 
           {/* Quick Timeout Presets */}
@@ -298,7 +286,7 @@ export function DisplayPanel() {
             ))}
           </div>
         </div>
-      </div>
+      </FormSection>
     </div>
   )
 }

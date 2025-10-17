@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useAppStore } from '../stores'
+import { TabBar } from './pos'
 
 interface Tab {
   id: string
@@ -50,112 +51,19 @@ export function SaleScreen({ onBack }: SaleScreenProps) {
       }
     `}>
       {/* Header with Tabs */}
-      <header className={`
-        flex items-center border-b
-        ${theme === 'dark' 
-          ? 'bg-gray-800 border-gray-700' 
-          : 'bg-white border-gray-200'
-        }
-      `}>
-        {/* Back Button */}
-        <button
-          onClick={onBack}
-          className={`
-            px-6 py-4 flex items-center gap-2 border-r
-            transition-colors duration-200
-            ${theme === 'dark'
-              ? 'border-gray-700 hover:bg-gray-700 text-gray-300'
-              : 'border-gray-200 hover:bg-gray-100 text-gray-700'
-            }
-          `}
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
-          <span className="font-medium">Back</span>
-        </button>
-
-        {/* Tabs */}
-        <div className="flex-1 flex items-center overflow-x-auto">
-          {tabs.map((tab) => (
-            <div
-              key={tab.id}
-              className={`
-                group relative flex items-center gap-2 px-6 py-4 border-r cursor-pointer
-                transition-colors duration-200
-                ${activeTabId === tab.id
-                  ? theme === 'dark'
-                    ? 'bg-gray-700 border-gray-600'
-                    : 'bg-gray-100 border-gray-300'
-                  : theme === 'dark'
-                    ? 'border-gray-700 hover:bg-gray-700/50'
-                    : 'border-gray-200 hover:bg-gray-50'
-                }
-              `}
-              onClick={() => setActiveTabId(tab.id)}
-            >
-              <span className={`
-                font-medium
-                ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}
-              `}>
-                {tab.name}
-              </span>
-              
-              {tab.items > 0 && (
-                <span className={`
-                  px-2 py-0.5 rounded-full text-xs font-medium
-                  ${theme === 'dark'
-                    ? 'bg-primary-600 text-white'
-                    : 'bg-primary-500 text-white'
-                  }
-                `}>
-                  {tab.items}
-                </span>
-              )}
-
-              {/* Close Button */}
-              {tabs.length > 1 && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    closeTab(tab.id)
-                  }}
-                  className={`
-                    ml-2 p-1 rounded opacity-0 group-hover:opacity-100
-                    transition-opacity duration-200
-                    ${theme === 'dark'
-                      ? 'hover:bg-gray-600 text-gray-400'
-                      : 'hover:bg-gray-200 text-gray-600'
-                    }
-                  `}
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              )}
-            </div>
-          ))}
-
-          {/* Add Tab Button */}
-          <button
-            onClick={addNewTab}
-            className={`
-              px-6 py-4 flex items-center gap-2
-              transition-colors duration-200
-              ${theme === 'dark'
-                ? 'hover:bg-gray-700 text-gray-400'
-                : 'hover:bg-gray-100 text-gray-600'
-              }
-            `}
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
-            <span className="font-medium">New Tab</span>
-          </button>
-        </div>
-      </header>
+      <TabBar
+        tabs={tabs.map(tab => ({
+          id: tab.id,
+          name: tab.name,
+          badge: tab.items > 0 ? tab.items : undefined
+        }))}
+        activeTabId={activeTabId}
+        onTabChange={setActiveTabId}
+        onTabClose={closeTab}
+        onAddTab={addNewTab}
+        closeable
+        minTabs={1}
+      />
 
       {/* Main Content - Coming Soon Placeholder */}
       <main className="flex-1 flex items-center justify-center">

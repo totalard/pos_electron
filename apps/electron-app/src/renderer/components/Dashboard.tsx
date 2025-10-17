@@ -1,5 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAppStore, usePinStore } from '../stores'
+import { MenuCard } from './pos'
+import { Grid } from './layout'
 
 interface DashboardProps {
   onNavigate: (screen: 'sales' | 'products' | 'inventory' | 'users' | 'settings') => void
@@ -11,10 +13,10 @@ export function Dashboard({ onNavigate }: DashboardProps) {
   const [currentTime, setCurrentTime] = useState(new Date())
 
   // Update time every second
-  useState(() => {
+  useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000)
     return () => clearInterval(timer)
-  })
+  }, [])
 
   const menuItems = [
     {
@@ -185,68 +187,19 @@ export function Dashboard({ onNavigate }: DashboardProps) {
         </div>
 
         {/* Menu Grid - Touch-safe with minimum 44x44px targets */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-8">
+        <Grid cols={1} gap="lg" responsive={{ md: 2, lg: 3, xl: 5 }}>
           {menuItems.map((item) => (
-            <button
+            <MenuCard
               key={item.id}
-              onClick={() => item.available && onNavigate(item.id as any)}
-              disabled={!item.available}
-              className={`
-                group relative overflow-hidden rounded-2xl p-8 min-h-[180px]
-                transition-all duration-200
-                ${item.available
-                  ? 'hover:scale-105 active:scale-100 hover:shadow-2xl active:shadow-lg cursor-pointer'
-                  : 'opacity-50 cursor-not-allowed'
-                }
-                ${theme === 'dark'
-                  ? 'bg-gray-800/50 border border-gray-700 hover:border-gray-600 active:border-gray-500'
-                  : 'bg-white border border-gray-200 hover:border-gray-300 active:border-gray-400'
-                }
-              `}
-              aria-label={item.title}
-            >
-              {/* Background Gradient */}
-              <div className={`
-                absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity duration-300
-                bg-gradient-to-br ${item.color}
-              `} />
-
-              {/* Icon */}
-              <div className={`
-                mb-4 text-transparent bg-clip-text bg-gradient-to-br ${item.color}
-              `}>
-                {item.icon}
-              </div>
-
-              {/* Content */}
-              <h3 className={`
-                text-xl font-bold mb-2
-                ${theme === 'dark' ? 'text-white' : 'text-gray-900'}
-              `}>
-                {item.title}
-              </h3>
-              <p className={`
-                text-sm
-                ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}
-              `}>
-                {item.description}
-              </p>
-
-              {/* Arrow Icon */}
-              {item.available && (
-                <div className={`
-                  absolute bottom-4 right-4 opacity-0 group-hover:opacity-100
-                  transition-opacity duration-300
-                  ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}
-                `}>
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                  </svg>
-                </div>
-              )}
-            </button>
+              title={item.title}
+              description={item.description}
+              icon={item.icon}
+              gradient={item.color}
+              available={item.available}
+              onClick={() => onNavigate(item.id as any)}
+            />
           ))}
-        </div>
+        </Grid>
 
         {/* Quick Stats (Optional - can be implemented later) */}
         <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6">

@@ -334,17 +334,17 @@ export const useSettingsStore = create<SettingsState>()(
         try {
           const settings = await settingsAPI.getSettings()
           set({
-            general: settings.general,
-            business: settings.business,
-            taxes: settings.taxes,
-            hardware: settings.hardware,
-            receipts: settings.receipts,
-            inventory: settings.inventory,
-            integration: settings.integration,
-            backup: settings.backup,
-            display: settings.display,
-            security: settings.security,
-            about: settings.about,
+            general: { ...get().general, ...settings.general },
+            business: { ...get().business, ...settings.business },
+            taxes: { ...get().taxes, ...settings.taxes },
+            hardware: { ...get().hardware, ...settings.hardware },
+            receipts: { ...get().receipts, ...settings.receipts },
+            inventory: { ...get().inventory, ...settings.inventory },
+            integration: { ...get().integration, ...settings.integration },
+            backup: { ...get().backup, ...settings.backup },
+            display: { ...get().display, ...settings.display },
+            security: { ...get().security, ...settings.security },
+            about: { ...get().about, ...settings.about },
             isLoading: false
           })
         } catch (error) {

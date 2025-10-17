@@ -3,6 +3,7 @@ import { FeatureCarousel } from './FeatureCarousel'
 import { NumericKeypad } from './NumericKeypad'
 import { usePinStore } from '../stores'
 import { authAPI, type User } from '../services/api'
+import { Avatar, LoadingSpinner, ErrorMessage, Button } from './common'
 
 interface LoginProps {
   onAuthenticated?: () => void
@@ -72,28 +73,15 @@ export function Login({ onAuthenticated }: LoginProps) {
 
   const remainingAttempts = maxAttempts - attempts
 
-  // Get user initials for avatar
-  const getUserInitials = (name: string): string => {
-    const parts = name.trim().split(' ')
-    if (parts.length >= 2) {
-      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+  // Get avatar color based on user's avatar_color or user ID
+  const getAvatarColor = (user: User): 'blue' | 'green' | 'purple' | 'orange' | 'pink' | 'cyan' | 'indigo' | 'red' | 'teal' | 'amber' => {
+    if (user.avatar_color) {
+      return user.avatar_color as any
     }
-    return name.substring(0, 2).toUpperCase()
-  }
-
-  // Get avatar color based on user ID
-  const getAvatarColor = (userId: number): string => {
-    const colors = [
-      'bg-gradient-to-br from-blue-500 to-blue-600',
-      'bg-gradient-to-br from-green-500 to-green-600',
-      'bg-gradient-to-br from-purple-500 to-purple-600',
-      'bg-gradient-to-br from-pink-500 to-pink-600',
-      'bg-gradient-to-br from-yellow-500 to-yellow-600',
-      'bg-gradient-to-br from-red-500 to-red-600',
-      'bg-gradient-to-br from-indigo-500 to-indigo-600',
-      'bg-gradient-to-br from-teal-500 to-teal-600',
+    const colors: Array<'blue' | 'green' | 'purple' | 'orange' | 'pink' | 'cyan' | 'indigo' | 'red' | 'teal' | 'amber'> = [
+      'blue', 'green', 'purple', 'pink', 'orange', 'red', 'indigo', 'teal'
     ]
-    return colors[userId % colors.length]
+    return colors[user.id % colors.length]
   }
 
   return (
@@ -108,32 +96,19 @@ export function Login({ onAuthenticated }: LoginProps) {
         <div className="w-full max-w-md px-8 py-12">
           {/* Loading State */}
           {isLoadingUsers && (
-            <div className="text-center">
-              <div className="inline-flex items-center justify-center w-16 h-16 mb-4">
-                <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary-600"></div>
-              </div>
-              <p className="text-gray-600 dark:text-gray-400">Loading users...</p>
-            </div>
+            <LoadingSpinner size="xl" centered text="Loading users..." />
           )}
 
           {/* Error Loading Users */}
           {userLoadError && !isLoadingUsers && (
             <div className="text-center">
-              <div className="mb-6 p-4 rounded-lg bg-red-50 border border-red-200 text-red-700 dark:bg-red-900/50 dark:border-red-800 dark:text-red-300">
-                <div className="flex items-center justify-center gap-2 mb-2">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <span className="font-semibold">Connection Error</span>
-                </div>
+              <ErrorMessage type="error" className="mb-6">
+                <div className="mb-2 font-semibold">Connection Error</div>
                 <p className="text-sm">{userLoadError}</p>
-              </div>
-              <button
-                onClick={() => window.location.reload()}
-                className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
-              >
+              </ErrorMessage>
+              <Button onClick={() => window.location.reload()}>
                 Retry
-              </button>
+              </Button>
             </div>
           )}
 
@@ -157,13 +132,12 @@ export function Login({ onAuthenticated }: LoginProps) {
                     aria-label={`Select user ${user.full_name}`}
                   >
                     {/* Avatar - Touch-safe size */}
-                    <div className={`
-                      w-24 h-24 rounded-full flex items-center justify-center text-white text-3xl font-bold mb-4 shadow-lg
-                      ${getAvatarColor(user.id)}
-                      group-hover:scale-110 group-active:scale-100 transition-transform duration-150
-                    `}>
-                      {getUserInitials(user.full_name)}
-                    </div>
+                    <Avatar
+                      name={user.full_name}
+                      color={getAvatarColor(user)}
+                      size="2xl"
+                      className="mb-4 shadow-lg group-hover:scale-110 group-active:scale-100 transition-transform duration-150"
+                    />
 
                     {/* Name */}
                     <span className="text-base font-medium text-gray-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors text-center">
@@ -210,12 +184,12 @@ export function Login({ onAuthenticated }: LoginProps) {
 
               {/* User Info */}
               <div className="text-center mb-8">
-                <div className={`
-                  inline-flex items-center justify-center w-24 h-24 rounded-full text-white text-3xl font-bold mb-4 shadow-xl
-                  ${getAvatarColor(selectedUser.id)}
-                `}>
-                  {getUserInitials(selectedUser.full_name)}
-                </div>
+                <Avatar
+                  name={selectedUser.full_name}
+                  color={getAvatarColor(selectedUser)}
+                  size="2xl"
+                  className="mb-4 shadow-xl mx-auto"
+                />
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
                   {selectedUser.full_name}
                 </h2>
@@ -262,14 +236,9 @@ export function Login({ onAuthenticated }: LoginProps) {
 
               {/* Error Message */}
               {error && (
-                <div className="mb-6 p-4 rounded-lg text-center bg-red-50 dark:bg-red-900/50 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300">
-                  <div className="flex items-center justify-center gap-2">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    {error}
-                  </div>
-                </div>
+                <ErrorMessage type="error" className="mb-6">
+                  {error}
+                </ErrorMessage>
               )}
 
               {/* Attempts Remaining */}
@@ -281,8 +250,8 @@ export function Login({ onAuthenticated }: LoginProps) {
 
               {/* Loading State */}
               {isLoading && (
-                <div className="mb-6 flex justify-center">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 dark:border-primary-400" />
+                <div className="mb-6">
+                  <LoadingSpinner size="md" centered />
                 </div>
               )}
 
