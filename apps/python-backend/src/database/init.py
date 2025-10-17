@@ -5,6 +5,7 @@ import logging
 
 from tortoise import Tortoise
 from .config import TORTOISE_ORM
+from .migrations import run_all_migrations, check_migrations_needed
 
 logger = logging.getLogger(__name__)
 
@@ -12,13 +13,14 @@ logger = logging.getLogger(__name__)
 async def init_db() -> None:
     """
     Initialize Tortoise ORM database connection and generate schemas.
-    
+
     This function:
     - Establishes connection to the SQLite database
     - Registers all models from the configuration
+    - Runs any pending data migrations (e.g., role value updates)
     - Generates database schemas if they don't exist (safe mode)
     - Sets up connection pooling and lifecycle management
-    
+
     Raises:
         Exception: If database initialization fails
     """
@@ -27,6 +29,26 @@ async def init_db() -> None:
 
         # Initialize Tortoise ORM with configuration
         await Tortoise.init(config=TORTOISE_ORM)
+
+        # Check if migrations are needed
+        migrations_needed = await check_migrations_needed()
+        if migrations_needed:
+            logger.info(f"Pending migrations detected: {', '.join(migrations_needed)}")
+
+            # Run migrations BEFORE schema generation to ensure data compatibility
+            migration_results = await run_all_migrations()
+
+            if migration_results['success']:
+                logger.info("All migrations completed successfully")
+                for migration in migration_results['migrations_run']:
+                    logger.info(f"  - {migration['name']}: {migration.get('stats', migration.get('success'))}")
+            else:
+                logger.error("Migration failed!")
+                for error in migration_results['errors']:
+                    logger.error(f"  - {error}")
+                raise Exception("Database migration failed. See logs for details.")
+        else:
+            logger.info("No pending migrations detected")
 
         # Generate schemas safely (only creates tables if they don't exist)
         # This is idempotent and safe to run on every startup

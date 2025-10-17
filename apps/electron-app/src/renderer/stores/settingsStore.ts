@@ -1,19 +1,22 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { settingsAPI } from '../services/api'
 
 // Business mode types
 export type BusinessMode = 'restaurant' | 'retail'
 
 // Settings section types
-export type SettingsSection = 
-  | 'general' 
-  | 'business' 
-  | 'taxes' 
-  | 'hardware' 
-  | 'receipts' 
-  | 'inventory' 
-  | 'integration' 
-  | 'backup' 
+export type SettingsSection =
+  | 'general'
+  | 'business'
+  | 'taxes'
+  | 'hardware'
+  | 'receipts'
+  | 'inventory'
+  | 'integration'
+  | 'backup'
+  | 'display'
+  | 'security'
   | 'about'
 
 // Settings data interfaces
@@ -84,16 +87,34 @@ export interface BackupSettings {
   lastBackupDate: string | null
 }
 
+export interface DisplaySettings {
+  theme: 'light' | 'dark'
+  fontSize: 'small' | 'medium' | 'large'
+  screenTimeout: number
+}
+
+export interface SecuritySettings {
+  sessionTimeout: number
+  requirePinForRefunds: boolean
+  requirePinForVoids: boolean
+  requirePinForDiscounts: boolean
+}
+
 export interface AboutInfo {
   appVersion: string
   buildNumber: string
   lastUpdateCheck: string | null
+  databaseVersion: string
 }
 
 // Define the store state interface
 export interface SettingsState {
   // Current selected section
   selectedSection: SettingsSection
+
+  // Loading state
+  isLoading: boolean
+  error: string | null
 
   // Settings data
   general: GeneralSettings
@@ -104,18 +125,23 @@ export interface SettingsState {
   inventory: InventorySettings
   integration: IntegrationSettings
   backup: BackupSettings
+  display: DisplaySettings
+  security: SecuritySettings
   about: AboutInfo
 
   // Actions
   setSelectedSection: (section: SettingsSection) => void
-  updateGeneralSettings: (settings: Partial<GeneralSettings>) => void
-  updateBusinessSettings: (settings: Partial<BusinessSettings>) => void
-  updateTaxSettings: (settings: Partial<TaxSettings>) => void
-  updateHardwareSettings: (settings: Partial<HardwareSettings>) => void
-  updateReceiptSettings: (settings: Partial<ReceiptSettings>) => void
-  updateInventorySettings: (settings: Partial<InventorySettings>) => void
-  updateIntegrationSettings: (settings: Partial<IntegrationSettings>) => void
-  updateBackupSettings: (settings: Partial<BackupSettings>) => void
+  loadSettings: () => Promise<void>
+  updateGeneralSettings: (settings: Partial<GeneralSettings>) => Promise<void>
+  updateBusinessSettings: (settings: Partial<BusinessSettings>) => Promise<void>
+  updateTaxSettings: (settings: Partial<TaxSettings>) => Promise<void>
+  updateHardwareSettings: (settings: Partial<HardwareSettings>) => Promise<void>
+  updateReceiptSettings: (settings: Partial<ReceiptSettings>) => Promise<void>
+  updateInventorySettings: (settings: Partial<InventorySettings>) => Promise<void>
+  updateIntegrationSettings: (settings: Partial<IntegrationSettings>) => Promise<void>
+  updateBackupSettings: (settings: Partial<BackupSettings>) => Promise<void>
+  updateDisplaySettings: (settings: Partial<DisplaySettings>) => Promise<void>
+  updateSecuritySettings: (settings: Partial<SecuritySettings>) => Promise<void>
   setBusinessMode: (mode: BusinessMode) => void
   checkForUpdates: () => Promise<void>
   performBackup: () => Promise<void>
@@ -126,7 +152,9 @@ export interface SettingsState {
 // Initial state
 const initialState = {
   selectedSection: 'general' as SettingsSection,
-  
+  isLoading: false,
+  error: null,
+
   general: {
     storeName: 'MidLogic POS',
     storeAddress: '',
@@ -136,7 +164,7 @@ const initialState = {
     language: 'en',
     timezone: 'UTC'
   },
-  
+
   business: {
     mode: 'retail' as BusinessMode,
     enableTableManagement: false,
@@ -146,14 +174,14 @@ const initialState = {
     enableLoyaltyProgram: false,
     enableQuickCheckout: true
   },
-  
+
   taxes: {
     defaultTaxRate: 0,
     taxInclusive: false,
     taxLabel: 'Tax',
     enableMultipleTaxRates: false
   },
-  
+
   hardware: {
     printerEnabled: false,
     printerName: '',
@@ -161,7 +189,7 @@ const initialState = {
     barcodeReaderEnabled: false,
     displayEnabled: false
   },
-  
+
   receipts: {
     showLogo: false,
     logoUrl: '',
@@ -170,14 +198,14 @@ const initialState = {
     showTaxBreakdown: true,
     showBarcode: false
   },
-  
+
   inventory: {
     enableLowStockAlerts: true,
     lowStockThreshold: 10,
     enableAutoReorder: false,
     autoReorderThreshold: 5
   },
-  
+
   integration: {
     enableCloudSync: false,
     cloudSyncInterval: 60,
@@ -186,18 +214,32 @@ const initialState = {
     smtpPort: 587,
     smtpUsername: ''
   },
-  
+
   backup: {
     enableAutoBackup: false,
     backupInterval: 24,
     backupLocation: '',
     lastBackupDate: null
   },
-  
+
+  display: {
+    theme: 'light' as 'light' | 'dark',
+    fontSize: 'medium' as 'small' | 'medium' | 'large',
+    screenTimeout: 0
+  },
+
+  security: {
+    sessionTimeout: 0,
+    requirePinForRefunds: true,
+    requirePinForVoids: true,
+    requirePinForDiscounts: false
+  },
+
   about: {
     appVersion: '1.0.0',
     buildNumber: '1',
-    lastUpdateCheck: null
+    lastUpdateCheck: null,
+    databaseVersion: '1.0.0'
   }
 }
 
@@ -207,77 +249,215 @@ export const useSettingsStore = create<SettingsState>()(
     (set, get) => ({
       ...initialState,
 
-      setSelectedSection: (section: SettingsSection) => 
+      setSelectedSection: (section: SettingsSection) =>
         set({ selectedSection: section }),
 
-      updateGeneralSettings: (settings: Partial<GeneralSettings>) =>
-        set((state) => ({
-          general: { ...state.general, ...settings }
-        })),
+      loadSettings: async () => {
+        set({ isLoading: true, error: null })
+        try {
+          const settings = await settingsAPI.getSettings()
+          set({
+            general: settings.general,
+            business: settings.business,
+            taxes: settings.taxes,
+            hardware: settings.hardware,
+            receipts: settings.receipts,
+            inventory: settings.inventory,
+            integration: settings.integration,
+            backup: settings.backup,
+            display: settings.display,
+            security: settings.security,
+            about: settings.about,
+            isLoading: false
+          })
+        } catch (error) {
+          console.error('Failed to load settings:', error)
+          set({
+            isLoading: false,
+            error: error instanceof Error ? error.message : 'Failed to load settings'
+          })
+        }
+      },
 
-      updateBusinessSettings: (settings: Partial<BusinessSettings>) =>
-        set((state) => ({
-          business: { ...state.business, ...settings }
-        })),
+      updateGeneralSettings: async (settings: Partial<GeneralSettings>) => {
+        const currentState = get()
+        const updatedGeneral = { ...currentState.general, ...settings }
+        set({ general: updatedGeneral })
 
-      updateTaxSettings: (settings: Partial<TaxSettings>) =>
-        set((state) => ({
-          taxes: { ...state.taxes, ...settings }
-        })),
+        try {
+          await settingsAPI.updateSettings({ general: updatedGeneral })
+        } catch (error) {
+          console.error('Failed to update general settings:', error)
+          set({ general: currentState.general }) // Rollback on error
+        }
+      },
 
-      updateHardwareSettings: (settings: Partial<HardwareSettings>) =>
-        set((state) => ({
-          hardware: { ...state.hardware, ...settings }
-        })),
+      updateBusinessSettings: async (settings: Partial<BusinessSettings>) => {
+        const currentState = get()
+        const updatedBusiness = { ...currentState.business, ...settings }
+        set({ business: updatedBusiness })
 
-      updateReceiptSettings: (settings: Partial<ReceiptSettings>) =>
-        set((state) => ({
-          receipts: { ...state.receipts, ...settings }
-        })),
+        try {
+          await settingsAPI.updateSettings({ business: updatedBusiness })
+        } catch (error) {
+          console.error('Failed to update business settings:', error)
+          set({ business: currentState.business })
+        }
+      },
 
-      updateInventorySettings: (settings: Partial<InventorySettings>) =>
-        set((state) => ({
-          inventory: { ...state.inventory, ...settings }
-        })),
+      updateTaxSettings: async (settings: Partial<TaxSettings>) => {
+        const currentState = get()
+        const updatedTaxes = { ...currentState.taxes, ...settings }
+        set({ taxes: updatedTaxes })
 
-      updateIntegrationSettings: (settings: Partial<IntegrationSettings>) =>
-        set((state) => ({
-          integration: { ...state.integration, ...settings }
-        })),
+        try {
+          await settingsAPI.updateSettings({ taxes: updatedTaxes })
+        } catch (error) {
+          console.error('Failed to update tax settings:', error)
+          set({ taxes: currentState.taxes })
+        }
+      },
 
-      updateBackupSettings: (settings: Partial<BackupSettings>) =>
-        set((state) => ({
-          backup: { ...state.backup, ...settings }
-        })),
+      updateHardwareSettings: async (settings: Partial<HardwareSettings>) => {
+        const currentState = get()
+        const updatedHardware = { ...currentState.hardware, ...settings }
+        set({ hardware: updatedHardware })
+
+        try {
+          await settingsAPI.updateSettings({ hardware: updatedHardware })
+        } catch (error) {
+          console.error('Failed to update hardware settings:', error)
+          set({ hardware: currentState.hardware })
+        }
+      },
+
+      updateReceiptSettings: async (settings: Partial<ReceiptSettings>) => {
+        const currentState = get()
+        const updatedReceipts = { ...currentState.receipts, ...settings }
+        set({ receipts: updatedReceipts })
+
+        try {
+          await settingsAPI.updateSettings({ receipts: updatedReceipts })
+        } catch (error) {
+          console.error('Failed to update receipt settings:', error)
+          set({ receipts: currentState.receipts })
+        }
+      },
+
+      updateInventorySettings: async (settings: Partial<InventorySettings>) => {
+        const currentState = get()
+        const updatedInventory = { ...currentState.inventory, ...settings }
+        set({ inventory: updatedInventory })
+
+        try {
+          await settingsAPI.updateSettings({ inventory: updatedInventory })
+        } catch (error) {
+          console.error('Failed to update inventory settings:', error)
+          set({ inventory: currentState.inventory })
+        }
+      },
+
+      updateIntegrationSettings: async (settings: Partial<IntegrationSettings>) => {
+        const currentState = get()
+        const updatedIntegration = { ...currentState.integration, ...settings }
+        set({ integration: updatedIntegration })
+
+        try {
+          await settingsAPI.updateSettings({ integration: updatedIntegration })
+        } catch (error) {
+          console.error('Failed to update integration settings:', error)
+          set({ integration: currentState.integration })
+        }
+      },
+
+      updateBackupSettings: async (settings: Partial<BackupSettings>) => {
+        const currentState = get()
+        const updatedBackup = { ...currentState.backup, ...settings }
+        set({ backup: updatedBackup })
+
+        try {
+          await settingsAPI.updateSettings({ backup: updatedBackup })
+        } catch (error) {
+          console.error('Failed to update backup settings:', error)
+          set({ backup: currentState.backup })
+        }
+      },
+
+      updateDisplaySettings: async (settings: Partial<DisplaySettings>) => {
+        const currentState = get()
+        const updatedDisplay = { ...currentState.display, ...settings }
+        set({ display: updatedDisplay })
+
+        try {
+          await settingsAPI.updateSettings({ display: updatedDisplay })
+        } catch (error) {
+          console.error('Failed to update display settings:', error)
+          set({ display: currentState.display })
+        }
+      },
+
+      updateSecuritySettings: async (settings: Partial<SecuritySettings>) => {
+        const currentState = get()
+        const updatedSecurity = { ...currentState.security, ...settings }
+        set({ security: updatedSecurity })
+
+        try {
+          await settingsAPI.updateSettings({ security: updatedSecurity })
+        } catch (error) {
+          console.error('Failed to update security settings:', error)
+          set({ security: currentState.security })
+        }
+      },
 
       setBusinessMode: (mode: BusinessMode) =>
-        set((state) => ({
-          business: { ...state.business, mode }
-        })),
+        get().updateBusinessSettings({ mode }),
 
       checkForUpdates: async () => {
-        // Placeholder for update check logic
-        set((state) => ({
-          about: {
-            ...state.about,
-            lastUpdateCheck: new Date().toISOString()
-          }
-        }))
+        const currentState = get()
+        const updatedAbout = {
+          ...currentState.about,
+          lastUpdateCheck: new Date().toISOString()
+        }
+        set({ about: updatedAbout })
+
+        try {
+          await settingsAPI.updateSettings({ about: updatedAbout })
+        } catch (error) {
+          console.error('Failed to update about info:', error)
+        }
       },
 
       performBackup: async () => {
-        // Placeholder for backup logic
-        set((state) => ({
-          backup: {
-            ...state.backup,
+        try {
+          const result = await settingsAPI.performBackup()
+          const currentState = get()
+          const updatedBackup = {
+            ...currentState.backup,
             lastBackupDate: new Date().toISOString()
           }
-        }))
+          set({ backup: updatedBackup })
+
+          // Update backend with new backup date
+          await settingsAPI.updateSettings({ backup: updatedBackup })
+
+          console.log('Backup created:', result.backup_file)
+        } catch (error) {
+          console.error('Failed to perform backup:', error)
+          throw error
+        }
       },
 
       restoreBackup: async (filePath: string) => {
-        // Placeholder for restore logic
-        console.log('Restoring backup from:', filePath)
+        try {
+          const result = await settingsAPI.restoreBackup(filePath)
+          console.log('Backup restored:', result.message)
+
+          // Reload settings after restore
+          await get().loadSettings()
+        } catch (error) {
+          console.error('Failed to restore backup:', error)
+          throw error
+        }
       },
 
       reset: () => set(initialState)
@@ -285,14 +465,8 @@ export const useSettingsStore = create<SettingsState>()(
     {
       name: 'settings-storage',
       partialize: (state) => ({
-        general: state.general,
-        business: state.business,
-        taxes: state.taxes,
-        hardware: state.hardware,
-        receipts: state.receipts,
-        inventory: state.inventory,
-        integration: state.integration,
-        backup: state.backup
+        selectedSection: state.selectedSection,
+        display: state.display
       })
     }
   )

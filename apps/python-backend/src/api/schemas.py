@@ -228,3 +228,147 @@ class StockAdjustmentResponse(BaseModel):
     class Config:
         from_attributes = True
 
+
+# Settings Schemas
+class GeneralSettings(BaseModel):
+    """Schema for general settings"""
+    storeName: str = Field(default="MidLogic POS")
+    storeAddress: str = Field(default="")
+    storePhone: str = Field(default="")
+    storeEmail: str = Field(default="")
+    currency: str = Field(default="USD")
+    language: str = Field(default="en")
+    timezone: str = Field(default="UTC")
+
+
+class BusinessSettings(BaseModel):
+    """Schema for business settings"""
+    mode: str = Field(default="retail")
+    enableTableManagement: bool = Field(default=False)
+    enableReservations: bool = Field(default=False)
+    enableKitchenDisplay: bool = Field(default=False)
+    enableBarcodeScanner: bool = Field(default=True)
+    enableLoyaltyProgram: bool = Field(default=False)
+    enableQuickCheckout: bool = Field(default=True)
+
+
+class TaxSettings(BaseModel):
+    """Schema for tax settings"""
+    defaultTaxRate: float = Field(default=0, ge=0, le=100)
+    taxInclusive: bool = Field(default=False)
+    taxLabel: str = Field(default="Tax")
+    enableMultipleTaxRates: bool = Field(default=False)
+
+
+class HardwareSettings(BaseModel):
+    """Schema for hardware settings"""
+    printerEnabled: bool = Field(default=False)
+    printerName: str = Field(default="")
+    cashDrawerEnabled: bool = Field(default=False)
+    barcodeReaderEnabled: bool = Field(default=False)
+    displayEnabled: bool = Field(default=False)
+
+
+class ReceiptSettings(BaseModel):
+    """Schema for receipt settings"""
+    showLogo: bool = Field(default=False)
+    logoUrl: str = Field(default="")
+    headerText: str = Field(default="Thank you for your purchase!")
+    footerText: str = Field(default="Please come again!")
+    showTaxBreakdown: bool = Field(default=True)
+    showBarcode: bool = Field(default=False)
+
+
+class InventorySettings(BaseModel):
+    """Schema for inventory settings"""
+    enableLowStockAlerts: bool = Field(default=True)
+    lowStockThreshold: int = Field(default=10, ge=0)
+    enableAutoReorder: bool = Field(default=False)
+    autoReorderThreshold: int = Field(default=5, ge=0)
+
+
+class IntegrationSettings(BaseModel):
+    """Schema for integration settings"""
+    enableCloudSync: bool = Field(default=False)
+    cloudSyncInterval: int = Field(default=60, ge=1)
+    enableEmailReceipts: bool = Field(default=False)
+    smtpServer: str = Field(default="")
+    smtpPort: int = Field(default=587, ge=1, le=65535)
+    smtpUsername: str = Field(default="")
+
+
+class BackupSettings(BaseModel):
+    """Schema for backup settings"""
+    enableAutoBackup: bool = Field(default=False)
+    backupInterval: int = Field(default=24, ge=1)
+    backupLocation: str = Field(default="")
+    lastBackupDate: Optional[str] = None
+
+
+class DisplaySettings(BaseModel):
+    """Schema for display settings"""
+    theme: str = Field(default="light")
+    fontSize: str = Field(default="medium")
+    screenTimeout: int = Field(default=0, ge=0)
+
+
+class SecuritySettings(BaseModel):
+    """Schema for security settings"""
+    sessionTimeout: int = Field(default=0, ge=0)
+    requirePinForRefunds: bool = Field(default=True)
+    requirePinForVoids: bool = Field(default=True)
+    requirePinForDiscounts: bool = Field(default=False)
+
+
+class SystemInfo(BaseModel):
+    """Schema for system information"""
+    appVersion: str = Field(default="1.0.0")
+    buildNumber: str = Field(default="1")
+    lastUpdateCheck: Optional[str] = None
+    databaseVersion: str = Field(default="1.0.0")
+
+
+class SettingsResponse(BaseModel):
+    """Schema for settings response"""
+    id: int
+    general: GeneralSettings
+    business: BusinessSettings
+    taxes: TaxSettings
+    hardware: HardwareSettings
+    receipts: ReceiptSettings
+    inventory: InventorySettings
+    integration: IntegrationSettings
+    backup: BackupSettings
+    display: DisplaySettings
+    security: SecuritySettings
+    about: SystemInfo
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class SettingsUpdate(BaseModel):
+    """Schema for updating settings"""
+    general: Optional[GeneralSettings] = None
+    business: Optional[BusinessSettings] = None
+    taxes: Optional[TaxSettings] = None
+    hardware: Optional[HardwareSettings] = None
+    receipts: Optional[ReceiptSettings] = None
+    inventory: Optional[InventorySettings] = None
+    integration: Optional[IntegrationSettings] = None
+    backup: Optional[BackupSettings] = None
+    display: Optional[DisplaySettings] = None
+    security: Optional[SecuritySettings] = None
+    about: Optional[SystemInfo] = None
+
+
+class BackupRequest(BaseModel):
+    """Schema for backup request"""
+    location: Optional[str] = None
+
+
+class RestoreRequest(BaseModel):
+    """Schema for restore request"""
+    filePath: str = Field(..., min_length=1)

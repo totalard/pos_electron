@@ -1,8 +1,24 @@
 """
 Helper functions for API endpoints
 """
-from ..database.models import User, Product, StockTransaction
-from .schemas import UserResponse, ProductResponse, StockTransactionResponse
+from ..database.models import User, Product, StockTransaction, Settings
+from .schemas import (
+    UserResponse,
+    ProductResponse,
+    StockTransactionResponse,
+    SettingsResponse,
+    GeneralSettings,
+    BusinessSettings,
+    TaxSettings,
+    HardwareSettings,
+    ReceiptSettings,
+    InventorySettings,
+    IntegrationSettings,
+    BackupSettings,
+    DisplaySettings,
+    SecuritySettings,
+    SystemInfo
+)
 
 
 def user_to_response(user: User) -> UserResponse:
@@ -62,3 +78,22 @@ def stock_transaction_to_response(transaction: StockTransaction) -> StockTransac
         created_at=transaction.created_at
     )
 
+
+def settings_to_response(settings: Settings) -> SettingsResponse:
+    """Convert Settings model to SettingsResponse schema"""
+    return SettingsResponse(
+        id=settings.id,
+        general=GeneralSettings(**settings.general_settings),
+        business=BusinessSettings(**settings.business_settings),
+        taxes=TaxSettings(**settings.tax_settings),
+        hardware=HardwareSettings(**settings.hardware_settings),
+        receipts=ReceiptSettings(**settings.receipt_settings),
+        inventory=InventorySettings(**settings.inventory_settings),
+        integration=IntegrationSettings(**settings.integration_settings),
+        backup=BackupSettings(**settings.backup_settings),
+        display=DisplaySettings(**settings.display_settings),
+        security=SecuritySettings(**settings.security_settings),
+        about=SystemInfo(**settings.system_info),
+        created_at=settings.created_at,
+        updated_at=settings.updated_at
+    )

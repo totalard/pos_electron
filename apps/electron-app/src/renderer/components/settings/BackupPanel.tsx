@@ -5,8 +5,12 @@ export function BackupPanel() {
   const { backup, updateBackupSettings, performBackup } = useSettingsStore()
 
   const handleBackupNow = async () => {
-    await performBackup()
-    alert('Backup completed successfully!')
+    try {
+      await performBackup()
+      alert('Backup completed successfully!')
+    } catch (error) {
+      alert('Backup failed: ' + (error instanceof Error ? error.message : 'Unknown error'))
+    }
   }
 
   return (
@@ -25,16 +29,26 @@ export function BackupPanel() {
           Automatic Backup
         </h3>
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between min-h-[44px] gap-4">
             <div>
               <h4 className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Enable Auto Backup</h4>
               <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>Automatically backup data</p>
             </div>
             <button
               onClick={() => updateBackupSettings({ enableAutoBackup: !backup.enableAutoBackup })}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${backup.enableAutoBackup ? 'bg-blue-500' : theme === 'dark' ? 'bg-gray-600' : 'bg-gray-300'}`}
+              className={`
+                relative inline-flex h-8 w-14 items-center rounded-full
+                transition-colors duration-200
+                focus:outline-none focus:ring-2 focus:ring-blue-500/20
+                ${backup.enableAutoBackup ? 'bg-blue-500' : theme === 'dark' ? 'bg-gray-600' : 'bg-gray-300'}
+              `}
+              aria-label="Toggle auto backup"
             >
-              <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${backup.enableAutoBackup ? 'translate-x-6' : 'translate-x-1'}`} />
+              <span className={`
+                inline-block h-6 w-6 transform rounded-full bg-white
+                transition-transform duration-200
+                ${backup.enableAutoBackup ? 'translate-x-7' : 'translate-x-1'}
+              `} />
             </button>
           </div>
 
@@ -48,7 +62,17 @@ export function BackupPanel() {
                   type="number"
                   value={backup.backupInterval}
                   onChange={(e) => updateBackupSettings({ backupInterval: parseInt(e.target.value) || 24 })}
-                  className={`w-full px-4 py-2 rounded-lg ${theme === 'dark' ? 'bg-gray-800 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'} border focus:outline-none focus:ring-2 focus:ring-blue-500/20`}
+                  className={`
+                    w-full px-4 py-3 rounded-lg border
+                    min-h-[44px]
+                    transition-colors duration-200
+                    ${theme === 'dark'
+                      ? 'bg-gray-800 border-gray-600 text-white focus:border-blue-500'
+                      : 'bg-white border-gray-300 text-gray-900 focus:border-blue-500'
+                    }
+                    focus:outline-none focus:ring-2 focus:ring-blue-500/20
+                  `}
+                  aria-label="Backup interval in hours"
                 />
               </div>
               <div>
@@ -59,8 +83,18 @@ export function BackupPanel() {
                   type="text"
                   value={backup.backupLocation}
                   onChange={(e) => updateBackupSettings({ backupLocation: e.target.value })}
-                  className={`w-full px-4 py-2 rounded-lg ${theme === 'dark' ? 'bg-gray-800 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'} border focus:outline-none focus:ring-2 focus:ring-blue-500/20`}
+                  className={`
+                    w-full px-4 py-3 rounded-lg border
+                    min-h-[44px]
+                    transition-colors duration-200
+                    ${theme === 'dark'
+                      ? 'bg-gray-800 border-gray-600 text-white focus:border-blue-500'
+                      : 'bg-white border-gray-300 text-gray-900 focus:border-blue-500'
+                    }
+                    focus:outline-none focus:ring-2 focus:ring-blue-500/20
+                  `}
                   placeholder="/path/to/backup"
+                  aria-label="Backup location path"
                 />
               </div>
             </>
@@ -83,12 +117,32 @@ export function BackupPanel() {
         <div className="space-y-4">
           <button
             onClick={handleBackupNow}
-            className={`w-full px-6 py-3 rounded-lg font-medium transition-colors ${theme === 'dark' ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-blue-500 hover:bg-blue-600 text-white'}`}
+            className={`
+              w-full px-6 py-3 rounded-lg font-medium
+              min-h-[44px]
+              transition-all duration-200
+              ${theme === 'dark'
+                ? 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white'
+                : 'bg-blue-500 hover:bg-blue-600 active:bg-blue-700 text-white'
+              }
+              focus:outline-none focus:ring-2 focus:ring-blue-500/20
+            `}
+            aria-label="Backup now"
           >
             Backup Now
           </button>
           <button
-            className={`w-full px-6 py-3 rounded-lg font-medium transition-colors ${theme === 'dark' ? 'bg-gray-700 hover:bg-gray-600 text-white' : 'bg-gray-200 hover:bg-gray-300 text-gray-900'}`}
+            className={`
+              w-full px-6 py-3 rounded-lg font-medium
+              min-h-[44px]
+              transition-all duration-200
+              ${theme === 'dark'
+                ? 'bg-gray-700 hover:bg-gray-600 active:bg-gray-500 text-white'
+                : 'bg-gray-200 hover:bg-gray-300 active:bg-gray-400 text-gray-900'
+              }
+              focus:outline-none focus:ring-2 focus:ring-blue-500/20
+            `}
+            aria-label="Restore from backup"
           >
             Restore from Backup
           </button>

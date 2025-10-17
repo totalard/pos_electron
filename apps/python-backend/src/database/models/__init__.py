@@ -10,6 +10,7 @@ from .inventory import (
     StockAdjustmentLine,
     TransactionType
 )
+from .settings import Settings
 
 __all__ = [
     "BaseModel",
@@ -22,5 +23,6 @@ __all__ = [
     "StockAdjustment",
     "StockAdjustmentLine",
     "TransactionType",
+    "Settings",
 ]
 

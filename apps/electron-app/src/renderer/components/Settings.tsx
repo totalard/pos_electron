@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { useAppStore, useSettingsStore, SettingsSection } from '../stores'
 import { SettingsNavigation } from './settings/SettingsNavigation'
 import { GeneralPanel } from './settings/GeneralPanel'
@@ -8,6 +9,8 @@ import { ReceiptsPanel } from './settings/ReceiptsPanel'
 import { InventoryPanel } from './settings/InventoryPanel'
 import { IntegrationPanel } from './settings/IntegrationPanel'
 import { BackupPanel } from './settings/BackupPanel'
+import { DisplayPanel } from './settings/DisplayPanel'
+import { SecurityPanel } from './settings/SecurityPanel'
 import { AboutPanel } from './settings/AboutPanel'
 
 interface SettingsProps {
@@ -16,7 +19,12 @@ interface SettingsProps {
 
 export function Settings({ onBack }: SettingsProps) {
   const { theme } = useAppStore()
-  const { selectedSection } = useSettingsStore()
+  const { selectedSection, loadSettings } = useSettingsStore()
+
+  // Load settings from backend on mount
+  useEffect(() => {
+    loadSettings()
+  }, [loadSettings])
 
   // Render the appropriate content panel based on selected section
   const renderContentPanel = () => {
@@ -37,6 +45,10 @@ export function Settings({ onBack }: SettingsProps) {
         return <IntegrationPanel />
       case 'backup':
         return <BackupPanel />
+      case 'display':
+        return <DisplayPanel />
+      case 'security':
+        return <SecurityPanel />
       case 'about':
         return <AboutPanel />
       default:

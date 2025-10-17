@@ -301,5 +301,200 @@ export const productsAPI = {
   }
 }
 
+// ============================================================================
+// Settings Types
+// ============================================================================
+
+export interface GeneralSettings {
+  storeName: string
+  storeAddress: string
+  storePhone: string
+  storeEmail: string
+  currency: string
+  language: string
+  timezone: string
+}
+
+export interface BusinessSettings {
+  mode: 'restaurant' | 'retail'
+  enableTableManagement: boolean
+  enableReservations: boolean
+  enableKitchenDisplay: boolean
+  enableBarcodeScanner: boolean
+  enableLoyaltyProgram: boolean
+  enableQuickCheckout: boolean
+}
+
+export interface TaxSettings {
+  defaultTaxRate: number
+  taxInclusive: boolean
+  taxLabel: string
+  enableMultipleTaxRates: boolean
+}
+
+export interface HardwareSettings {
+  printerEnabled: boolean
+  printerName: string
+  cashDrawerEnabled: boolean
+  barcodeReaderEnabled: boolean
+  displayEnabled: boolean
+}
+
+export interface ReceiptSettings {
+  showLogo: boolean
+  logoUrl: string
+  headerText: string
+  footerText: string
+  showTaxBreakdown: boolean
+  showBarcode: boolean
+}
+
+export interface InventorySettings {
+  enableLowStockAlerts: boolean
+  lowStockThreshold: number
+  enableAutoReorder: boolean
+  autoReorderThreshold: number
+}
+
+export interface IntegrationSettings {
+  enableCloudSync: boolean
+  cloudSyncInterval: number
+  enableEmailReceipts: boolean
+  smtpServer: string
+  smtpPort: number
+  smtpUsername: string
+}
+
+export interface BackupSettings {
+  enableAutoBackup: boolean
+  backupInterval: number
+  backupLocation: string
+  lastBackupDate: string | null
+}
+
+export interface DisplaySettings {
+  theme: 'light' | 'dark'
+  fontSize: 'small' | 'medium' | 'large'
+  screenTimeout: number
+}
+
+export interface SecuritySettings {
+  sessionTimeout: number
+  requirePinForRefunds: boolean
+  requirePinForVoids: boolean
+  requirePinForDiscounts: boolean
+}
+
+export interface SystemInfo {
+  appVersion: string
+  buildNumber: string
+  lastUpdateCheck: string | null
+  databaseVersion: string
+}
+
+export interface Settings {
+  id: number
+  general: GeneralSettings
+  business: BusinessSettings
+  taxes: TaxSettings
+  hardware: HardwareSettings
+  receipts: ReceiptSettings
+  inventory: InventorySettings
+  integration: IntegrationSettings
+  backup: BackupSettings
+  display: DisplaySettings
+  security: SecuritySettings
+  about: SystemInfo
+  created_at: string
+  updated_at: string
+}
+
+export interface SettingsUpdate {
+  general?: Partial<GeneralSettings>
+  business?: Partial<BusinessSettings>
+  taxes?: Partial<TaxSettings>
+  hardware?: Partial<HardwareSettings>
+  receipts?: Partial<ReceiptSettings>
+  inventory?: Partial<InventorySettings>
+  integration?: Partial<IntegrationSettings>
+  backup?: Partial<BackupSettings>
+  display?: Partial<DisplaySettings>
+  security?: Partial<SecuritySettings>
+  about?: Partial<SystemInfo>
+}
+
+// ============================================================================
+// Settings API
+// ============================================================================
+
+export const settingsAPI = {
+  /**
+   * Get application settings
+   */
+  async getSettings(): Promise<Settings> {
+    const response = await fetch(`${API_BASE_URL}/settings`)
+    return handleResponse<Settings>(response)
+  },
+
+  /**
+   * Update application settings
+   */
+  async updateSettings(settingsData: SettingsUpdate): Promise<Settings> {
+    const response = await fetch(`${API_BASE_URL}/settings`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(settingsData)
+    })
+    return handleResponse<Settings>(response)
+  },
+
+  /**
+   * Perform database backup
+   */
+  async performBackup(location?: string): Promise<{
+    success: boolean
+    message: string
+    backup_file: string
+    timestamp: string
+  }> {
+    const response = await fetch(`${API_BASE_URL}/settings/backup`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ location })
+    })
+    return handleResponse(response)
+  },
+
+  /**
+   * Restore database from backup
+   */
+  async restoreBackup(filePath: string): Promise<{
+    success: boolean
+    message: string
+    restored_from: string
+    pre_restore_backup: string
+  }> {
+    const response = await fetch(`${API_BASE_URL}/settings/restore`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ filePath })
+    })
+    return handleResponse(response)
+  },
+
+  /**
+   * Get database information
+   */
+  async getDatabaseInfo(): Promise<{
+    path: string
+    size_bytes?: number
+    size_mb?: number
+    exists: boolean
+  }> {
+    const response = await fetch(`${API_BASE_URL}/settings/database-info`)
+    return handleResponse(response)
+  }
+}
+
 export { APIError }
 

@@ -26,7 +26,17 @@ export function TaxesPanel() {
               step="0.01"
               value={taxes.defaultTaxRate}
               onChange={(e) => updateTaxSettings({ defaultTaxRate: parseFloat(e.target.value) || 0 })}
-              className={`w-full px-4 py-2 rounded-lg ${theme === 'dark' ? 'bg-gray-800 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'} border focus:outline-none focus:ring-2 focus:ring-blue-500/20`}
+              className={`
+                w-full px-4 py-3 rounded-lg border
+                min-h-[44px]
+                transition-colors duration-200
+                ${theme === 'dark'
+                  ? 'bg-gray-800 border-gray-600 text-white focus:border-blue-500'
+                  : 'bg-white border-gray-300 text-gray-900 focus:border-blue-500'
+                }
+                focus:outline-none focus:ring-2 focus:ring-blue-500/20
+              `}
+              aria-label="Default tax rate percentage"
             />
           </div>
 
@@ -38,11 +48,21 @@ export function TaxesPanel() {
               type="text"
               value={taxes.taxLabel}
               onChange={(e) => updateTaxSettings({ taxLabel: e.target.value })}
-              className={`w-full px-4 py-2 rounded-lg ${theme === 'dark' ? 'bg-gray-800 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'} border focus:outline-none focus:ring-2 focus:ring-blue-500/20`}
+              className={`
+                w-full px-4 py-3 rounded-lg border
+                min-h-[44px]
+                transition-colors duration-200
+                ${theme === 'dark'
+                  ? 'bg-gray-800 border-gray-600 text-white focus:border-blue-500'
+                  : 'bg-white border-gray-300 text-gray-900 focus:border-blue-500'
+                }
+                focus:outline-none focus:ring-2 focus:ring-blue-500/20
+              `}
+              aria-label="Tax label"
             />
           </div>
 
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between min-h-[44px] gap-4">
             <div>
               <h4 className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
                 Tax Inclusive Pricing
@@ -53,13 +73,23 @@ export function TaxesPanel() {
             </div>
             <button
               onClick={() => updateTaxSettings({ taxInclusive: !taxes.taxInclusive })}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${taxes.taxInclusive ? 'bg-blue-500' : theme === 'dark' ? 'bg-gray-600' : 'bg-gray-300'}`}
+              className={`
+                relative inline-flex h-8 w-14 items-center rounded-full
+                transition-colors duration-200
+                focus:outline-none focus:ring-2 focus:ring-blue-500/20
+                ${taxes.taxInclusive ? 'bg-blue-500' : theme === 'dark' ? 'bg-gray-600' : 'bg-gray-300'}
+              `}
+              aria-label="Toggle tax inclusive pricing"
             >
-              <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${taxes.taxInclusive ? 'translate-x-6' : 'translate-x-1'}`} />
+              <span className={`
+                inline-block h-6 w-6 transform rounded-full bg-white
+                transition-transform duration-200
+                ${taxes.taxInclusive ? 'translate-x-7' : 'translate-x-1'}
+              `} />
             </button>
           </div>
 
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between min-h-[44px] gap-4">
             <div>
               <h4 className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
                 Multiple Tax Rates
@@ -70,9 +100,19 @@ export function TaxesPanel() {
             </div>
             <button
               onClick={() => updateTaxSettings({ enableMultipleTaxRates: !taxes.enableMultipleTaxRates })}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${taxes.enableMultipleTaxRates ? 'bg-blue-500' : theme === 'dark' ? 'bg-gray-600' : 'bg-gray-300'}`}
+              className={`
+                relative inline-flex h-8 w-14 items-center rounded-full
+                transition-colors duration-200
+                focus:outline-none focus:ring-2 focus:ring-blue-500/20
+                ${taxes.enableMultipleTaxRates ? 'bg-blue-500' : theme === 'dark' ? 'bg-gray-600' : 'bg-gray-300'}
+              `}
+              aria-label="Toggle multiple tax rates"
             >
-              <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${taxes.enableMultipleTaxRates ? 'translate-x-6' : 'translate-x-1'}`} />
+              <span className={`
+                inline-block h-6 w-6 transform rounded-full bg-white
+                transition-transform duration-200
+                ${taxes.enableMultipleTaxRates ? 'translate-x-7' : 'translate-x-1'}
+              `} />
             </button>
           </div>
         </div>
