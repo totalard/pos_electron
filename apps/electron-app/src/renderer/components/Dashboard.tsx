@@ -63,7 +63,7 @@ export function Dashboard({ onNavigate }: DashboardProps) {
         </svg>
       ),
       color: 'from-orange-500 to-orange-700',
-      available: currentUser?.role === 'primary' // Only available to primary user
+      available: currentUser?.role === 'admin' // Only available to admin users
     },
     {
       id: 'settings',
@@ -76,7 +76,7 @@ export function Dashboard({ onNavigate }: DashboardProps) {
         </svg>
       ),
       color: 'from-gray-500 to-gray-700',
-      available: true
+      available: currentUser?.role === 'admin' // Only available to admin users
     }
   ]
 
@@ -141,7 +141,7 @@ export function Dashboard({ onNavigate }: DashboardProps) {
                   text-xs
                   ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}
                 `}>
-                  {currentUser?.role === 'primary' ? 'Primary User' : 'Staff'}
+                  {currentUser?.role === 'admin' ? 'Administrator' : 'User'}
                 </p>
               </div>
               <div className={`
@@ -184,25 +184,26 @@ export function Dashboard({ onNavigate }: DashboardProps) {
           </p>
         </div>
 
-        {/* Menu Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
+        {/* Menu Grid - Touch-safe with minimum 44x44px targets */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-8">
           {menuItems.map((item) => (
             <button
               key={item.id}
               onClick={() => item.available && onNavigate(item.id as any)}
               disabled={!item.available}
               className={`
-                group relative overflow-hidden rounded-2xl p-8
-                transition-all duration-300
+                group relative overflow-hidden rounded-2xl p-8 min-h-[180px]
+                transition-all duration-200
                 ${item.available
-                  ? 'hover:scale-105 hover:shadow-2xl cursor-pointer'
+                  ? 'hover:scale-105 active:scale-100 hover:shadow-2xl active:shadow-lg cursor-pointer'
                   : 'opacity-50 cursor-not-allowed'
                 }
                 ${theme === 'dark'
-                  ? 'bg-gray-800/50 border border-gray-700 hover:border-gray-600'
-                  : 'bg-white border border-gray-200 hover:border-gray-300'
+                  ? 'bg-gray-800/50 border border-gray-700 hover:border-gray-600 active:border-gray-500'
+                  : 'bg-white border border-gray-200 hover:border-gray-300 active:border-gray-400'
                 }
               `}
+              aria-label={item.title}
             >
               {/* Background Gradient */}
               <div className={`

@@ -8,8 +8,8 @@ from .base import BaseModel
 
 class UserRole(str, Enum):
     """User role enumeration"""
-    PRIMARY = "primary"  # Primary user with full permissions
-    STAFF = "staff"      # Regular staff user
+    ADMIN = "admin"  # Admin user with full permissions
+    USER = "user"    # Regular user with limited permissions
 
 
 class User(BaseModel):
@@ -41,8 +41,8 @@ class User(BaseModel):
     # Role and permissions
     role = fields.CharEnumField(
         UserRole,
-        default=UserRole.STAFF,
-        description="User role (primary or staff)"
+        default=UserRole.USER,
+        description="User role (admin or user)"
     )
     
     is_active = fields.BooleanField(
@@ -88,7 +88,7 @@ class User(BaseModel):
         return f"{self.full_name} ({self.role.value})"
     
     @property
-    def is_primary(self) -> bool:
-        """Check if user is the primary user"""
-        return self.role == UserRole.PRIMARY
+    def is_admin(self) -> bool:
+        """Check if user is an admin user"""
+        return self.role == UserRole.ADMIN
 

@@ -19,7 +19,8 @@ export function WelcomeScreen() {
   }, [])
 
   const handleGetStarted = () => {
-    setCurrentUser('Demo User')
+    // This component is deprecated - navigation is handled by Login component
+    console.log('Get started clicked')
   }
 
   const toggleTheme = () => {
@@ -87,7 +88,7 @@ export function WelcomeScreen() {
         {currentUser && (
           <div className="mb-6 p-4 rounded-lg bg-primary-50 border border-primary-200">
             <p className="text-sm text-primary-800">
-              Welcome back, <span className="font-semibold">{currentUser}</span>!
+              Welcome back, <span className="font-semibold">{typeof currentUser === 'string' ? currentUser : currentUser.full_name}</span>!
             </p>
           </div>
         )}

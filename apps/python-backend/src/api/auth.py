@@ -48,11 +48,11 @@ async def initialize_primary_user():
         primary_user = await User.create(
             full_name="Primary User",
             pin_hash=pin_hash,
-            role=UserRole.PRIMARY,
+            role=UserRole.ADMIN,
             is_active=True
         )
-        
-        logger.info(f"Primary user created with ID: {primary_user.id}")
+
+        logger.info(f"Admin user created with ID: {primary_user.id}")
 
         return user_to_response(primary_user)
     
@@ -148,22 +148,22 @@ async def create_user(user_data: UserCreate, created_by_id: int = 1):
     try:
         # Get the creator user
         creator = await User.get(id=created_by_id)
-        
-        # Check if creator is primary user
-        if creator.role != UserRole.PRIMARY:
+
+        # Check if creator is admin user
+        if creator.role != UserRole.ADMIN:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="Only primary users can create new users"
+                detail="Only admin users can create new users"
             )
-        
-        # Create new user (always as STAFF role)
+
+        # Create new user (always as USER role)
         new_user = await User.create(
             full_name=user_data.full_name,
             mobile_number=user_data.mobile_number,
             pin_hash=pin_hash,
             email=user_data.email,
             notes=user_data.notes,
-            role=UserRole.STAFF,
+            role=UserRole.USER,
             is_active=True,
             created_by=creator
         )
@@ -186,27 +186,36 @@ async def create_user(user_data: UserCreate, created_by_id: int = 1):
 
 
 @router.put("/users/{user_id}", response_model=UserResponse)
-async def update_user(user_id: int, user_data: UserUpdate):
+async def update_user(user_id: int, user_data: UserUpdate, admin_id: int = 1):
     """
     Update user information.
-    
+
     Note: Cannot update PIN through this endpoint. Use change-pin endpoint instead.
+    Only admin users can update user information.
     """
     try:
+        # Check if requester is admin
+        admin_user = await User.get(id=admin_id)
+        if admin_user.role != UserRole.ADMIN:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Only admin users can update user information"
+            )
+
         user = await User.get(id=user_id)
-        
+
         # Update only provided fields
         update_data = user_data.model_dump(exclude_unset=True)
-        
+
         for field, value in update_data.items():
             setattr(user, field, value)
-        
+
         await user.save()
 
-        logger.info(f"User {user_id} updated successfully")
+        logger.info(f"User {user_id} updated successfully by admin {admin_id}")
 
         return user_to_response(user)
-    
+
     except DoesNotExist:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -247,30 +256,38 @@ async def change_pin(user_id: int, pin_data: UserChangePIN):
 
 
 @router.delete("/users/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_user(user_id: int):
+async def delete_user(user_id: int, admin_id: int = 1):
     """
     Delete a user (soft delete by setting is_active to False).
-    
-    Note: Primary user cannot be deleted.
+
+    Note: Primary user cannot be deleted. Only admin users can delete users.
     """
     try:
-        user = await User.get(id=user_id)
-        
-        # Prevent deletion of primary user
-        if user.role == UserRole.PRIMARY:
+        # Check if requester is admin
+        admin_user = await User.get(id=admin_id)
+        if admin_user.role != UserRole.ADMIN:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="Cannot delete primary user"
+                detail="Only admin users can delete users"
             )
-        
+
+        user = await User.get(id=user_id)
+
+        # Prevent deletion of admin user
+        if user.role == UserRole.ADMIN:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Cannot delete admin user"
+            )
+
         # Soft delete
         user.is_active = False
         await user.save()
-        
-        logger.info(f"User {user_id} deactivated")
-        
+
+        logger.info(f"User {user_id} deactivated by admin {admin_id}")
+
         return None
-    
+
     except DoesNotExist:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

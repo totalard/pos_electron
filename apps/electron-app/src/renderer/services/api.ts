@@ -13,7 +13,7 @@ export interface User {
   full_name: string
   mobile_number?: string
   email?: string
-  role: 'primary' | 'staff'
+  role: 'admin' | 'user'
   is_active: boolean
   notes?: string
   last_login?: string

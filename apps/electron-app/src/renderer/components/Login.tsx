@@ -147,37 +147,38 @@ export function Login({ onAuthenticated }: LoginProps) {
                 Select your account to continue
               </p>
 
-              {/* User Grid */}
-              <div className="grid grid-cols-2 gap-6 mb-8">
+              {/* User Grid - Touch-safe with minimum 44x44px targets */}
+              <div className="grid grid-cols-2 gap-8 mb-8">
                 {users.map((user) => (
                   <button
                     key={user.id}
                     onClick={() => handleUserSelect(user)}
-                    className="group flex flex-col items-center p-6 rounded-2xl bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 hover:border-primary-500 dark:hover:border-primary-500 hover:shadow-lg transition-all duration-200 transform hover:scale-105"
+                    className="group flex flex-col items-center p-8 rounded-2xl bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 hover:border-primary-500 dark:hover:border-primary-500 active:border-primary-600 dark:active:border-primary-500 hover:shadow-lg active:shadow-md transition-all duration-150 transform hover:scale-105 active:scale-100 min-h-[200px] justify-center"
+                    aria-label={`Select user ${user.full_name}`}
                   >
-                    {/* Avatar */}
+                    {/* Avatar - Touch-safe size */}
                     <div className={`
-                      w-20 h-20 rounded-full flex items-center justify-center text-white text-2xl font-bold mb-3 shadow-lg
+                      w-24 h-24 rounded-full flex items-center justify-center text-white text-3xl font-bold mb-4 shadow-lg
                       ${getAvatarColor(user.id)}
-                      group-hover:scale-110 transition-transform duration-200
+                      group-hover:scale-110 group-active:scale-100 transition-transform duration-150
                     `}>
                       {getUserInitials(user.full_name)}
                     </div>
 
                     {/* Name */}
-                    <span className="text-sm font-medium text-gray-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
+                    <span className="text-base font-medium text-gray-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors text-center">
                       {user.full_name}
                     </span>
 
                     {/* Role Badge */}
                     <span className={`
-                      mt-2 px-2 py-1 text-xs rounded-full
-                      ${user.role === 'primary' 
-                        ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400' 
+                      mt-3 px-3 py-1.5 text-xs font-medium rounded-full
+                      ${user.role === 'admin'
+                        ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
                         : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
                       }
                     `}>
-                      {user.role === 'primary' ? 'Admin' : 'Staff'}
+                      {user.role === 'admin' ? 'Admin' : 'User'}
                     </span>
                   </button>
                 ))}
@@ -195,12 +196,13 @@ export function Login({ onAuthenticated }: LoginProps) {
           {/* PIN Entry Screen */}
           {!isLoadingUsers && !userLoadError && selectedUser && (
             <div>
-              {/* Back Button */}
+              {/* Back Button - Touch-safe with minimum 44x44px */}
               <button
                 onClick={handleBackToUserSelection}
-                className="mb-6 flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+                className="mb-6 px-4 py-3 min-h-[44px] flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white active:text-gray-800 dark:active:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700/50 active:bg-gray-200 dark:active:bg-gray-600/50 rounded-lg transition-all duration-150"
+                aria-label="Back to user selection"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>
                 Back

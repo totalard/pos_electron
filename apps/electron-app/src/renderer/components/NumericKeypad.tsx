@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { useAppStore } from '../stores'
 
 interface NumericKeypadProps {
@@ -24,7 +24,7 @@ export function NumericKeypad({
 
   const handleKeyPress = (key: string) => {
     if (disabled) return
-    
+
     if (digits.includes(key)) {
       onDigitPress(key)
     } else if (key === 'Backspace') {
@@ -37,48 +37,64 @@ export function NumericKeypad({
   }
 
   // Handle keyboard events
-  const handleKeyDown = (event: React.KeyboardEvent) => {
-    event.preventDefault()
-    handleKeyPress(event.key)
+  const handleKeyDown = (event: React.KeyboardEvent | KeyboardEvent) => {
+    const key = (event as KeyboardEvent).key || (event as React.KeyboardEvent).key
+
+    // Only prevent default for keys we handle
+    if (['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'Backspace', 'Enter', 'Escape'].includes(key)) {
+      event.preventDefault()
+      handleKeyPress(key)
+    }
   }
 
+  // Add global keyboard listener
+  useEffect(() => {
+    if (disabled) return
+
+    window.addEventListener('keydown', handleKeyDown as EventListener)
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown as EventListener)
+    }
+  }, [disabled, onDigitPress, onBackspace, onClear, onSubmit])
+
+  // Touch-safe button sizing: minimum 44x44px for touch targets
   const buttonBaseClass = `
-    w-20 h-20 rounded-2xl font-bold text-2xl
-    transition-all duration-200 ease-in-out
-    transform active:scale-95
-    focus:outline-none focus:ring-4
-    disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none
-    shadow-lg hover:shadow-xl
+    min-w-[56px] min-h-[56px] w-16 h-16 rounded-lg font-bold text-xl
+    transition-all duration-150 ease-in-out
+    transform active:scale-95 hover:scale-105
+    focus:outline-none focus:ring-2 focus:ring-offset-1
+    disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:hover:scale-100
+    shadow-md hover:shadow-lg
+    flex items-center justify-center
   `
 
   const digitButtonClass = `
     ${buttonBaseClass}
     ${theme === 'dark'
-      ? 'bg-gray-700 text-white hover:bg-gray-600 focus:ring-primary-400/50 border border-gray-600'
-      : 'bg-white text-gray-900 hover:bg-gray-50 focus:ring-primary-500/50 border border-gray-200'
+      ? 'bg-gray-700 text-white hover:bg-gray-600 focus:ring-primary-400/50 border border-gray-600 active:bg-gray-500'
+      : 'bg-white text-gray-900 hover:bg-gray-100 focus:ring-primary-500/50 border border-gray-300 active:bg-gray-200'
     }
   `
 
   const actionButtonClass = `
     ${buttonBaseClass}
     ${theme === 'dark'
-      ? 'bg-primary-600 text-white hover:bg-primary-500 focus:ring-primary-400/50'
-      : 'bg-primary-600 text-white hover:bg-primary-700 focus:ring-primary-500/50'
+      ? 'bg-primary-600 text-white hover:bg-primary-500 focus:ring-primary-400/50 active:bg-primary-700'
+      : 'bg-primary-600 text-white hover:bg-primary-700 focus:ring-primary-500/50 active:bg-primary-800'
     }
   `
 
   const clearButtonClass = `
     ${buttonBaseClass}
     ${theme === 'dark'
-      ? 'bg-red-600 text-white hover:bg-red-500 focus:ring-red-400/50'
-      : 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500/50'
+      ? 'bg-red-600 text-white hover:bg-red-500 focus:ring-red-400/50 active:bg-red-700'
+      : 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500/50 active:bg-red-800'
     }
   `
 
   return (
-    <div 
-      className={`grid grid-cols-3 gap-6 ${className}`}
-      onKeyDown={handleKeyDown}
+    <div
+      className={`grid grid-cols-3 gap-2 ${className}`}
       tabIndex={0}
     >
       {/* Row 1: 1, 2, 3 */}
@@ -152,18 +168,18 @@ export function NumericKeypad({
         </svg>
       </button>
 
-      {/* Row 5: Submit button spanning all columns */}
+      {/* Row 5: Submit button spanning all columns - full width */}
       <button
         onClick={onSubmit}
         disabled={disabled}
         className={`
           ${actionButtonClass}
-          col-span-3 h-16 text-xl font-semibold
+          col-span-3 min-h-[56px] h-14 text-lg font-semibold
           flex items-center justify-center gap-2
         `}
         aria-label="Submit PIN"
       >
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
         Enter

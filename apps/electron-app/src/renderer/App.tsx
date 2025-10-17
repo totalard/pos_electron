@@ -11,7 +11,7 @@ type AppScreen = 'splash' | 'pin' | 'dashboard' | 'sales' | 'products' | 'invent
 function App() {
   const [currentScreen, setCurrentScreen] = useState<AppScreen>('splash')
   const { theme } = useAppStore()
-  const { reset: resetPin, initializeSystem } = usePinStore()
+  const { reset: resetPin, initializeSystem, currentUser } = usePinStore()
 
   // Handle splash screen completion
   const handleSplashComplete = () => {
@@ -23,8 +23,13 @@ function App() {
     setCurrentScreen('dashboard')
   }
 
-  // Handle navigation from dashboard
+  // Handle navigation from dashboard with role-based access control
   const handleNavigate = (screen: 'sales' | 'products' | 'inventory' | 'users' | 'settings') => {
+    // Restrict admin-only screens
+    if ((screen === 'users' || screen === 'settings') && currentUser?.role !== 'admin') {
+      console.warn(`Access denied: ${screen} is only available to admin users`)
+      return
+    }
     setCurrentScreen(screen)
   }
 
