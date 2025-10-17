@@ -5,3 +5,19 @@ export type { AppState } from './appStore'
 export { usePinStore, getPinDisplay, isPinComplete } from './pinStore'
 export type { PinState } from './pinStore'
 
+export { useSettingsStore } from './settingsStore'
+export type {
+  SettingsState,
+  BusinessMode,
+  SettingsSection,
+  GeneralSettings,
+  BusinessSettings,
+  TaxSettings,
+  HardwareSettings,
+  ReceiptSettings,
+  InventorySettings,
+  IntegrationSettings,
+  BackupSettings,
+  AboutInfo
+} from './settingsStore'
+

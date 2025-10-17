@@ -4,8 +4,9 @@ import { SplashScreen } from './components/SplashScreen'
 import { Login } from './components/Login'
 import { Dashboard } from './components/Dashboard'
 import { SaleScreen } from './components/SaleScreen'
+import { Settings } from './components/Settings'
 
-type AppScreen = 'splash' | 'pin' | 'dashboard' | 'sales' | 'products' | 'inventory' | 'users'
+type AppScreen = 'splash' | 'pin' | 'dashboard' | 'sales' | 'products' | 'inventory' | 'users' | 'settings'
 
 function App() {
   const [currentScreen, setCurrentScreen] = useState<AppScreen>('splash')
@@ -23,7 +24,7 @@ function App() {
   }
 
   // Handle navigation from dashboard
-  const handleNavigate = (screen: 'sales' | 'products' | 'inventory' | 'users') => {
+  const handleNavigate = (screen: 'sales' | 'products' | 'inventory' | 'users' | 'settings') => {
     setCurrentScreen(screen)
   }
 
@@ -112,6 +113,10 @@ function App() {
             </button>
           </div>
         </div>
+      )}
+
+      {currentScreen === 'settings' && (
+        <Settings onBack={handleBackToDashboard} />
       )}
     </div>
   )

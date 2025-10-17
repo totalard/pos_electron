@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useAppStore, usePinStore } from '../stores'
 
 interface DashboardProps {
-  onNavigate: (screen: 'sales' | 'products' | 'inventory' | 'users') => void
+  onNavigate: (screen: 'sales' | 'products' | 'inventory' | 'users' | 'settings') => void
 }
 
 export function Dashboard({ onNavigate }: DashboardProps) {
@@ -64,27 +64,40 @@ export function Dashboard({ onNavigate }: DashboardProps) {
       ),
       color: 'from-orange-500 to-orange-700',
       available: currentUser?.role === 'primary' // Only available to primary user
+    },
+    {
+      id: 'settings',
+      title: 'Settings',
+      description: 'Configure system settings',
+      icon: (
+        <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+      ),
+      color: 'from-gray-500 to-gray-700',
+      available: true
     }
   ]
 
   return (
     <div className={`
-      min-h-screen
-      ${theme === 'dark' 
-        ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900' 
+      min-h-screen w-screen p-4
+      ${theme === 'dark'
+        ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900'
         : 'bg-gradient-to-br from-gray-50 via-white to-gray-100'
       }
     `}>
       {/* Header */}
       <header className={`
         border-b
-        ${theme === 'dark' 
-          ? 'bg-gray-800/50 border-gray-700' 
+        ${theme === 'dark'
+          ? 'bg-gray-800/50 border-gray-700'
           : 'bg-white/80 border-gray-200'
         }
-        backdrop-blur-sm
+        backdrop-blur-sm rounded-t-xl
       `}>
-        <div className="max-w-7xl mx-auto px-6 py-4">
+        <div className="px-6 py-4">
           <div className="flex items-center justify-between">
             {/* Logo and Title */}
             <div className="flex items-center gap-4">
@@ -151,9 +164,12 @@ export function Dashboard({ onNavigate }: DashboardProps) {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-6 py-12">
+      <main className={`
+        px-6 py-8 rounded-b-xl
+        ${theme === 'dark' ? 'bg-gray-800/30' : 'bg-white/50'}
+      `}>
         {/* Welcome Section */}
-        <div className="mb-12">
+        <div className="mb-8">
           <h2 className={`
             text-3xl font-bold mb-2
             ${theme === 'dark' ? 'text-white' : 'text-gray-900'}
@@ -169,7 +185,7 @@ export function Dashboard({ onNavigate }: DashboardProps) {
         </div>
 
         {/* Menu Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
           {menuItems.map((item) => (
             <button
               key={item.id}
