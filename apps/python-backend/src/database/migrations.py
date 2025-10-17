@@ -4,8 +4,9 @@ Database migration utilities for handling schema and data migrations.
 This module provides utilities for migrating data when model definitions change,
 particularly for handling enum value changes and constraint updates.
 """
+import json
 import logging
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Any
 from tortoise import Tortoise
 from tortoise.transactions import in_transaction
 
@@ -157,6 +158,177 @@ async def update_role_column_constraints() -> bool:
         return False
 
 
+async def migrate_settings_to_normalized() -> Dict[str, Any]:
+    """
+    Migrate settings from old JSON-based Settings model to new normalized Setting model.
+
+    This migration:
+    1. Checks if old Settings table exists and has data
+    2. Extracts all JSON fields from the old Settings model
+    3. Converts each setting to individual rows in the new Setting table
+    4. Preserves existing values, uses defaults for missing values
+    5. Handles nested JSON objects appropriately
+
+    Returns:
+        Dict with migration statistics
+    """
+    stats = {
+        'settings_migrated': 0,
+        'settings_skipped': 0,
+        'errors': [],
+        'old_settings_found': False
+    }
+
+    try:
+        async with in_transaction() as conn:
+            # Check if old settings table exists
+            tables = await conn.execute_query_dict(
+                "SELECT name FROM sqlite_master WHERE type='table' AND name='settings'"
+            )
+
+            if not tables:
+                logger.info("Old settings table not found, skipping migration")
+                return stats
+
+            # Check if old settings has data
+            old_settings = await conn.execute_query_dict(
+                "SELECT * FROM settings LIMIT 1"
+            )
+
+            if not old_settings:
+                logger.info("No data in old settings table, skipping migration")
+                return stats
+
+            stats['old_settings_found'] = True
+            old_setting = old_settings[0]
+            logger.info("Found old settings data, starting migration...")
+
+            # Import defaults to get data type information
+            from .defaults import get_default_settings
+            defaults_list = get_default_settings()
+            defaults_map = {
+                f"{d['section']}.{d['key']}": d for d in defaults_list
+            }
+
+            # Helper function to extract and migrate settings from JSON field
+            def extract_settings(section: str, json_data: Any) -> List[Dict[str, Any]]:
+                """Extract individual settings from JSON data"""
+                settings = []
+
+                if not json_data:
+                    return settings
+
+                # Parse JSON if it's a string
+                if isinstance(json_data, str):
+                    try:
+                        json_data = json.loads(json_data)
+                    except json.JSONDecodeError:
+                        logger.warning(f"Failed to parse JSON for section {section}")
+                        return settings
+
+                # Extract each key-value pair
+                for key, value in json_data.items():
+                    default_key = f"{section}.{key}"
+                    default_info = defaults_map.get(default_key, {})
+
+                    # Determine data type
+                    data_type = default_info.get('data_type', 'string')
+                    if isinstance(value, bool):
+                        data_type = 'boolean'
+                    elif isinstance(value, (int, float)):
+                        data_type = 'number'
+                    elif isinstance(value, (dict, list)):
+                        data_type = 'json'
+
+                    # Convert value to string for storage
+                    if data_type == 'boolean':
+                        value_str = 'true' if value else 'false'
+                    elif data_type == 'json':
+                        value_str = json.dumps(value)
+                    else:
+                        value_str = str(value) if value is not None else ''
+
+                    # Get default value
+                    default_value = default_info.get('default_value', value_str)
+                    description = default_info.get('description', f'{section} setting: {key}')
+
+                    settings.append({
+                        'section': section,
+                        'key': key,
+                        'value': value_str,
+                        'default_value': default_value,
+                        'data_type': data_type,
+                        'description': description
+                    })
+
+                return settings
+
+            # Map old JSON field names to section names
+            field_mapping = {
+                'general_settings': 'general',
+                'business_settings': 'business',
+                'tax_settings': 'taxes',
+                'hardware_settings': 'hardware',
+                'receipt_settings': 'receipts',
+                'inventory_settings': 'inventory',
+                'integration_settings': 'integration',
+                'backup_settings': 'backup',
+                'display_settings': 'display',
+                'security_settings': 'security',
+                'system_info': 'about'
+            }
+
+            # Extract all settings
+            all_settings = []
+            for field_name, section in field_mapping.items():
+                if field_name in old_setting and old_setting[field_name]:
+                    section_settings = extract_settings(section, old_setting[field_name])
+                    all_settings.extend(section_settings)
+                    logger.info(f"Extracted {len(section_settings)} settings from {section}")
+
+            # Insert settings into new table
+            for setting in all_settings:
+                try:
+                    # Check if setting already exists
+                    existing = await conn.execute_query_dict(
+                        "SELECT id FROM setting WHERE section = ? AND key = ?",
+                        [setting['section'], setting['key']]
+                    )
+
+                    if existing:
+                        stats['settings_skipped'] += 1
+                        continue
+
+                    # Insert new setting
+                    await conn.execute_query(
+                        """
+                        INSERT INTO setting (section, key, value, default_value, data_type, description, created_at, updated_at)
+                        VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                        """,
+                        [
+                            setting['section'],
+                            setting['key'],
+                            setting['value'],
+                            setting['default_value'],
+                            setting['data_type'],
+                            setting['description']
+                        ]
+                    )
+                    stats['settings_migrated'] += 1
+
+                except Exception as e:
+                    stats['errors'].append(f"Failed to migrate {setting['section']}.{setting['key']}: {e}")
+                    logger.error(f"Failed to migrate setting {setting['section']}.{setting['key']}: {e}")
+
+            logger.info(f"Settings migration completed: {stats['settings_migrated']} migrated, {stats['settings_skipped']} skipped")
+
+    except Exception as e:
+        stats['errors'].append(f"Settings migration failed: {e}")
+        logger.error(f"Settings migration failed: {e}")
+
+    return stats
+
+
 async def run_all_migrations() -> Dict[str, any]:
     """
     Run all pending migrations in the correct order.
@@ -206,6 +378,17 @@ async def run_all_migrations() -> Dict[str, any]:
             results['errors'].append("Role constraint verification failed")
             logger.error("Migration failed: Role constraints are not valid")
             return results
+
+        # Migration 3: Migrate settings from JSON to normalized table
+        logger.info("Running migration: Settings normalization (JSON -> relational)")
+        settings_stats = await migrate_settings_to_normalized()
+        results['migrations_run'].append({
+            'name': 'settings_normalization',
+            'stats': settings_stats
+        })
+
+        if settings_stats['errors']:
+            logger.warning(f"Settings migration had errors: {settings_stats['errors']}")
 
         results['success'] = True
         logger.info("All migrations completed successfully")
@@ -296,6 +479,34 @@ async def check_migrations_needed() -> List[str]:
                     logger.info("Missing column detected: avatar_color")
             except Exception as e:
                 logger.debug(f"Could not check for missing columns: {e}")
+
+            # Check if settings migration is needed
+            try:
+                # Check if old settings table exists and has data
+                tables = await conn.execute_query_dict(
+                    "SELECT name FROM sqlite_master WHERE type='table' AND name='settings'"
+                )
+
+                if tables:
+                    # Check if new setting table exists
+                    new_tables = await conn.execute_query_dict(
+                        "SELECT name FROM sqlite_master WHERE type='table' AND name='setting'"
+                    )
+
+                    if new_tables:
+                        # Check if new table is empty (migration not done yet)
+                        count = await conn.execute_query_dict(
+                            "SELECT COUNT(*) as count FROM setting"
+                        )
+
+                        if count and count[0]['count'] == 0:
+                            needed.append('settings_normalization')
+                            logger.info("Settings normalization migration needed")
+                    else:
+                        # New table doesn't exist yet, migration will be needed after schema generation
+                        logger.debug("New setting table doesn't exist yet")
+            except Exception as e:
+                logger.debug(f"Could not check for settings migration: {e}")
 
     except Exception as e:
         logger.error(f"Failed to check migration status: {e}")

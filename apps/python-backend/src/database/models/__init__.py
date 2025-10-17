@@ -10,7 +10,8 @@ from .inventory import (
     StockAdjustmentLine,
     TransactionType
 )
-from .settings import Settings
+from .settings import Settings  # DEPRECATED: Use Setting (singular) instead
+from .setting import Setting, SettingDataType  # New normalized settings model
 from .tax_rule import TaxRule, TaxType
 
 __all__ = [
@@ -24,7 +25,9 @@ __all__ = [
     "StockAdjustment",
     "StockAdjustmentLine",
     "TransactionType",
-    "Settings",
+    "Settings",  # DEPRECATED
+    "Setting",  # New normalized model
+    "SettingDataType",
     "TaxRule",
     "TaxType",
 ]

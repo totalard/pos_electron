@@ -32,7 +32,8 @@ TORTOISE_ORM = {
                 "src.database.models.user",
                 "src.database.models.product",
                 "src.database.models.inventory",
-                "src.database.models.settings",
+                "src.database.models.settings",  # Old JSON-based settings (deprecated)
+                "src.database.models.setting",   # New normalized settings
                 "src.database.models.tax_rule",
                 "aerich.models"  # Required for Aerich migrations
             ],

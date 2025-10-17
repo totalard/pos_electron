@@ -2,7 +2,7 @@
 Pydantic schemas for API request/response validation
 """
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Any, Dict, List
 from pydantic import BaseModel, Field, field_validator
 
 
@@ -437,6 +437,38 @@ class SettingsUpdate(BaseModel):
     security: Optional[SecuritySettings] = None
     about: Optional[SystemInfo] = None
 
+
+# New Normalized Setting Schemas
+class SettingItemResponse(BaseModel):
+    """Schema for individual setting item response"""
+    id: int
+    section: str
+    key: str
+    value: str
+    default_value: str
+    data_type: str
+    description: Optional[str]
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class SettingItemUpdate(BaseModel):
+    """Schema for updating an individual setting"""
+    value: Any  # Will be converted to string based on data_type
+
+
+class SectionSettingsResponse(BaseModel):
+    """Schema for all settings in a section"""
+    section: str
+    settings: Dict[str, Any]  # Key-value pairs with typed values
+
+
+class BulkSettingsUpdate(BaseModel):
+    """Schema for bulk updating multiple settings"""
+    updates: List[Dict[str, Any]]  # List of {section, key, value} dicts
 
 
 # Tax Rule Schemas

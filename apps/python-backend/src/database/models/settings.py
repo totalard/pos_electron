@@ -1,17 +1,46 @@
 """
 Settings model for application configuration
+
+DEPRECATED: This model is deprecated in favor of the new normalized Setting model.
+The new Setting model stores each setting as an individual row instead of using
+JSON fields, providing better organization, querying, and type safety.
+
+This model is kept for backward compatibility during migration.
+New code should use the Setting model from .setting module.
 """
+import warnings
 from tortoise import fields
 from .base import BaseModel
 
 
 class Settings(BaseModel):
     """
-    Settings model for storing application configuration.
-    
+    DEPRECATED: Settings model for storing application configuration.
+
     This model uses a singleton pattern - only one settings record should exist.
     All settings are stored as JSON fields for flexibility.
+
+    DEPRECATION NOTICE:
+    This model is deprecated and will be removed in a future version.
+    Please use the new Setting model (singular) which provides:
+    - Normalized relational structure (one row per setting)
+    - Better organization by section
+    - Easier querying and filtering
+    - Type safety with data_type field
+    - Built-in default value management
+
+    Migration from this model to the new Setting model happens automatically
+    on application startup.
     """
+
+    def __init__(self, *args, **kwargs):
+        """Initialize with deprecation warning"""
+        warnings.warn(
+            "Settings model is deprecated. Use Setting model instead.",
+            DeprecationWarning,
+            stacklevel=2
+        )
+        super().__init__(*args, **kwargs)
     
     # General Settings
     general_settings = fields.JSONField(

@@ -1,14 +1,20 @@
 """
 Settings API endpoints
+
+This module provides API endpoints for managing application settings.
+It uses the new normalized Setting model while maintaining backward
+compatibility with the old JSON-based Settings model API.
 """
 import logging
 import shutil
 from datetime import datetime
 from pathlib import Path
+from typing import Dict, Any
 from fastapi import APIRouter, HTTPException, status
 from tortoise.exceptions import DoesNotExist
 
-from ..database.models import Settings
+from ..database.models.setting import Setting
+from ..database.defaults import get_default_settings
 from .schemas import (
     SettingsResponse,
     SettingsUpdate,
@@ -24,44 +30,95 @@ from .schemas import (
     BackupSettings,
     DisplaySettings,
     SecuritySettings,
-    SystemInfo
+    SystemInfo,
+    SettingItemResponse,
+    SettingItemUpdate,
+    SectionSettingsResponse,
+    BulkSettingsUpdate
 )
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
 
-def settings_to_response(settings: Settings) -> SettingsResponse:
-    """Convert Settings model to SettingsResponse schema"""
-    return SettingsResponse(
-        id=settings.id,
-        general=GeneralSettings(**settings.general_settings),
-        business=BusinessSettings(**settings.business_settings),
-        taxes=TaxSettings(**settings.tax_settings),
-        hardware=HardwareSettings(**settings.hardware_settings),
-        receipts=ReceiptSettings(**settings.receipt_settings),
-        inventory=InventorySettings(**settings.inventory_settings),
-        integration=IntegrationSettings(**settings.integration_settings),
-        backup=BackupSettings(**settings.backup_settings),
-        display=DisplaySettings(**settings.display_settings),
-        security=SecuritySettings(**settings.security_settings),
-        about=SystemInfo(**settings.system_info),
-        created_at=settings.created_at,
-        updated_at=settings.updated_at
-    )
+async def ensure_settings_initialized():
+    """
+    Ensure settings are initialized with defaults.
+    Called on first access to settings.
+    """
+    count = await Setting.all().count()
+    if count == 0:
+        logger.info("Initializing settings with defaults...")
+        defaults = get_default_settings()
+        created = await Setting.initialize_defaults(defaults)
+        logger.info(f"Initialized {created} default settings")
+
+
+async def aggregate_settings_by_section() -> Dict[str, Dict[str, Any]]:
+    """
+    Aggregate all settings grouped by section with typed values.
+
+    Returns:
+        Dictionary mapping section names to setting dictionaries
+    """
+    sections = {}
+    all_settings = await Setting.all()
+
+    for setting in all_settings:
+        if setting.section not in sections:
+            sections[setting.section] = {}
+        sections[setting.section][setting.key] = setting.get_typed_value()
+
+    return sections
 
 
 @router.get("/", response_model=SettingsResponse)
 async def get_settings():
     """
     Get application settings.
-    
-    Returns the singleton settings instance. Creates default settings if none exist.
+
+    Returns all settings aggregated by section, maintaining backward
+    compatibility with the old JSON-based Settings model API.
     """
     try:
-        settings = await Settings.get_settings()
+        # Ensure settings are initialized
+        await ensure_settings_initialized()
+
+        # Get all settings aggregated by section
+        sections = await aggregate_settings_by_section()
+
+        # Get first setting's timestamps (or use current time if none exist)
+        first_setting = await Setting.first()
+        if first_setting:
+            created_at = first_setting.created_at
+            updated_at = first_setting.updated_at
+            setting_id = first_setting.id
+        else:
+            created_at = datetime.now()
+            updated_at = datetime.now()
+            setting_id = 1
+
+        # Build response matching old format
+        response = SettingsResponse(
+            id=setting_id,
+            general=GeneralSettings(**sections.get('general', {})),
+            business=BusinessSettings(**sections.get('business', {})),
+            taxes=TaxSettings(**sections.get('taxes', {})),
+            hardware=HardwareSettings(**sections.get('hardware', {})),
+            receipts=ReceiptSettings(**sections.get('receipts', {})),
+            inventory=InventorySettings(**sections.get('inventory', {})),
+            integration=IntegrationSettings(**sections.get('integration', {})),
+            backup=BackupSettings(**sections.get('backup', {})),
+            display=DisplaySettings(**sections.get('display', {})),
+            security=SecuritySettings(**sections.get('security', {})),
+            about=SystemInfo(**sections.get('about', {})),
+            created_at=created_at,
+            updated_at=updated_at
+        )
+
         logger.info("Settings retrieved successfully")
-        return settings_to_response(settings)
+        return response
+
     except Exception as e:
         logger.error(f"Failed to retrieve settings: {e}")
         raise HTTPException(
@@ -74,53 +131,37 @@ async def get_settings():
 async def update_settings(settings_data: SettingsUpdate):
     """
     Update application settings.
-    
+
     Accepts partial updates for any settings category.
-    Only provided fields will be updated.
+    Decomposes section updates into individual setting updates.
+    Maintains backward compatibility with old API.
     """
     try:
-        # Prepare update data
-        update_data = {}
-        
-        if settings_data.general is not None:
-            update_data['general_settings'] = settings_data.general.model_dump()
-        
-        if settings_data.business is not None:
-            update_data['business_settings'] = settings_data.business.model_dump()
-        
-        if settings_data.taxes is not None:
-            update_data['tax_settings'] = settings_data.taxes.model_dump()
-        
-        if settings_data.hardware is not None:
-            update_data['hardware_settings'] = settings_data.hardware.model_dump()
-        
-        if settings_data.receipts is not None:
-            update_data['receipt_settings'] = settings_data.receipts.model_dump()
-        
-        if settings_data.inventory is not None:
-            update_data['inventory_settings'] = settings_data.inventory.model_dump()
-        
-        if settings_data.integration is not None:
-            update_data['integration_settings'] = settings_data.integration.model_dump()
-        
-        if settings_data.backup is not None:
-            update_data['backup_settings'] = settings_data.backup.model_dump()
-        
-        if settings_data.display is not None:
-            update_data['display_settings'] = settings_data.display.model_dump()
-        
-        if settings_data.security is not None:
-            update_data['security_settings'] = settings_data.security.model_dump()
-        
-        if settings_data.about is not None:
-            update_data['system_info'] = settings_data.about.model_dump()
-        
-        # Update settings
-        settings = await Settings.update_settings(**update_data)
-        
-        logger.info("Settings updated successfully")
-        return settings_to_response(settings)
-        
+        # Map section names to update data
+        section_mapping = {
+            'general': settings_data.general,
+            'business': settings_data.business,
+            'taxes': settings_data.taxes,
+            'hardware': settings_data.hardware,
+            'receipts': settings_data.receipts,
+            'inventory': settings_data.inventory,
+            'integration': settings_data.integration,
+            'backup': settings_data.backup,
+            'display': settings_data.display,
+            'security': settings_data.security,
+            'about': settings_data.about
+        }
+
+        # Update each section that has data
+        for section, data in section_mapping.items():
+            if data is not None:
+                settings_dict = data.model_dump()
+                await Setting.update_section(section, settings_dict)
+                logger.info(f"Updated {section} settings: {len(settings_dict)} values")
+
+        # Return updated settings in old format
+        return await get_settings()
+
     except Exception as e:
         logger.error(f"Failed to update settings: {e}")
         raise HTTPException(
@@ -156,11 +197,8 @@ async def perform_backup(backup_request: BackupRequest):
         # Copy database file
         shutil.copy2(DB_PATH, backup_file)
         
-        # Update backup settings
-        settings = await Settings.get_settings()
-        backup_settings = settings.backup_settings or {}
-        backup_settings['lastBackupDate'] = datetime.now().isoformat()
-        await Settings.update_settings(backup_settings=backup_settings)
+        # Update lastBackupDate setting
+        await Setting.update_setting('backup', 'lastBackupDate', datetime.now().isoformat())
         
         logger.info(f"Backup created successfully: {backup_file}")
         
@@ -258,3 +296,127 @@ async def get_database_info():
             detail=f"Failed to get database info: {str(e)}"
         )
 
+# ===== NEW GRANULAR SETTINGS ENDPOINTS =====
+
+@router.get("/{section}", response_model=SectionSettingsResponse)
+async def get_section_settings(section: str):
+    """
+    Get all settings for a specific section.
+
+    Args:
+        section: Section name (e.g., 'display', 'security', 'inventory')
+
+    Returns:
+        All settings in the section as key-value pairs
+    """
+    try:
+        settings = await Setting.get_section(section)
+
+        if not settings:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Section '{section}' not found or has no settings"
+            )
+
+        return SectionSettingsResponse(
+            section=section,
+            settings=settings
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get section settings: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get section settings: {str(e)}"
+        )
+
+
+@router.get("/{section}/{key}", response_model=SettingItemResponse)
+async def get_individual_setting(section: str, key: str):
+    """
+    Get an individual setting by section and key.
+
+    Args:
+        section: Section name
+        key: Setting key
+
+    Returns:
+        Individual setting details
+    """
+    try:
+        setting = await Setting.get(section=section, key=key)
+        return setting
+
+    except DoesNotExist:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Setting '{section}.{key}' not found"
+        )
+    except Exception as e:
+        logger.error(f"Failed to get setting: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get setting: {str(e)}"
+        )
+
+
+@router.put("/{section}/{key}", response_model=SettingItemResponse)
+async def update_individual_setting(section: str, key: str, update: SettingItemUpdate):
+    """
+    Update an individual setting.
+
+    Args:
+        section: Section name
+        key: Setting key
+        update: New value
+
+    Returns:
+        Updated setting
+    """
+    try:
+        setting = await Setting.update_setting(section, key, update.value)
+        logger.info(f"Updated setting {section}.{key}")
+        return setting
+
+    except DoesNotExist:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Setting '{section}.{key}' not found"
+        )
+    except Exception as e:
+        logger.error(f"Failed to update setting: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to update setting: {str(e)}"
+        )
+
+
+@router.post("/bulk", status_code=status.HTTP_200_OK)
+async def bulk_update_settings(bulk_update: BulkSettingsUpdate):
+    """
+    Bulk update multiple settings across sections.
+
+    Args:
+        bulk_update: List of setting updates with section, key, and value
+
+    Returns:
+        Number of settings updated
+    """
+    try:
+        updated = await Setting.bulk_update(bulk_update.updates)
+        logger.info(f"Bulk updated {len(updated)} settings")
+
+        return {
+            "success": True,
+            "updated_count": len(updated),
+            "message": f"Successfully updated {len(updated)} settings"
+        }
+
+    except Exception as e:
+        logger.error(f"Failed to bulk update settings: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to bulk update settings: {str(e)}"
+        )

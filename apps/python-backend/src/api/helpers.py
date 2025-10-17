@@ -1,23 +1,12 @@
 """
 Helper functions for API endpoints
 """
-from ..database.models import User, Product, StockTransaction, Settings
+from ..database.models import User, Product, StockTransaction, Setting
 from .schemas import (
     UserResponse,
     ProductResponse,
     StockTransactionResponse,
-    SettingsResponse,
-    GeneralSettings,
-    BusinessSettings,
-    TaxSettings,
-    HardwareSettings,
-    ReceiptSettings,
-    InventorySettings,
-    IntegrationSettings,
-    BackupSettings,
-    DisplaySettings,
-    SecuritySettings,
-    SystemInfo
+    SettingItemResponse
 )
 
 
@@ -80,21 +69,22 @@ def stock_transaction_to_response(transaction: StockTransaction) -> StockTransac
     )
 
 
-def settings_to_response(settings: Settings) -> SettingsResponse:
-    """Convert Settings model to SettingsResponse schema"""
-    return SettingsResponse(
-        id=settings.id,
-        general=GeneralSettings(**settings.general_settings),
-        business=BusinessSettings(**settings.business_settings),
-        taxes=TaxSettings(**settings.tax_settings),
-        hardware=HardwareSettings(**settings.hardware_settings),
-        receipts=ReceiptSettings(**settings.receipt_settings),
-        inventory=InventorySettings(**settings.inventory_settings),
-        integration=IntegrationSettings(**settings.integration_settings),
-        backup=BackupSettings(**settings.backup_settings),
-        display=DisplaySettings(**settings.display_settings),
-        security=SecuritySettings(**settings.security_settings),
-        about=SystemInfo(**settings.system_info),
-        created_at=settings.created_at,
-        updated_at=settings.updated_at
+def setting_to_response(setting: Setting) -> SettingItemResponse:
+    """
+    Convert Setting model to SettingItemResponse schema.
+
+    Note: The main settings endpoints in settings.py handle aggregation
+    of Setting rows into the old SettingsResponse format for backward compatibility.
+    This helper is for the new granular endpoints.
+    """
+    return SettingItemResponse(
+        id=setting.id,
+        section=setting.section,
+        key=setting.key,
+        value=setting.value,
+        default_value=setting.default_value,
+        data_type=setting.data_type.value,
+        description=setting.description,
+        created_at=setting.created_at,
+        updated_at=setting.updated_at
     )
