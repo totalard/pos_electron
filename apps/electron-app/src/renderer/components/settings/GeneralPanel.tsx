@@ -1,10 +1,12 @@
 import { useState } from 'react'
 import { useAppStore, useSettingsStore } from '../../stores'
+import { Toast } from '../common'
 
 export function GeneralPanel() {
   const { theme } = useAppStore()
   const { general, updateGeneralSettings } = useSettingsStore()
   const [logoPreview, setLogoPreview] = useState<string>(general.logoUrl || '')
+  const [toast, setToast] = useState<{ show: boolean; message: string; type: 'success' | 'error' | 'warning' }>({ show: false, message: '', type: 'success' })
 
   const handleInputChange = (field: keyof typeof general, value: string) => {
     updateGeneralSettings({ [field]: value })
@@ -14,11 +16,11 @@ export function GeneralPanel() {
     const file = e.target.files?.[0]
     if (file) {
       if (!file.type.startsWith('image/')) {
-        alert('Please select an image file')
+        setToast({ show: true, message: 'Please select an image file', type: 'warning' })
         return
       }
       if (file.size > 2 * 1024 * 1024) {
-        alert('Image size should be less than 2MB')
+        setToast({ show: true, message: 'Image size should be less than 2MB', type: 'warning' })
         return
       }
       const reader = new FileReader()
@@ -26,6 +28,7 @@ export function GeneralPanel() {
         const result = reader.result as string
         setLogoPreview(result)
         updateGeneralSettings({ logoUrl: result })
+        setToast({ show: true, message: 'Logo uploaded successfully', type: 'success' })
       }
       reader.readAsDataURL(file)
     }
@@ -156,6 +159,15 @@ export function GeneralPanel() {
           </div>
         </div>
       </div>
+
+      {/* Toast Notification */}
+      <Toast
+        isOpen={toast.show}
+        onClose={() => setToast({ ...toast, show: false })}
+        message={toast.message}
+        type={toast.type}
+        duration={3000}
+      />
     </div>
   )
 }

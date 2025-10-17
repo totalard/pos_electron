@@ -1,15 +1,18 @@
+import { useState } from 'react'
 import { useAppStore, useSettingsStore } from '../../stores'
+import { Toast } from '../common'
 
 export function BackupPanel() {
   const { theme } = useAppStore()
   const { backup, updateBackupSettings, performBackup } = useSettingsStore()
+  const [toast, setToast] = useState<{ show: boolean; message: string; type: 'success' | 'error' }>({ show: false, message: '', type: 'success' })
 
   const handleBackupNow = async () => {
     try {
       await performBackup()
-      alert('Backup completed successfully!')
+      setToast({ show: true, message: 'Backup completed successfully!', type: 'success' })
     } catch (error) {
-      alert('Backup failed: ' + (error instanceof Error ? error.message : 'Unknown error'))
+      setToast({ show: true, message: 'Backup failed: ' + (error instanceof Error ? error.message : 'Unknown error'), type: 'error' })
     }
   }
 
@@ -148,6 +151,15 @@ export function BackupPanel() {
           </button>
         </div>
       </div>
+
+      {/* Toast Notification */}
+      <Toast
+        isOpen={toast.show}
+        onClose={() => setToast({ ...toast, show: false })}
+        message={toast.message}
+        type={toast.type}
+        duration={3000}
+      />
     </div>
   )
 }

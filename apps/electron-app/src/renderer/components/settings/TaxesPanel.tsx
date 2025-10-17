@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useAppStore } from '../../stores'
+import { RightPanel, Input, Button, ConfirmDialog, Toast } from '../common'
+import { Select } from '../forms'
 
 interface TaxRule {
   id: number
@@ -17,12 +19,17 @@ interface TaxRule {
   priority: number
 }
 
+type PanelMode = 'closed' | 'add' | 'edit'
+
 export function TaxesPanel() {
   const { theme } = useAppStore()
   const [taxRules, setTaxRules] = useState<TaxRule[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [showAddModal, setShowAddModal] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
+  const [panelMode, setPanelMode] = useState<PanelMode>('closed')
   const [editingRule, setEditingRule] = useState<TaxRule | null>(null)
+  const [deleteConfirm, setDeleteConfirm] = useState<{ show: boolean; rule: TaxRule | null }>({ show: false, rule: null })
+  const [toast, setToast] = useState<{ show: boolean; message: string; type: 'success' | 'error' }>({ show: false, message: '', type: 'success' })
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -57,11 +64,12 @@ export function TaxesPanel() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setIsSaving(true)
     try {
       const url = editingRule
         ? `http://localhost:8001/api/tax-rules/${editingRule.id}`
         : 'http://localhost:8001/api/tax-rules/'
-      
+
       const response = await fetch(url, {
         method: editingRule ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -70,23 +78,31 @@ export function TaxesPanel() {
 
       if (response.ok) {
         await loadTaxRules()
-        setShowAddModal(false)
-        setEditingRule(null)
-        resetForm()
+        closePanel()
       }
     } catch (error) {
       console.error('Failed to save tax rule:', error)
+    } finally {
+      setIsSaving(false)
     }
   }
 
-  const handleDelete = async (id: number) => {
-    if (!confirm('Are you sure you want to delete this tax rule?')) return
-    
+  const handleDeleteClick = (rule: TaxRule) => {
+    setDeleteConfirm({ show: true, rule })
+  }
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteConfirm.rule) return
+
     try {
-      await fetch(`http://localhost:8001/api/tax-rules/${id}`, { method: 'DELETE' })
+      await fetch(`http://localhost:8001/api/tax-rules/${deleteConfirm.rule.id}`, { method: 'DELETE' })
       await loadTaxRules()
+      setToast({ show: true, message: 'Tax rule deleted successfully', type: 'success' })
     } catch (error) {
       console.error('Failed to delete tax rule:', error)
+      setToast({ show: true, message: 'Failed to delete tax rule. Please try again.', type: 'error' })
+    } finally {
+      setDeleteConfirm({ show: false, rule: null })
     }
   }
 
@@ -116,7 +132,13 @@ export function TaxesPanel() {
     })
   }
 
-  const openEditModal = (rule: TaxRule) => {
+  const openAddPanel = () => {
+    resetForm()
+    setEditingRule(null)
+    setPanelMode('add')
+  }
+
+  const openEditPanel = (rule: TaxRule) => {
     setEditingRule(rule)
     setFormData({
       name: rule.name,
@@ -132,7 +154,13 @@ export function TaxesPanel() {
       is_active: rule.is_active,
       priority: rule.priority
     })
-    setShowAddModal(true)
+    setPanelMode('edit')
+  }
+
+  const closePanel = () => {
+    setPanelMode('closed')
+    setEditingRule(null)
+    resetForm()
   }
 
   return (
@@ -147,7 +175,7 @@ export function TaxesPanel() {
           </p>
         </div>
         <button
-          onClick={() => { resetForm(); setShowAddModal(true) }}
+          onClick={openAddPanel}
           className={`px-6 py-3 rounded-lg font-medium min-h-[44px] transition-all ${theme === 'dark' ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-blue-500 hover:bg-blue-600 text-white'}`}
         >
           Add Tax Rule
@@ -198,13 +226,13 @@ export function TaxesPanel() {
                     {rule.is_active ? 'Disable' : 'Enable'}
                   </button>
                   <button
-                    onClick={() => openEditModal(rule)}
+                    onClick={() => openEditPanel(rule)}
                     className={`px-4 py-2 rounded-lg min-h-[44px] ${theme === 'dark' ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-blue-500 hover:bg-blue-600 text-white'}`}
                   >
                     Edit
                   </button>
                   <button
-                    onClick={() => handleDelete(rule.id)}
+                    onClick={() => handleDeleteClick(rule)}
                     className={`px-4 py-2 rounded-lg min-h-[44px] ${theme === 'dark' ? 'bg-red-600 hover:bg-red-700 text-white' : 'bg-red-500 hover:bg-red-600 text-white'}`}
                   >
                     Delete
@@ -216,78 +244,175 @@ export function TaxesPanel() {
         </div>
       )}
 
-      {showAddModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className={`w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-lg ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
-            <div className="p-6">
-              <h3 className={`text-xl font-bold mb-4 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                {editingRule ? 'Edit Tax Rule' : 'Add Tax Rule'}
-              </h3>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <label className={`block text-sm font-medium mb-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>Name</label>
-                  <input type="text" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} className={`w-full px-4 py-2 rounded-lg min-h-[44px] ${theme === 'dark' ? 'bg-gray-700 border border-gray-600 text-white' : 'bg-white border border-gray-300 text-gray-900'}`} required />
-                </div>
-                <div>
-                  <label className={`block text-sm font-medium mb-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>Tax Type</label>
-                  <select value={formData.tax_type} onChange={(e) => setFormData({...formData, tax_type: e.target.value})} className={`w-full px-4 py-2 rounded-lg min-h-[44px] ${theme === 'dark' ? 'bg-gray-700 border border-gray-600 text-white' : 'bg-white border border-gray-300 text-gray-900'}`}>
-                    <option value="simple">Simple Tax</option>
-                    <option value="gst_cgst">GST (CGST+SGST)</option>
-                    <option value="gst_igst">GST (IGST)</option>
-                    <option value="vat">VAT</option>
-                  </select>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className={`block text-sm font-medium mb-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>Rate (%)</label>
-                    <input type="number" step="0.01" value={formData.rate} onChange={(e) => setFormData({...formData, rate: parseFloat(e.target.value)})} className={`w-full px-4 py-2 rounded-lg min-h-[44px] ${theme === 'dark' ? 'bg-gray-700 border border-gray-600 text-white' : 'bg-white border border-gray-300 text-gray-900'}`} />
-                  </div>
-                  <div>
-                    <label className={`block text-sm font-medium mb-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>Priority</label>
-                    <input type="number" value={formData.priority} onChange={(e) => setFormData({...formData, priority: parseInt(e.target.value)})} className={`w-full px-4 py-2 rounded-lg min-h-[44px] ${theme === 'dark' ? 'bg-gray-700 border border-gray-600 text-white' : 'bg-white border border-gray-300 text-gray-900'}`} />
-                  </div>
-                </div>
-                {formData.tax_type.includes('gst') && (
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className={`block text-sm font-medium mb-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>CGST Rate (%)</label>
-                      <input type="number" step="0.01" value={formData.cgst_rate} onChange={(e) => setFormData({...formData, cgst_rate: parseFloat(e.target.value)})} className={`w-full px-4 py-2 rounded-lg min-h-[44px] ${theme === 'dark' ? 'bg-gray-700 border border-gray-600 text-white' : 'bg-white border border-gray-300 text-gray-900'}`} />
-                    </div>
-                    <div>
-                      <label className={`block text-sm font-medium mb-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>SGST Rate (%)</label>
-                      <input type="number" step="0.01" value={formData.sgst_rate} onChange={(e) => setFormData({...formData, sgst_rate: parseFloat(e.target.value)})} className={`w-full px-4 py-2 rounded-lg min-h-[44px] ${theme === 'dark' ? 'bg-gray-700 border border-gray-600 text-white' : 'bg-white border border-gray-300 text-gray-900'}`} />
-                    </div>
-                    <div>
-                      <label className={`block text-sm font-medium mb-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>IGST Rate (%)</label>
-                      <input type="number" step="0.01" value={formData.igst_rate} onChange={(e) => setFormData({...formData, igst_rate: parseFloat(e.target.value)})} className={`w-full px-4 py-2 rounded-lg min-h-[44px] ${theme === 'dark' ? 'bg-gray-700 border border-gray-600 text-white' : 'bg-white border border-gray-300 text-gray-900'}`} />
-                    </div>
-                    <div>
-                      <label className={`block text-sm font-medium mb-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>CESS Rate (%)</label>
-                      <input type="number" step="0.01" value={formData.cess_rate} onChange={(e) => setFormData({...formData, cess_rate: parseFloat(e.target.value)})} className={`w-full px-4 py-2 rounded-lg min-h-[44px] ${theme === 'dark' ? 'bg-gray-700 border border-gray-600 text-white' : 'bg-white border border-gray-300 text-gray-900'}`} />
-                    </div>
-                    <div>
-                      <label className={`block text-sm font-medium mb-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>HSN Code</label>
-                      <input type="text" value={formData.hsn_code} onChange={(e) => setFormData({...formData, hsn_code: e.target.value})} className={`w-full px-4 py-2 rounded-lg min-h-[44px] ${theme === 'dark' ? 'bg-gray-700 border border-gray-600 text-white' : 'bg-white border border-gray-300 text-gray-900'}`} />
-                    </div>
-                    <div>
-                      <label className={`block text-sm font-medium mb-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>SAC Code</label>
-                      <input type="text" value={formData.sac_code} onChange={(e) => setFormData({...formData, sac_code: e.target.value})} className={`w-full px-4 py-2 rounded-lg min-h-[44px] ${theme === 'dark' ? 'bg-gray-700 border border-gray-600 text-white' : 'bg-white border border-gray-300 text-gray-900'}`} />
-                    </div>
-                  </div>
-                )}
-                <div className="flex gap-3 pt-4">
-                  <button type="submit" className={`flex-1 px-6 py-3 rounded-lg font-medium min-h-[44px] ${theme === 'dark' ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-blue-500 hover:bg-blue-600 text-white'}`}>
-                    {editingRule ? 'Update' : 'Create'}
-                  </button>
-                  <button type="button" onClick={() => { setShowAddModal(false); setEditingRule(null); resetForm() }} className={`flex-1 px-6 py-3 rounded-lg font-medium min-h-[44px] ${theme === 'dark' ? 'bg-gray-600 hover:bg-gray-500 text-white' : 'bg-gray-200 hover:bg-gray-300 text-gray-900'}`}>
-                    Cancel
-                  </button>
-                </div>
-              </form>
-            </div>
+      {/* Add/Edit Tax Rule Panel */}
+      <RightPanel
+        isOpen={panelMode !== 'closed'}
+        onClose={closePanel}
+        title={panelMode === 'add' ? 'Add Tax Rule' : 'Edit Tax Rule'}
+        width="lg"
+      >
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Name */}
+          <Input
+            label="Tax Rule Name"
+            value={formData.name}
+            onChange={(e) => setFormData({...formData, name: e.target.value})}
+            required
+            placeholder="Enter tax rule name"
+          />
+
+          {/* Description */}
+          <div>
+            <label className={`block text-sm font-medium mb-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+              Description
+            </label>
+            <textarea
+              value={formData.description}
+              onChange={(e) => setFormData({...formData, description: e.target.value})}
+              rows={2}
+              className={`
+                w-full px-4 py-3 rounded-lg border transition-colors resize-none
+                ${theme === 'dark'
+                  ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500'
+                  : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-blue-500'
+                }
+                focus:outline-none focus:ring-2 focus:ring-blue-500/20
+              `}
+              placeholder="Optional description"
+            />
           </div>
-        </div>
-      )}
+
+          {/* Tax Type */}
+          <Select
+            label="Tax Type"
+            value={formData.tax_type}
+            onChange={(e) => setFormData({...formData, tax_type: e.target.value})}
+            options={[
+              { value: 'simple', label: 'Simple Tax' },
+              { value: 'gst_cgst', label: 'GST (CGST+SGST)' },
+              { value: 'gst_igst', label: 'GST (IGST)' },
+              { value: 'vat', label: 'VAT' }
+            ]}
+          />
+
+          {/* Rate and Priority */}
+          <div className="grid grid-cols-2 gap-4">
+            <Input
+              label="Tax Rate (%)"
+              type="number"
+              step="0.01"
+              value={formData.rate.toString()}
+              onChange={(e) => setFormData({...formData, rate: parseFloat(e.target.value) || 0})}
+              placeholder="0.00"
+            />
+            <Input
+              label="Priority"
+              type="number"
+              value={formData.priority.toString()}
+              onChange={(e) => setFormData({...formData, priority: parseInt(e.target.value) || 0})}
+              placeholder="0"
+            />
+          </div>
+          {/* GST Fields - Show only when tax type includes 'gst' */}
+          {formData.tax_type.includes('gst') && (
+            <div className="space-y-4">
+              <h4 className={`text-sm font-semibold ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                GST Details
+              </h4>
+
+              <div className="grid grid-cols-2 gap-4">
+                <Input
+                  label="CGST Rate (%)"
+                  type="number"
+                  step="0.01"
+                  value={formData.cgst_rate.toString()}
+                  onChange={(e) => setFormData({...formData, cgst_rate: parseFloat(e.target.value) || 0})}
+                  placeholder="0.00"
+                />
+                <Input
+                  label="SGST Rate (%)"
+                  type="number"
+                  step="0.01"
+                  value={formData.sgst_rate.toString()}
+                  onChange={(e) => setFormData({...formData, sgst_rate: parseFloat(e.target.value) || 0})}
+                  placeholder="0.00"
+                />
+                <Input
+                  label="IGST Rate (%)"
+                  type="number"
+                  step="0.01"
+                  value={formData.igst_rate.toString()}
+                  onChange={(e) => setFormData({...formData, igst_rate: parseFloat(e.target.value) || 0})}
+                  placeholder="0.00"
+                />
+                <Input
+                  label="CESS Rate (%)"
+                  type="number"
+                  step="0.01"
+                  value={formData.cess_rate.toString()}
+                  onChange={(e) => setFormData({...formData, cess_rate: parseFloat(e.target.value) || 0})}
+                  placeholder="0.00"
+                />
+                <Input
+                  label="HSN Code"
+                  value={formData.hsn_code}
+                  onChange={(e) => setFormData({...formData, hsn_code: e.target.value})}
+                  placeholder="Enter HSN code"
+                />
+                <Input
+                  label="SAC Code"
+                  value={formData.sac_code}
+                  onChange={(e) => setFormData({...formData, sac_code: e.target.value})}
+                  placeholder="Enter SAC code"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Action Buttons */}
+          <div className="flex gap-3 pt-4">
+            <Button
+              type="submit"
+              variant="primary"
+              fullWidth
+              isLoading={isSaving}
+              disabled={isSaving}
+            >
+              {panelMode === 'add' ? 'Create Tax Rule' : 'Update Tax Rule'}
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              fullWidth
+              onClick={closePanel}
+              disabled={isSaving}
+            >
+              Cancel
+            </Button>
+          </div>
+        </form>
+      </RightPanel>
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={deleteConfirm.show}
+        onClose={() => setDeleteConfirm({ show: false, rule: null })}
+        onConfirm={handleDeleteConfirm}
+        title="Delete Tax Rule"
+        message={`Are you sure you want to delete "${deleteConfirm.rule?.name}"? This action cannot be undone.`}
+        variant="danger"
+        confirmText="Delete"
+        cancelText="Cancel"
+      />
+
+      {/* Toast Notification */}
+      <Toast
+        isOpen={toast.show}
+        onClose={() => setToast({ ...toast, show: false })}
+        message={toast.message}
+        type={toast.type}
+        duration={3000}
+      />
     </div>
   )
 }

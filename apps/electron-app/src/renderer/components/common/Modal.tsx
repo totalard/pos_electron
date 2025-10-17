@@ -23,9 +23,14 @@ export interface ModalProps extends HTMLAttributes<HTMLDivElement> {
 
 /**
  * Reusable Modal component with backdrop and animations
- * 
+ *
+ * @deprecated This component is deprecated. Use RightPanel for better touch-friendly UX.
+ * RightPanel provides a slide-in panel from the right side which is more suitable
+ * for touch interfaces and provides better mobile experience.
+ *
  * @example
  * ```tsx
+ * // Old (deprecated):
  * <Modal
  *   isOpen={isOpen}
  *   onClose={() => setIsOpen(false)}
@@ -34,6 +39,16 @@ export interface ModalProps extends HTMLAttributes<HTMLDivElement> {
  * >
  *   <form>...</form>
  * </Modal>
+ *
+ * // New (recommended):
+ * <RightPanel
+ *   isOpen={isOpen}
+ *   onClose={() => setIsOpen(false)}
+ *   title="Add User"
+ *   width="md"
+ * >
+ *   <form>...</form>
+ * </RightPanel>
  * ```
  */
 export function Modal({

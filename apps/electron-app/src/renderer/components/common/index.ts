@@ -16,6 +16,9 @@ export type { ButtonProps } from './Button'
 export { Card } from './Card'
 export type { CardProps } from './Card'
 
+export { ConfirmDialog } from './ConfirmDialog'
+export type { ConfirmDialogProps } from './ConfirmDialog'
+
 export { ErrorMessage } from './ErrorMessage'
 export type { ErrorMessageProps } from './ErrorMessage'
 
@@ -30,6 +33,12 @@ export type { LoadingSpinnerProps } from './LoadingSpinner'
 
 export { Modal } from './Modal'
 export type { ModalProps } from './Modal'
+
+export { RightPanel } from './RightPanel'
+export type { RightPanelProps } from './RightPanel'
+
+export { Toast } from './Toast'
+export type { ToastProps } from './Toast'
 
 export { Toggle } from './Toggle'
 export type { ToggleProps } from './Toggle'

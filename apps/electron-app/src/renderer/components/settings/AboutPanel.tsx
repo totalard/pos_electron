@@ -1,12 +1,15 @@
+import { useState } from 'react'
 import { useAppStore, useSettingsStore } from '../../stores'
+import { Toast } from '../common'
 
 export function AboutPanel() {
   const { theme } = useAppStore()
   const { about, checkForUpdates } = useSettingsStore()
+  const [toast, setToast] = useState<{ show: boolean; message: string; type: 'success' | 'info' }>({ show: false, message: '', type: 'success' })
 
   const handleCheckUpdates = async () => {
     await checkForUpdates()
-    alert('You are using the latest version!')
+    setToast({ show: true, message: 'You are using the latest version!', type: 'info' })
   }
 
   return (
@@ -91,6 +94,15 @@ export function AboutPanel() {
           © 2024 MidLogic. All rights reserved.
         </p>
       </div>
+
+      {/* Toast Notification */}
+      <Toast
+        isOpen={toast.show}
+        onClose={() => setToast({ ...toast, show: false })}
+        message={toast.message}
+        type={toast.type}
+        duration={3000}
+      />
     </div>
   )
 }
