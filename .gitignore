@@ -63,3 +63,11 @@ release/
 app/dist/
 .webpack/
 
+# SQLite Database Files
+*.db
+*.sqlite
+*.db-journal
+*.db-shm
+*.db-wal
+apps/python-backend/data/
+
