@@ -5,11 +5,16 @@ import { Login } from './components/Login'
 import { Dashboard } from './components/Dashboard'
 import { SaleScreen } from './components/SaleScreen'
 import { Settings } from './components/Settings'
+import { ProductsScreen } from './components/products'
+import { Walkthrough, defaultWalkthroughSteps } from './components/walkthrough'
+
+const API_BASE_URL = 'http://localhost:8001/api'
 
 type AppScreen = 'splash' | 'pin' | 'dashboard' | 'sales' | 'products' | 'inventory' | 'users' | 'settings'
 
 function App() {
   const [currentScreen, setCurrentScreen] = useState<AppScreen>('splash')
+  const [showWalkthrough, setShowWalkthrough] = useState(false)
   const { theme } = useAppStore()
   const { reset: resetPin, initializeSystem, currentUser } = usePinStore()
 
@@ -19,8 +24,27 @@ function App() {
   }
 
   // Handle PIN authentication
-  const handlePinAuthenticated = () => {
+  const handlePinAuthenticated = async () => {
     setCurrentScreen('dashboard')
+
+    // Check if walkthrough should be shown
+    try {
+      const response = await fetch(`${API_BASE_URL}/settings/display/show_walkthrough`)
+      const data = await response.json()
+      const shouldShowWalkthrough = data?.value !== false
+
+      if (shouldShowWalkthrough) {
+        // Show walkthrough after a short delay
+        setTimeout(() => {
+          setShowWalkthrough(true)
+        }, 500)
+      }
+    } catch {
+      // If setting doesn't exist, show walkthrough by default
+      setTimeout(() => {
+        setShowWalkthrough(true)
+      }, 500)
+    }
   }
 
   // Handle navigation from dashboard with role-based access control
@@ -36,6 +60,16 @@ function App() {
   // Handle back to dashboard
   const handleBackToDashboard = () => {
     setCurrentScreen('dashboard')
+  }
+
+  // Handle walkthrough completion
+  const handleWalkthroughComplete = () => {
+    setShowWalkthrough(false)
+  }
+
+  // Handle walkthrough skip
+  const handleWalkthroughSkip = () => {
+    setShowWalkthrough(false)
   }
 
   // Apply theme to document
@@ -76,18 +110,7 @@ function App() {
       )}
 
       {currentScreen === 'products' && (
-        <div className="flex items-center justify-center h-screen">
-          <div className="text-center">
-            <h1 className="text-3xl font-bold mb-4">Products & Services</h1>
-            <p className="text-gray-600 mb-4">Coming soon...</p>
-            <button
-              onClick={handleBackToDashboard}
-              className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
-            >
-              Back to Dashboard
-            </button>
-          </div>
-        </div>
+        <ProductsScreen onBack={handleBackToDashboard} />
       )}
 
       {currentScreen === 'inventory' && (
@@ -122,6 +145,16 @@ function App() {
 
       {currentScreen === 'settings' && (
         <Settings onBack={handleBackToDashboard} />
+      )}
+
+      {/* Walkthrough Overlay */}
+      {showWalkthrough && (
+        <Walkthrough
+          steps={defaultWalkthroughSteps}
+          onComplete={handleWalkthroughComplete}
+          onSkip={handleWalkthroughSkip}
+          showDontShowAgain
+        />
       )}
     </div>
   )

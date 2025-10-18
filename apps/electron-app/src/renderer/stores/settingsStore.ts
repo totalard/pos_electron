@@ -1082,7 +1082,7 @@ export const useSettingsStore = create<SettingsState>()(
       loadBackupHistory: async () => {
         try {
           const backups = await settingsAPI.listBackups()
-          set({ backupHistory: backups })
+          set({ backupHistory: backups as BackupFile[] })
         } catch (error) {
           console.error('Failed to load backup history:', error)
         }

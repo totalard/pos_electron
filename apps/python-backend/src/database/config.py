@@ -30,6 +30,7 @@ TORTOISE_ORM = {
         "models": {
             "models": [
                 "src.database.models.user",
+                "src.database.models.customer",
                 "src.database.models.product",
                 "src.database.models.inventory",
                 "src.database.models.settings",  # Old JSON-based settings (deprecated)

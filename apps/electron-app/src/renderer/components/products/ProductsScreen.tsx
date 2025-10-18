@@ -1,0 +1,358 @@
+import { useEffect, useState } from 'react'
+import { useAppStore, useProductStore } from '../../stores'
+import { PageHeader, PageContainer, SplitLayout } from '../layout'
+import { Button, LoadingSpinner, ErrorMessage, RightPanel, IconButton, ThemeToggle } from '../common'
+import { ProductForm } from './ProductForm'
+import { CategoryManagement } from './CategoryManagement'
+import { ProductDetailView } from './ProductDetailView'
+import { ProductTileView } from './ProductTileView'
+import { ProductGridView } from './ProductGridView'
+import type { EnhancedProduct } from '../../services/api'
+
+interface ProductsScreenProps {
+  onBack: () => void
+}
+
+export function ProductsScreen({ onBack }: ProductsScreenProps) {
+  const { theme } = useAppStore()
+  const {
+    products,
+    categories,
+    isLoading,
+    error,
+    filters,
+    viewMode: productViewMode,
+    fetchProducts,
+    fetchCategories,
+    setFilters,
+    clearFilters,
+    selectedProduct,
+    setSelectedProduct,
+    setViewMode: setProductViewMode
+  } = useProductStore()
+
+  // UI state
+  const [screenMode, setScreenMode] = useState<'list' | 'detail' | 'form'>('list')
+  const [showCategoryManagement, setShowCategoryManagement] = useState(false)
+  const [editingProduct, setEditingProduct] = useState<EnhancedProduct | null>(null)
+  
+  // Load data on mount
+  useEffect(() => {
+    fetchProducts()
+    fetchCategories()
+  }, [fetchProducts, fetchCategories])
+
+  // Reload products when filters change
+  useEffect(() => {
+    fetchProducts()
+  }, [filters, fetchProducts])
+
+  const handleAddProduct = () => {
+    setEditingProduct(null)
+    setSelectedProduct(null)
+    setScreenMode('form')
+  }
+
+  const handleSelectProduct = (product: EnhancedProduct) => {
+    setSelectedProduct(product)
+    setEditingProduct(null)
+    setScreenMode('detail')
+  }
+
+  const handleEditProduct = (product: EnhancedProduct) => {
+    setEditingProduct(product)
+    setSelectedProduct(product)
+    setScreenMode('form')
+  }
+
+  const handleCloseDetail = () => {
+    setScreenMode('list')
+    setEditingProduct(null)
+    setSelectedProduct(null)
+  }
+
+  const handleProductSaved = () => {
+    setScreenMode('list')
+    setEditingProduct(null)
+    setSelectedProduct(null)
+    fetchProducts()
+  }
+
+  const handleManageCategories = () => {
+    setShowCategoryManagement(true)
+  }
+
+  const handleCloseCategoryManagement = () => {
+    setShowCategoryManagement(false)
+    fetchCategories()
+  }
+
+  const handleCategoryFilter = (categoryId: number | null) => {
+    setFilters({ categoryId })
+  }
+
+  const handleProductTypeFilter = (productType: string | null) => {
+    setFilters({ productType })
+  }
+
+  const handleSearchChange = (search: string) => {
+    setFilters({ search })
+  }
+
+  const handleClearFilters = () => {
+    clearFilters()
+  }
+
+  // Filter active products
+  const activeProducts = products.filter(p => p.is_active)
+  
+  // Left Panel: Product List
+  const leftPanel = (
+    <div className="h-full flex flex-col">
+      {/* Search and Filters */}
+      <div className="p-4 border-b border-gray-700">
+        {/* Search */}
+        <div className="mb-3">
+          <input
+            type="text"
+            placeholder="Search products..."
+            value={filters.search}
+            onChange={(e) => handleSearchChange(e.target.value)}
+            className={`
+              w-full px-3 py-2 rounded-lg text-sm
+              ${theme === 'dark'
+                ? 'bg-gray-700 text-white border-gray-600'
+                : 'bg-white text-gray-900 border-gray-300'
+              }
+              border focus:outline-none focus:ring-2 focus:ring-blue-500
+            `}
+          />
+        </div>
+
+        {/* Category Filter */}
+        <select
+          value={filters.categoryId || ''}
+          onChange={(e) => handleCategoryFilter(e.target.value ? Number(e.target.value) : null)}
+          className={`
+            w-full px-3 py-2 rounded-lg text-sm mb-2
+            ${theme === 'dark'
+              ? 'bg-gray-700 text-white border-gray-600'
+              : 'bg-white text-gray-900 border-gray-300'
+            }
+            border focus:outline-none focus:ring-2 focus:ring-blue-500
+          `}
+        >
+          <option value="">All Categories</option>
+          {categories.map(cat => (
+            <option key={cat.id} value={cat.id}>{cat.name}</option>
+          ))}
+        </select>
+
+        {/* Product Type Filter */}
+        <select
+          value={filters.productType || ''}
+          onChange={(e) => handleProductTypeFilter(e.target.value || null)}
+          className={`
+            w-full px-3 py-2 rounded-lg text-sm
+            ${theme === 'dark'
+              ? 'bg-gray-700 text-white border-gray-600'
+              : 'bg-white text-gray-900 border-gray-300'
+            }
+            border focus:outline-none focus:ring-2 focus:ring-blue-500
+          `}
+        >
+          <option value="">All Types</option>
+          <option value="simple">Simple</option>
+          <option value="variation">Variation</option>
+          <option value="bundle">Bundle</option>
+          <option value="service">Service</option>
+        </select>
+
+        {/* Clear Filters */}
+        {(filters.search || filters.categoryId || filters.productType) && (
+          <button
+            onClick={handleClearFilters}
+            className={`
+              w-full mt-2 px-3 py-1.5 rounded-lg text-xs
+              ${theme === 'dark'
+                ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }
+              transition-colors
+            `}
+          >
+            Clear Filters
+          </button>
+        )}
+      </div>
+
+      {/* Product List/Grid */}
+      <div className="flex-1 overflow-y-auto p-4">
+        {isLoading && (
+          <div className="flex items-center justify-center py-20">
+            <LoadingSpinner size="md" />
+          </div>
+        )}
+
+        {!isLoading && productViewMode === 'tile' && (
+          <ProductTileView
+            products={activeProducts}
+            onProductClick={handleSelectProduct}
+          />
+        )}
+
+        {!isLoading && productViewMode === 'grid' && (
+          <ProductGridView
+            products={activeProducts}
+            selectedProductId={selectedProduct?.id}
+            onProductClick={handleSelectProduct}
+          />
+        )}
+      </div>
+    </div>
+  )
+
+  // Right Panel: Product Detail or Form
+  const rightPanel = (
+    <div className="h-full">
+      {screenMode === 'list' && (
+        <div className={`
+          h-full flex items-center justify-center
+          ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}
+        `}>
+          <div className="text-center">
+            <svg className="w-24 h-24 mx-auto mb-4 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+            </svg>
+            <p className="text-lg font-medium mb-2">Select a product</p>
+            <p className="text-sm mb-6">Choose a product from the list to view details</p>
+          </div>
+        </div>
+      )}
+
+      {screenMode === 'detail' && selectedProduct && (
+        <ProductDetailView
+          product={selectedProduct}
+          onEdit={() => handleEditProduct(selectedProduct)}
+          onClose={handleCloseDetail}
+        />
+      )}
+
+      {screenMode === 'form' && (
+        <ProductForm
+          product={editingProduct}
+          onSave={handleProductSaved}
+          onCancel={handleCloseDetail}
+        />
+      )}
+    </div>
+  )
+
+  return (
+    <div className={`
+      h-screen w-screen flex flex-col
+      ${theme === 'dark'
+        ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900'
+        : 'bg-gradient-to-br from-gray-50 via-white to-gray-100'
+      }
+    `}>
+      {/* Header */}
+      <PageHeader
+        title="Product Management"
+        subtitle="Manage your products, categories, and inventory"
+        showBackButton
+        onBack={onBack}
+        icon={
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+          </svg>
+        }
+        actions={
+          <div className="flex items-center gap-3">
+            {/* View Mode Toggle */}
+            <div className={`
+              flex items-center gap-1 p-1 rounded-lg
+              ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-100'}
+            `}>
+              <IconButton
+                icon={
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                  </svg>
+                }
+                label="Tile view"
+                onClick={() => setProductViewMode('tile')}
+                variant={productViewMode === 'tile' ? 'primary' : 'ghost'}
+                size="sm"
+              />
+              <IconButton
+                icon={
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                  </svg>
+                }
+                label="Grid view"
+                onClick={() => setProductViewMode('grid')}
+                variant={productViewMode === 'grid' ? 'primary' : 'ghost'}
+                size="sm"
+              />
+            </div>
+
+            <Button
+              variant="secondary"
+              size="md"
+              onClick={handleManageCategories}
+              icon={
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                </svg>
+              }
+            >
+              Categories
+            </Button>
+            <Button
+              variant="primary"
+              size="md"
+              onClick={handleAddProduct}
+              icon={
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+              }
+            >
+              Add Product
+            </Button>
+            <ThemeToggle size="md" />
+          </div>
+        }
+      />
+
+      {/* Main Content */}
+      <PageContainer>
+        {/* Error Message */}
+        {error && (
+          <ErrorMessage message={error} className="mb-4" />
+        )}
+
+        {/* Split Layout */}
+        <SplitLayout
+          left={leftPanel}
+          right={rightPanel}
+          leftWidth={4}
+          gap="md"
+        />
+      </PageContainer>
+
+      {/* Category Management Panel */}
+      <RightPanel
+        isOpen={showCategoryManagement}
+        onClose={handleCloseCategoryManagement}
+        title="Manage Categories"
+        width="md"
+      >
+        <CategoryManagement onClose={handleCloseCategoryManagement} />
+      </RightPanel>
+    </div>
+  )
+}
+

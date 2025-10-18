@@ -458,6 +458,105 @@ async def add_tax_rule_columns() -> Dict[str, any]:
     return stats
 
 
+async def migrate_product_models() -> Dict[str, Any]:
+    """
+    Migrate products table to support new product management features.
+
+    Adds columns for:
+    - product_type (simple/bundle/variation/service)
+    - category_id (foreign key to product_categories)
+    - base_price (replaces selling_price)
+    - tax_id (foreign key to tax_rules)
+    - stock_quantity (replaces current_stock)
+    - low_stock_threshold (replaces min_stock_level)
+    - image_paths (JSON array for multiple images)
+
+    Returns:
+        Dict with migration statistics
+    """
+    stats = {
+        'columns_added': 0,
+        'columns_skipped': 0,
+        'errors': []
+    }
+
+    try:
+        async with in_transaction() as conn:
+            # Check if products table exists
+            table_check = await conn.execute_query_dict(
+                "SELECT name FROM sqlite_master WHERE type='table' AND name='products'"
+            )
+
+            if not table_check:
+                logger.info("products table does not exist yet, skipping migration")
+                return stats
+
+            # Get existing columns
+            columns_result = await conn.execute_query_dict("PRAGMA table_info(products)")
+            existing_columns = {col['name'] for col in columns_result}
+
+            # Define new columns to add
+            new_columns = {
+                'product_type': "ALTER TABLE products ADD COLUMN product_type VARCHAR(20) DEFAULT 'simple'",
+                'category_id': "ALTER TABLE products ADD COLUMN category_id INT",
+                'base_price': "ALTER TABLE products ADD COLUMN base_price DECIMAL(10,2) DEFAULT 0",
+                'tax_id': "ALTER TABLE products ADD COLUMN tax_id INT",
+                'stock_quantity': "ALTER TABLE products ADD COLUMN stock_quantity INT DEFAULT 0",
+                'low_stock_threshold': "ALTER TABLE products ADD COLUMN low_stock_threshold INT DEFAULT 0",
+                'image_paths': "ALTER TABLE products ADD COLUMN image_paths TEXT DEFAULT '[]'"
+            }
+
+            # Add missing columns
+            for column_name, alter_sql in new_columns.items():
+                if column_name not in existing_columns:
+                    try:
+                        await conn.execute_query(alter_sql)
+                        stats['columns_added'] += 1
+                        logger.info(f"Added column '{column_name}' to products table")
+                    except Exception as e:
+                        stats['errors'].append(f"Failed to add column '{column_name}': {e}")
+                        logger.error(f"Failed to add column '{column_name}': {e}")
+                else:
+                    stats['columns_skipped'] += 1
+                    logger.debug(f"Column '{column_name}' already exists in products table")
+
+            # Migrate data from old columns to new columns
+            if stats['columns_added'] > 0:
+                try:
+                    # Copy selling_price to base_price if base_price is 0
+                    await conn.execute_query(
+                        "UPDATE products SET base_price = selling_price WHERE base_price = 0"
+                    )
+
+                    # Copy current_stock to stock_quantity if stock_quantity is 0
+                    await conn.execute_query(
+                        "UPDATE products SET stock_quantity = current_stock WHERE stock_quantity = 0"
+                    )
+
+                    # Copy min_stock_level to low_stock_threshold if low_stock_threshold is 0
+                    await conn.execute_query(
+                        "UPDATE products SET low_stock_threshold = min_stock_level WHERE low_stock_threshold = 0"
+                    )
+
+                    # Set product_type based on item_type
+                    await conn.execute_query(
+                        "UPDATE products SET product_type = CASE WHEN item_type = 'service' THEN 'service' ELSE 'simple' END WHERE product_type = 'simple'"
+                    )
+
+                    logger.info("Migrated data from old columns to new columns")
+                except Exception as e:
+                    stats['errors'].append(f"Failed to migrate data: {e}")
+                    logger.error(f"Failed to migrate data: {e}")
+
+            logger.info(f"Product models migration completed: {stats['columns_added']} columns added, {stats['columns_skipped']} skipped")
+
+    except Exception as e:
+        stats['errors'].append(f"Product models migration failed: {e}")
+        logger.error(f"Product models migration failed: {e}")
+
+    return stats
+
+
 async def run_all_migrations() -> Dict[str, any]:
     """
     Run all pending migrations in the correct order.
@@ -540,6 +639,17 @@ async def run_all_migrations() -> Dict[str, any]:
 
         if tax_columns_stats['errors']:
             logger.warning(f"Tax rule columns migration had errors: {tax_columns_stats['errors']}")
+
+        # Migration 6: Migrate product models for comprehensive product management
+        logger.info("Running migration: Product models enhancement")
+        product_models_stats = await migrate_product_models()
+        results['migrations_run'].append({
+            'name': 'migrate_product_models',
+            'stats': product_models_stats
+        })
+
+        if product_models_stats['errors']:
+            logger.warning(f"Product models migration had errors: {product_models_stats['errors']}")
 
         results['success'] = True
         logger.info("All migrations completed successfully")

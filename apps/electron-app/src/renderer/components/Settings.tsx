@@ -15,6 +15,7 @@ import { UserManagementPanel } from './settings/UserManagementPanel'
 import { AboutPanel } from './settings/AboutPanel'
 import { PageHeader } from './layout'
 import { SplitLayout } from './layout'
+import { ThemeToggle } from './common'
 
 interface SettingsProps {
   onBack: () => void
@@ -82,12 +83,15 @@ export function Settings({ onBack }: SettingsProps) {
           </svg>
         }
         actions={
-          <div className={`
-            text-sm flex items-center gap-2
-            ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}
-          `}>
-            <div className="w-2 h-2 rounded-full bg-green-500"></div>
-            <span>Auto-saved</span>
+          <div className="flex items-center gap-3">
+            <div className={`
+              text-sm flex items-center gap-2
+              ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}
+            `}>
+              <div className="w-2 h-2 rounded-full bg-green-500"></div>
+              <span>Auto-saved</span>
+            </div>
+            <ThemeToggle size="md" />
           </div>
         }
       />

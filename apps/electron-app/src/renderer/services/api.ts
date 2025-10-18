@@ -83,6 +83,152 @@ export interface ProductCreate {
   notes?: string
 }
 
+export interface ProductUpdate {
+  name?: string
+  sku?: string
+  barcode?: string
+  description?: string
+  product_type?: string
+  category_id?: number
+  base_price?: number
+  cost_price?: number
+  tax_id?: number
+  stock_quantity?: number
+  low_stock_threshold?: number
+  track_inventory?: boolean
+  is_active?: boolean
+  notes?: string
+}
+
+// ============================================================================
+// Product Management Types (New Comprehensive System)
+// ============================================================================
+
+export interface ProductCategory {
+  id: number
+  name: string
+  description?: string
+  image_path?: string
+  parent_category_id?: number
+  parent_category_name?: string
+  display_order: number
+  is_active: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface ProductCategoryCreate {
+  name: string
+  description?: string
+  parent_category_id?: number
+  display_order?: number
+  is_active?: boolean
+}
+
+export interface ProductCategoryUpdate {
+  name?: string
+  description?: string
+  parent_category_id?: number
+  display_order?: number
+  is_active?: boolean
+}
+
+export interface ProductVariation {
+  id: number
+  parent_product_id: number
+  variation_name: string
+  sku?: string
+  barcode?: string
+  price_adjustment: number
+  cost_price?: number
+  stock_quantity: number
+  attributes: Record<string, any>
+  is_active: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface ProductVariationCreate {
+  variation_name: string
+  sku?: string
+  barcode?: string
+  price_adjustment?: number
+  cost_price?: number
+  stock_quantity?: number
+  attributes?: Record<string, any>
+  is_active?: boolean
+}
+
+export interface ProductVariationUpdate {
+  variation_name?: string
+  sku?: string
+  barcode?: string
+  price_adjustment?: number
+  cost_price?: number
+  stock_quantity?: number
+  attributes?: Record<string, any>
+  is_active?: boolean
+}
+
+export interface ProductBundleComponent {
+  id: number
+  bundle_product_id: number
+  component_product_id: number
+  quantity: number
+  created_at: string
+  updated_at: string
+}
+
+export interface ProductBundleComponentCreate {
+  component_product_id: number
+  quantity: number
+}
+
+export interface EnhancedProduct {
+  id: number
+  name: string
+  sku?: string
+  barcode?: string
+  description?: string
+  product_type: 'simple' | 'bundle' | 'variation' | 'service'
+  category_id?: number
+  category_name?: string
+  base_price: number
+  cost_price?: number
+  tax_id?: number
+  tax_name?: string
+  stock_quantity: number
+  low_stock_threshold: number
+  track_inventory: boolean
+  is_active: boolean
+  image_paths: string[]
+  notes?: string
+  variations?: ProductVariation[]
+  bundle_components?: ProductBundleComponent[]
+  created_at: string
+  updated_at: string
+}
+
+export interface EnhancedProductCreate {
+  name: string
+  sku?: string
+  barcode?: string
+  description?: string
+  product_type?: string
+  category_id?: number
+  base_price: number
+  cost_price?: number
+  tax_id?: number
+  stock_quantity?: number
+  low_stock_threshold?: number
+  track_inventory?: boolean
+  is_active?: boolean
+  image_paths?: string[]
+  notes?: string
+  variations?: ProductVariationCreate[]
+  bundle_components?: ProductBundleComponentCreate[]
+}
+
 export interface StockTransaction {
   id: number
   transaction_type: string
@@ -616,6 +762,319 @@ export const settingsAPI = {
   }> {
     const response = await fetch(`${API_BASE_URL}/settings/database-info`)
     return handleResponse(response)
+  }
+}
+
+// ============================================================================
+// Product Management API (New Comprehensive System)
+// ============================================================================
+
+export const productManagementAPI = {
+  // ============================================================================
+  // Category Endpoints
+  // ============================================================================
+
+  /**
+   * Get all product categories
+   */
+  async getAllCategories(params?: {
+    parent_id?: number
+    is_active?: boolean
+  }): Promise<ProductCategory[]> {
+    const queryParams = new URLSearchParams()
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined) {
+          queryParams.append(key, String(value))
+        }
+      })
+    }
+
+    const url = `${API_BASE_URL}/product-management/categories?${queryParams.toString()}`
+    const response = await fetch(url)
+    return handleResponse<ProductCategory[]>(response)
+  },
+
+  /**
+   * Get a specific category
+   */
+  async getCategory(categoryId: number): Promise<ProductCategory> {
+    const response = await fetch(`${API_BASE_URL}/product-management/categories/${categoryId}`)
+    return handleResponse<ProductCategory>(response)
+  },
+
+  /**
+   * Create a new category
+   */
+  async createCategory(categoryData: ProductCategoryCreate): Promise<ProductCategory> {
+    const response = await fetch(`${API_BASE_URL}/product-management/categories`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(categoryData)
+    })
+    return handleResponse<ProductCategory>(response)
+  },
+
+  /**
+   * Update a category
+   */
+  async updateCategory(categoryId: number, categoryData: ProductCategoryUpdate): Promise<ProductCategory> {
+    const response = await fetch(`${API_BASE_URL}/product-management/categories/${categoryId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(categoryData)
+    })
+    return handleResponse<ProductCategory>(response)
+  },
+
+  /**
+   * Delete a category
+   */
+  async deleteCategory(categoryId: number): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/product-management/categories/${categoryId}`, {
+      method: 'DELETE'
+    })
+    if (!response.ok) {
+      throw new APIError('Failed to delete category', response.status)
+    }
+  },
+
+  /**
+   * Upload category image
+   */
+  async uploadCategoryImage(categoryId: number, file: File): Promise<{ success: boolean; image_path: string }> {
+    const formData = new FormData()
+    formData.append('file', file)
+
+    const response = await fetch(`${API_BASE_URL}/product-management/categories/${categoryId}/image`, {
+      method: 'POST',
+      body: formData
+    })
+    return handleResponse(response)
+  },
+
+  /**
+   * Delete category image
+   */
+  async deleteCategoryImage(categoryId: number): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/product-management/categories/${categoryId}/image`, {
+      method: 'DELETE'
+    })
+    if (!response.ok) {
+      throw new APIError('Failed to delete category image', response.status)
+    }
+  },
+
+  // ============================================================================
+  // Product Endpoints
+  // ============================================================================
+
+  /**
+   * Get all products with filters
+   */
+  async getAllProducts(params?: {
+    skip?: number
+    limit?: number
+    search?: string
+    product_type?: string
+    category_id?: number
+    is_active?: boolean
+  }): Promise<EnhancedProduct[]> {
+    const queryParams = new URLSearchParams()
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined) {
+          queryParams.append(key, String(value))
+        }
+      })
+    }
+
+    const url = `${API_BASE_URL}/product-management/?${queryParams.toString()}`
+    const response = await fetch(url)
+    return handleResponse<EnhancedProduct[]>(response)
+  },
+
+  /**
+   * Get a specific product with full details
+   */
+  async getProduct(productId: number): Promise<EnhancedProduct> {
+    const response = await fetch(`${API_BASE_URL}/product-management/products/${productId}`)
+    return handleResponse<EnhancedProduct>(response)
+  },
+
+  /**
+   * Lookup product by barcode
+   */
+  async lookupByBarcode(barcode: string): Promise<EnhancedProduct> {
+    const response = await fetch(`${API_BASE_URL}/product-management/products/barcode/${barcode}`)
+    return handleResponse<EnhancedProduct>(response)
+  },
+
+  /**
+   * Create a new product
+   */
+  async createProduct(productData: EnhancedProductCreate): Promise<EnhancedProduct> {
+    const response = await fetch(`${API_BASE_URL}/product-management/products`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(productData)
+    })
+    return handleResponse<EnhancedProduct>(response)
+  },
+
+  /**
+   * Update a product
+   */
+  async updateProduct(productId: number, productData: ProductUpdate): Promise<EnhancedProduct> {
+    const response = await fetch(`${API_BASE_URL}/product-management/products/${productId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(productData)
+    })
+    return handleResponse<EnhancedProduct>(response)
+  },
+
+  /**
+   * Delete a product (soft delete)
+   */
+  async deleteProduct(productId: number): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/product-management/products/${productId}`, {
+      method: 'DELETE'
+    })
+    if (!response.ok) {
+      throw new APIError('Failed to delete product', response.status)
+    }
+  },
+
+  /**
+   * Upload product images
+   */
+  async uploadProductImages(productId: number, files: File[]): Promise<{
+    success: boolean
+    image_paths: string[]
+    total_images: number
+    message: string
+  }> {
+    const formData = new FormData()
+    files.forEach(file => formData.append('files', file))
+
+    const response = await fetch(`${API_BASE_URL}/product-management/products/${productId}/images`, {
+      method: 'POST',
+      body: formData
+    })
+    return handleResponse(response)
+  },
+
+  /**
+   * Delete a product image
+   */
+  async deleteProductImage(productId: number, imageIndex: number): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/product-management/products/${productId}/images/${imageIndex}`, {
+      method: 'DELETE'
+    })
+    if (!response.ok) {
+      throw new APIError('Failed to delete product image', response.status)
+    }
+  },
+
+  // ============================================================================
+  // Product Variation Endpoints
+  // ============================================================================
+
+  /**
+   * Get all variations for a product
+   */
+  async getProductVariations(productId: number): Promise<ProductVariation[]> {
+    const response = await fetch(`${API_BASE_URL}/product-management/products/${productId}/variations`)
+    return handleResponse<ProductVariation[]>(response)
+  },
+
+  /**
+   * Create a new variation
+   */
+  async createProductVariation(productId: number, variationData: ProductVariationCreate): Promise<ProductVariation> {
+    const response = await fetch(`${API_BASE_URL}/product-management/products/${productId}/variations`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(variationData)
+    })
+    return handleResponse<ProductVariation>(response)
+  },
+
+  /**
+   * Update a variation
+   */
+  async updateProductVariation(
+    productId: number,
+    variationId: number,
+    variationData: ProductVariationUpdate
+  ): Promise<ProductVariation> {
+    const response = await fetch(
+      `${API_BASE_URL}/product-management/products/${productId}/variations/${variationId}`,
+      {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(variationData)
+      }
+    )
+    return handleResponse<ProductVariation>(response)
+  },
+
+  /**
+   * Delete a variation
+   */
+  async deleteProductVariation(productId: number, variationId: number): Promise<void> {
+    const response = await fetch(
+      `${API_BASE_URL}/product-management/products/${productId}/variations/${variationId}`,
+      {
+        method: 'DELETE'
+      }
+    )
+    if (!response.ok) {
+      throw new APIError('Failed to delete variation', response.status)
+    }
+  },
+
+  // ============================================================================
+  // Product Bundle Endpoints
+  // ============================================================================
+
+  /**
+   * Get all bundle components for a product
+   */
+  async getBundleComponents(productId: number): Promise<ProductBundleComponent[]> {
+    const response = await fetch(`${API_BASE_URL}/product-management/products/${productId}/bundle-components`)
+    return handleResponse<ProductBundleComponent[]>(response)
+  },
+
+  /**
+   * Add a component to a bundle
+   */
+  async addBundleComponent(
+    productId: number,
+    componentData: ProductBundleComponentCreate
+  ): Promise<ProductBundleComponent> {
+    const response = await fetch(`${API_BASE_URL}/product-management/products/${productId}/bundle-components`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(componentData)
+    })
+    return handleResponse<ProductBundleComponent>(response)
+  },
+
+  /**
+   * Remove a component from a bundle
+   */
+  async removeBundleComponent(productId: number, componentId: number): Promise<void> {
+    const response = await fetch(
+      `${API_BASE_URL}/product-management/products/${productId}/bundle-components/${componentId}`,
+      {
+        method: 'DELETE'
+      }
+    )
+    if (!response.ok) {
+      throw new APIError('Failed to remove bundle component', response.status)
+    }
   }
 }
 

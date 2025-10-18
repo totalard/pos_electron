@@ -94,67 +94,256 @@ class UserLoginResponse(BaseModel):
     token: Optional[str] = None  # For future JWT implementation
 
 
-# Product Schemas
+# ============================================================================
+# Customer Schemas
+# ============================================================================
+
+class CustomerCreate(BaseModel):
+    """Schema for creating a new customer"""
+    name: str = Field(..., min_length=1, max_length=255)
+    phone: Optional[str] = Field(None, max_length=20)
+    email: Optional[str] = Field(None, max_length=255)
+    address: Optional[str] = None
+    loyalty_points: int = Field(default=0, ge=0)
+
+
+class CustomerUpdate(BaseModel):
+    """Schema for updating a customer"""
+    name: Optional[str] = Field(None, min_length=1, max_length=255)
+    phone: Optional[str] = Field(None, max_length=20)
+    email: Optional[str] = Field(None, max_length=255)
+    address: Optional[str] = None
+    loyalty_points: Optional[int] = Field(None, ge=0)
+
+
+class CustomerResponse(BaseModel):
+    """Schema for customer response"""
+    id: int
+    name: str
+    phone: Optional[str]
+    email: Optional[str]
+    address: Optional[str]
+    loyalty_points: int
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+# ============================================================================
+# Product Category Schemas
+# ============================================================================
+
+class ProductCategoryCreate(BaseModel):
+    """Schema for creating a product category"""
+    name: str = Field(..., min_length=1, max_length=255)
+    description: Optional[str] = None
+    parent_category_id: Optional[int] = None
+    display_order: int = Field(default=0)
+    is_active: bool = Field(default=True)
+
+
+class ProductCategoryUpdate(BaseModel):
+    """Schema for updating a product category"""
+    name: Optional[str] = Field(None, min_length=1, max_length=255)
+    description: Optional[str] = None
+    parent_category_id: Optional[int] = None
+    display_order: Optional[int] = None
+    is_active: Optional[bool] = None
+
+
+class ProductCategoryResponse(BaseModel):
+    """Schema for product category response"""
+    id: int
+    name: str
+    description: Optional[str]
+    image_path: Optional[str]
+    parent_category_id: Optional[int]
+    display_order: int
+    is_active: bool
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+# ============================================================================
+# Product Variation Schemas
+# ============================================================================
+
+class ProductVariationCreate(BaseModel):
+    """Schema for creating a product variation"""
+    variation_name: str = Field(..., min_length=1, max_length=255)
+    sku: Optional[str] = Field(None, max_length=100)
+    barcode: Optional[str] = Field(None, max_length=100)
+    price_adjustment: float = Field(default=0)
+    cost_price: Optional[float] = Field(None, ge=0)
+    stock_quantity: int = Field(default=0, ge=0)
+    attributes: Dict[str, Any] = Field(default_factory=dict)
+    is_active: bool = Field(default=True)
+
+
+class ProductVariationUpdate(BaseModel):
+    """Schema for updating a product variation"""
+    variation_name: Optional[str] = Field(None, min_length=1, max_length=255)
+    sku: Optional[str] = Field(None, max_length=100)
+    barcode: Optional[str] = Field(None, max_length=100)
+    price_adjustment: Optional[float] = None
+    cost_price: Optional[float] = Field(None, ge=0)
+    stock_quantity: Optional[int] = Field(None, ge=0)
+    attributes: Optional[Dict[str, Any]] = None
+    is_active: Optional[bool] = None
+
+
+class ProductVariationResponse(BaseModel):
+    """Schema for product variation response"""
+    id: int
+    parent_product_id: int
+    variation_name: str
+    sku: Optional[str]
+    barcode: Optional[str]
+    price_adjustment: float
+    cost_price: Optional[float]
+    stock_quantity: int
+    attributes: Dict[str, Any]
+    is_active: bool
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+# ============================================================================
+# Product Bundle Schemas
+# ============================================================================
+
+class ProductBundleComponentCreate(BaseModel):
+    """Schema for creating a bundle component"""
+    component_product_id: int
+    quantity: int = Field(..., ge=1)
+
+
+class ProductBundleComponentResponse(BaseModel):
+    """Schema for bundle component response"""
+    id: int
+    bundle_product_id: int
+    component_product_id: int
+    quantity: int
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+# ============================================================================
+# Enhanced Product Schemas
+# ============================================================================
+
 class ProductCreate(BaseModel):
     """Schema for creating a new product"""
     name: str = Field(..., min_length=1, max_length=255)
+    description: Optional[str] = None
     sku: Optional[str] = Field(None, max_length=100)
     barcode: Optional[str] = Field(None, max_length=100)
-    description: Optional[str] = None
-    item_type: str = Field(default="product")
-    category: str = Field(default="general")
+    product_type: str = Field(default="simple")  # simple/bundle/variation/service
+    category_id: Optional[int] = None
+    base_price: float = Field(..., ge=0)
     cost_price: float = Field(default=0, ge=0)
-    selling_price: float = Field(..., ge=0)
-    tax_rate: float = Field(default=0, ge=0, le=100)
-    track_inventory: bool = Field(default=True)
-    current_stock: int = Field(default=0, ge=0)
-    min_stock_level: int = Field(default=0, ge=0)
-    max_stock_level: int = Field(default=0, ge=0)
+    tax_id: Optional[int] = None
     is_active: bool = Field(default=True)
-    image_url: Optional[str] = Field(None, max_length=500)
+    track_inventory: bool = Field(default=True)
+    stock_quantity: int = Field(default=0, ge=0)
+    low_stock_threshold: int = Field(default=0, ge=0)
+    max_stock_level: int = Field(default=0, ge=0)
+    image_paths: List[str] = Field(default_factory=list)
     notes: Optional[str] = None
+
+    # For VARIATION type products
+    variations: Optional[List[ProductVariationCreate]] = None
+
+    # For BUNDLE type products
+    bundle_components: Optional[List[ProductBundleComponentCreate]] = None
+
+    # Backward compatibility fields
+    item_type: Optional[str] = Field(default="product")
+    selling_price: Optional[float] = None
+    tax_rate: Optional[float] = None
+    current_stock: Optional[int] = None
+    min_stock_level: Optional[int] = None
+    image_url: Optional[str] = None
 
 
 class ProductUpdate(BaseModel):
     """Schema for updating a product"""
     name: Optional[str] = Field(None, min_length=1, max_length=255)
+    description: Optional[str] = None
     sku: Optional[str] = Field(None, max_length=100)
     barcode: Optional[str] = Field(None, max_length=100)
-    description: Optional[str] = None
+    product_type: Optional[str] = None
+    category_id: Optional[int] = None
+    base_price: Optional[float] = Field(None, ge=0)
+    cost_price: Optional[float] = Field(None, ge=0)
+    tax_id: Optional[int] = None
+    is_active: Optional[bool] = None
+    track_inventory: Optional[bool] = None
+    stock_quantity: Optional[int] = Field(None, ge=0)
+    low_stock_threshold: Optional[int] = Field(None, ge=0)
+    max_stock_level: Optional[int] = Field(None, ge=0)
+    image_paths: Optional[List[str]] = None
+    notes: Optional[str] = None
+
+    # Backward compatibility
     item_type: Optional[str] = None
     category: Optional[str] = None
-    cost_price: Optional[float] = Field(None, ge=0)
-    selling_price: Optional[float] = Field(None, ge=0)
-    tax_rate: Optional[float] = Field(None, ge=0, le=100)
-    track_inventory: Optional[bool] = None
-    min_stock_level: Optional[int] = Field(None, ge=0)
-    max_stock_level: Optional[int] = Field(None, ge=0)
-    is_active: Optional[bool] = None
-    image_url: Optional[str] = Field(None, max_length=500)
-    notes: Optional[str] = None
+    selling_price: Optional[float] = None
+    tax_rate: Optional[float] = None
+    current_stock: Optional[int] = None
+    min_stock_level: Optional[int] = None
+    image_url: Optional[str] = None
 
 
 class ProductResponse(BaseModel):
     """Schema for product response"""
     id: int
     name: str
+    description: Optional[str]
     sku: Optional[str]
     barcode: Optional[str]
-    description: Optional[str]
-    item_type: str
-    category: str
+    product_type: str
+    category_id: Optional[int]
+    category_name: Optional[str] = None
+    base_price: float
     cost_price: float
-    selling_price: float
-    tax_rate: float
-    track_inventory: bool
-    current_stock: int
-    min_stock_level: int
-    max_stock_level: int
+    tax_id: Optional[int]
+    tax_name: Optional[str] = None
     is_active: bool
-    image_url: Optional[str]
+    track_inventory: bool
+    stock_quantity: int
+    low_stock_threshold: int
+    max_stock_level: int
+    image_paths: List[str]
     notes: Optional[str]
     created_at: datetime
     updated_at: datetime
+
+    # Include variations if product_type = variation
+    variations: Optional[List[ProductVariationResponse]] = None
+
+    # Include bundle components if product_type = bundle
+    bundle_components: Optional[List[ProductBundleComponentResponse]] = None
+
+    # Backward compatibility fields
+    item_type: str
+    category: str
+    selling_price: float
+    tax_rate: float
+    current_stock: int
+    min_stock_level: int
+    image_url: Optional[str]
 
     class Config:
         from_attributes = True

@@ -3,7 +3,15 @@ Database models package
 """
 from .base import BaseModel
 from .user import User, UserRole
-from .product import Product, ItemType, ProductCategory
+from .customer import Customer
+from .product import (
+    Product,
+    ProductCategory,
+    ProductVariation,
+    ProductBundle,
+    ProductType,
+    ItemType  # DEPRECATED - kept for backward compatibility
+)
 from .inventory import (
     StockTransaction,
     StockAdjustment,
@@ -24,9 +32,13 @@ __all__ = [
     "BaseModel",
     "User",
     "UserRole",
+    "Customer",
     "Product",
-    "ItemType",
     "ProductCategory",
+    "ProductVariation",
+    "ProductBundle",
+    "ProductType",
+    "ItemType",  # DEPRECATED
     "StockTransaction",
     "StockAdjustment",
     "StockAdjustmentLine",

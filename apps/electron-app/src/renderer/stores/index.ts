@@ -21,3 +21,6 @@ export type {
   AboutInfo
 } from './settingsStore'
 
+export { useProductStore } from './productStore'
+export type { ProductState } from './productStore'
+

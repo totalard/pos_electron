@@ -43,3 +43,6 @@ export type { ToastProps } from './Toast'
 export { Toggle } from './Toggle'
 export type { ToggleProps } from './Toggle'
 
+export { ThemeToggle } from './ThemeToggle'
+export type { ThemeToggleProps } from './ThemeToggle'
+

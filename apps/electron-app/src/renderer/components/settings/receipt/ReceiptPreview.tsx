@@ -114,32 +114,50 @@ export function ReceiptPreview({ settings }: ReceiptPreviewProps) {
         
         {/* Zoom Controls */}
         <div className="flex items-center gap-2">
-          <IconButton
+          <button
             onClick={() => setZoom(Math.max(50, zoom - 10))}
             disabled={zoom <= 50}
             aria-label="Zoom out"
-            className="min-w-[44px] min-h-[44px]"
+            className={`
+              min-w-[44px] min-h-[44px] rounded-lg transition-colors
+              ${theme === 'dark'
+                ? 'bg-gray-700 hover:bg-gray-600 text-white disabled:bg-gray-800 disabled:text-gray-600'
+                : 'bg-gray-100 hover:bg-gray-200 text-gray-900 disabled:bg-gray-50 disabled:text-gray-400'
+              }
+            `}
           >
             <span className="text-lg">−</span>
-          </IconButton>
+          </button>
           <span className={`text-sm font-medium min-w-[60px] text-center ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
             {zoom}%
           </span>
-          <IconButton
+          <button
             onClick={() => setZoom(Math.min(200, zoom + 10))}
             disabled={zoom >= 200}
             aria-label="Zoom in"
-            className="min-w-[44px] min-h-[44px]"
+            className={`
+              min-w-[44px] min-h-[44px] rounded-lg transition-colors
+              ${theme === 'dark'
+                ? 'bg-gray-700 hover:bg-gray-600 text-white disabled:bg-gray-800 disabled:text-gray-600'
+                : 'bg-gray-100 hover:bg-gray-200 text-gray-900 disabled:bg-gray-50 disabled:text-gray-400'
+              }
+            `}
           >
             <span className="text-lg">+</span>
-          </IconButton>
-          <IconButton
+          </button>
+          <button
             onClick={() => setZoom(100)}
             aria-label="Reset zoom"
-            className="min-w-[44px] min-h-[44px]"
+            className={`
+              min-w-[44px] min-h-[44px] rounded-lg transition-colors
+              ${theme === 'dark'
+                ? 'bg-gray-700 hover:bg-gray-600 text-white'
+                : 'bg-gray-100 hover:bg-gray-200 text-gray-900'
+              }
+            `}
           >
             <span className="text-xs">100%</span>
-          </IconButton>
+          </button>
         </div>
       </div>
 

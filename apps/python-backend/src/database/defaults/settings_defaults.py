@@ -599,6 +599,14 @@ def get_default_settings() -> List[Dict[str, Any]]:
             'data_type': 'number',
             'description': 'Screen timeout in minutes (0 = never)'
         },
+        {
+            'section': 'display',
+            'key': 'show_walkthrough',
+            'value': 'true',
+            'default_value': 'true',
+            'data_type': 'boolean',
+            'description': 'Show walkthrough tutorial on first login'
+        },
 
         # ===== SECURITY SETTINGS =====
         {

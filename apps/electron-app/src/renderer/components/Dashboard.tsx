@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useAppStore, usePinStore } from '../stores'
 import { MenuCard } from './pos'
 import { Grid } from './layout'
+import { ThemeToggle } from './common'
 
 interface DashboardProps {
   onNavigate: (screen: 'sales' | 'products' | 'inventory' | 'users' | 'settings') => void
@@ -130,7 +131,7 @@ export function Dashboard({ onNavigate }: DashboardProps) {
               </div>
             </div>
 
-            {/* User Info and Time */}
+            {/* User Info, Time, and Theme Toggle */}
             <div className="flex items-center gap-6">
               <div className="text-right">
                 <p className={`
@@ -148,8 +149,8 @@ export function Dashboard({ onNavigate }: DashboardProps) {
               </div>
               <div className={`
                 px-4 py-2 rounded-lg
-                ${theme === 'dark' 
-                  ? 'bg-gray-700/50 text-gray-300' 
+                ${theme === 'dark'
+                  ? 'bg-gray-700/50 text-gray-300'
                   : 'bg-gray-100 text-gray-700'
                 }
               `}>
@@ -160,6 +161,7 @@ export function Dashboard({ onNavigate }: DashboardProps) {
                   {currentTime.toLocaleDateString()}
                 </p>
               </div>
+              <ThemeToggle size="md" />
             </div>
           </div>
         </div>
