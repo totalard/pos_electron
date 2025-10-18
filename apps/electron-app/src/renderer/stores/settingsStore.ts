@@ -79,24 +79,121 @@ export interface TaxSettings {
 }
 
 export interface HardwareSettings {
-  printerEnabled: boolean
-  printerName: string
+  // Receipt Printer Configuration
+  receiptPrinterEnabled: boolean
+  receiptPrinterConnection: 'USB' | 'Network' | 'COM'
+  receiptPrinterPort: string
+  receiptPrinterBaudRate: number
+  receiptPrinterPaperSize: '58mm' | '80mm'
+
+  // Kitchen Printer Configuration
+  kitchenPrinterEnabled: boolean
+  kitchenPrinterConnection: 'USB' | 'Network' | 'COM'
+  kitchenPrinterPort: string
+  kitchenPrinterBaudRate: number
+
+  // Label Printer Configuration
+  labelPrinterEnabled: boolean
+  labelPrinterConnection: 'USB' | 'Network' | 'COM'
+  labelPrinterPort: string
+  labelPrinterBaudRate: number
+
+  // Cash Drawer Configuration
   cashDrawerEnabled: boolean
-  barcodeReaderEnabled: boolean
-  displayEnabled: boolean
+  cashDrawerConnection: 'Printer' | 'USB' | 'COM'
+  cashDrawerTrigger: 'Manual' | 'Auto'
+  cashDrawerAutoOpen: boolean
+
+  // Barcode Scanner Configuration
+  barcodeScannerEnabled: boolean
+  barcodeScannerConnection: 'USB' | 'Bluetooth' | 'COM'
+  barcodeScannerMode: 'Continuous' | 'Trigger'
+  barcodeScannerPrefix: string
+  barcodeScannerSuffix: string
+
+  // Customer Display Configuration
+  customerDisplayEnabled: boolean
+  customerDisplayType: 'Monitor' | 'Pole Display' | 'Tablet'
+  customerDisplayConnection: 'HDMI' | 'USB' | 'Network'
+  customerDisplayPort: string
+  customerDisplayShowItems: boolean
+  customerDisplayShowTotal: boolean
+  customerDisplayShowPromo: boolean
+  customerDisplayFontSize: 'Small' | 'Medium' | 'Large'
+
+  // Scale/Weight Device Configuration
+  scaleEnabled: boolean
+  scaleConnection: 'USB' | 'COM' | 'Network'
+  scalePort: string
+  scaleBaudRate: number
+  scaleUnit: 'kg' | 'lb' | 'g'
+
+  // Card Reader/Payment Terminal Configuration
+  paymentTerminalEnabled: boolean
+  paymentTerminalType: string
+  paymentTerminalConnection: 'USB' | 'Network' | 'Bluetooth'
+  paymentTerminalPort: string
 }
 
 export interface ReceiptSettings {
+  // Receipt Header
   showLogo: boolean
   logoUrl: string
-  headerText: string
-  footerText: string
-  customHeader: string
-  customFooter: string
+  businessName: string
+  businessAddress: string
+  businessPhone: string
+  businessEmail: string
+  taxId: string
+  customHeaderText: string
+
+  // Receipt Body - Item Display
+  showItemName: boolean
+  showItemQuantity: boolean
+  showItemPrice: boolean
+  showItemDiscount: boolean
+  showItemTax: boolean
+  itemColumnAlignment: 'left' | 'center' | 'right'
+  itemSpacing: 'compact' | 'normal' | 'spacious'
+
+  // Receipt Body - Totals
+  showSubtotal: boolean
   showTaxBreakdown: boolean
+  showDiscountTotal: boolean
+  showGrandTotal: boolean
+
+  // Receipt Footer
+  customFooterText: string
+  returnPolicy: string
+  promotionalMessage: string
   showBarcode: boolean
   showQRCode: boolean
-  paperSize: string
+  qrCodeContent: 'receipt_id' | 'receipt_url' | 'custom'
+
+  // Receipt Layout
+  paperWidth: '58mm' | '80mm' | 'custom'
+  customPaperWidth: number
+  fontFamily: 'monospace' | 'sans-serif' | 'serif'
+  fontSize: 'small' | 'medium' | 'large'
+  lineSpacing: 'compact' | 'normal' | 'relaxed'
+  marginTop: number
+  marginBottom: number
+  marginLeft: number
+  marginRight: number
+
+  // Template Options
+  activeTemplate: 'standard' | 'compact' | 'detailed' | 'custom'
+  customTemplates: Array<{
+    id: string
+    name: string
+    config: Record<string, any>
+  }>
+
+  // Print Behavior
+  autoPrint: boolean
+  numberOfCopies: number
+  printKitchenReceipt: boolean
+  printCustomerCopy: boolean
+  printMerchantCopy: boolean
 }
 
 export interface InventorySettings {
@@ -136,21 +233,9 @@ export interface InventorySettings {
   autoGenerateBarcode: boolean
   barcodePrefix: string
 
-  // Multi-Location Settings
-  enableMultiLocation: boolean
-  defaultLocation: string
-  transferBetweenLocations: boolean
-
   // Stock Valuation Method
   valuationMethod: 'FIFO' | 'LIFO' | 'Weighted Average'
   enableCostTracking: boolean
-
-  // Waste & Adjustment Tracking
-  enableWasteTracking: boolean
-  wasteReasons: string[]
-  requireWasteApproval: boolean
-  enableStockAdjustment: boolean
-  requireAdjustmentReason: boolean
 
   // Restaurant-Specific Settings
   enableRecipeManagement: boolean
@@ -314,24 +399,117 @@ const initialState = {
   },
 
   hardware: {
-    printerEnabled: false,
-    printerName: '',
+    // Receipt Printer Configuration
+    receiptPrinterEnabled: false,
+    receiptPrinterConnection: 'USB' as const,
+    receiptPrinterPort: '',
+    receiptPrinterBaudRate: 9600,
+    receiptPrinterPaperSize: '80mm' as const,
+
+    // Kitchen Printer Configuration
+    kitchenPrinterEnabled: false,
+    kitchenPrinterConnection: 'USB' as const,
+    kitchenPrinterPort: '',
+    kitchenPrinterBaudRate: 9600,
+
+    // Label Printer Configuration
+    labelPrinterEnabled: false,
+    labelPrinterConnection: 'USB' as const,
+    labelPrinterPort: '',
+    labelPrinterBaudRate: 9600,
+
+    // Cash Drawer Configuration
     cashDrawerEnabled: false,
-    barcodeReaderEnabled: false,
-    displayEnabled: false
+    cashDrawerConnection: 'Printer' as const,
+    cashDrawerTrigger: 'Manual' as const,
+    cashDrawerAutoOpen: false,
+
+    // Barcode Scanner Configuration
+    barcodeScannerEnabled: false,
+    barcodeScannerConnection: 'USB' as const,
+    barcodeScannerMode: 'Continuous' as const,
+    barcodeScannerPrefix: '',
+    barcodeScannerSuffix: '',
+
+    // Customer Display Configuration
+    customerDisplayEnabled: false,
+    customerDisplayType: 'Monitor' as const,
+    customerDisplayConnection: 'HDMI' as const,
+    customerDisplayPort: '',
+    customerDisplayShowItems: true,
+    customerDisplayShowTotal: true,
+    customerDisplayShowPromo: true,
+    customerDisplayFontSize: 'Medium' as const,
+
+    // Scale/Weight Device Configuration
+    scaleEnabled: false,
+    scaleConnection: 'USB' as const,
+    scalePort: '',
+    scaleBaudRate: 9600,
+    scaleUnit: 'kg' as const,
+
+    // Card Reader/Payment Terminal Configuration
+    paymentTerminalEnabled: false,
+    paymentTerminalType: '',
+    paymentTerminalConnection: 'USB' as const,
+    paymentTerminalPort: ''
   },
 
   receipts: {
+    // Receipt Header
     showLogo: false,
     logoUrl: '',
-    headerText: 'Thank you for your purchase!',
-    footerText: 'Please come again!',
-    customHeader: '',
-    customFooter: '',
+    businessName: '',
+    businessAddress: '',
+    businessPhone: '',
+    businessEmail: '',
+    taxId: '',
+    customHeaderText: 'Thank you for your purchase!',
+
+    // Receipt Body - Item Display
+    showItemName: true,
+    showItemQuantity: true,
+    showItemPrice: true,
+    showItemDiscount: true,
+    showItemTax: true,
+    itemColumnAlignment: 'left' as const,
+    itemSpacing: 'normal' as const,
+
+    // Receipt Body - Totals
+    showSubtotal: true,
     showTaxBreakdown: true,
+    showDiscountTotal: true,
+    showGrandTotal: true,
+
+    // Receipt Footer
+    customFooterText: 'Please come again!',
+    returnPolicy: '',
+    promotionalMessage: '',
     showBarcode: false,
     showQRCode: false,
-    paperSize: 'A4'
+    qrCodeContent: 'receipt_id' as const,
+
+    // Receipt Layout
+    paperWidth: '80mm' as const,
+    customPaperWidth: 80,
+    fontFamily: 'monospace' as const,
+    fontSize: 'medium' as const,
+    lineSpacing: 'normal' as const,
+    marginTop: 5,
+    marginBottom: 5,
+    marginLeft: 5,
+    marginRight: 5,
+
+    // Template Options
+    activeTemplate: 'standard' as const,
+    customTemplates: [],
+
+    // Print Behavior
+    autoPrint: false,
+    numberOfCopies: 1,
+    printKitchenReceipt: false,
+    printCustomerCopy: true,
+    printMerchantCopy: false
   },
 
   inventory: {
@@ -371,21 +549,9 @@ const initialState = {
     autoGenerateBarcode: false,
     barcodePrefix: '',
 
-    // Multi-Location Settings
-    enableMultiLocation: false,
-    defaultLocation: 'Main Warehouse',
-    transferBetweenLocations: false,
-
     // Stock Valuation Method
     valuationMethod: 'FIFO' as const,
     enableCostTracking: true,
-
-    // Waste & Adjustment Tracking
-    enableWasteTracking: false,
-    wasteReasons: ['Damaged', 'Expired', 'Lost', 'Other'],
-    requireWasteApproval: false,
-    enableStockAdjustment: true,
-    requireAdjustmentReason: true,
 
     // Restaurant-Specific Settings
     enableRecipeManagement: false,

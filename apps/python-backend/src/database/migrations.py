@@ -329,6 +329,62 @@ async def migrate_settings_to_normalized() -> Dict[str, Any]:
     return stats
 
 
+async def remove_deprecated_inventory_settings() -> Dict[str, Any]:
+    """
+    Remove deprecated inventory settings (waste tracking and multi-location).
+
+    This migration removes settings that are no longer supported in the freeware version:
+    - enableWasteTracking
+    - wasteReasons
+    - requireWasteApproval
+    - enableStockAdjustment
+    - requireAdjustmentReason
+    - enableMultiLocation
+    - defaultLocation
+    - transferBetweenLocations
+
+    Returns:
+        Dict with migration statistics
+    """
+    stats = {
+        'settings_removed': 0,
+        'errors': []
+    }
+
+    deprecated_keys = [
+        'enableWasteTracking',
+        'wasteReasons',
+        'requireWasteApproval',
+        'enableStockAdjustment',
+        'requireAdjustmentReason',
+        'enableMultiLocation',
+        'defaultLocation',
+        'transferBetweenLocations'
+    ]
+
+    try:
+        from .models.setting import Setting
+
+        for key in deprecated_keys:
+            try:
+                # Delete the setting if it exists
+                deleted_count = await Setting.filter(section='inventory', key=key).delete()
+                if deleted_count > 0:
+                    stats['settings_removed'] += deleted_count
+                    logger.info(f"Removed deprecated inventory setting: {key}")
+            except Exception as e:
+                stats['errors'].append(f"Failed to remove {key}: {e}")
+                logger.error(f"Failed to remove deprecated setting {key}: {e}")
+
+        logger.info(f"Deprecated inventory settings cleanup completed: {stats['settings_removed']} removed")
+
+    except Exception as e:
+        stats['errors'].append(f"Deprecated settings cleanup failed: {e}")
+        logger.error(f"Deprecated settings cleanup failed: {e}")
+
+    return stats
+
+
 async def run_all_migrations() -> Dict[str, any]:
     """
     Run all pending migrations in the correct order.
@@ -389,6 +445,17 @@ async def run_all_migrations() -> Dict[str, any]:
 
         if settings_stats['errors']:
             logger.warning(f"Settings migration had errors: {settings_stats['errors']}")
+
+        # Migration 4: Remove deprecated inventory settings
+        logger.info("Running migration: Remove deprecated inventory settings")
+        cleanup_stats = await remove_deprecated_inventory_settings()
+        results['migrations_run'].append({
+            'name': 'remove_deprecated_inventory_settings',
+            'stats': cleanup_stats
+        })
+
+        if cleanup_stats['errors']:
+            logger.warning(f"Deprecated settings cleanup had errors: {cleanup_stats['errors']}")
 
         results['success'] = True
         logger.info("All migrations completed successfully")

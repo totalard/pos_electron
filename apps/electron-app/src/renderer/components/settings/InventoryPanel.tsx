@@ -317,85 +317,12 @@ export function InventoryPanel() {
         </div>
       </FormSection>
 
-      {/* Advanced Features */}
+      {/* Business-Specific Features */}
       <FormSection
-        title="Advanced Features"
-        description="Multi-location, waste tracking, and business-specific settings"
+        title="Business-Specific Features"
+        description="Restaurant and retail specific inventory settings"
       >
         <div className="space-y-4">
-          {/* Multi-Location */}
-          <div className={`p-4 rounded-lg border-2 ${theme === 'dark' ? 'bg-gray-800/50 border-gray-700' : 'bg-gray-50 border-gray-200'}`}>
-            <h4 className={`text-sm font-semibold mb-3 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-              Multi-Location Management
-            </h4>
-            <div className="space-y-4">
-              <Toggle
-                checked={inventory.enableMultiLocation}
-                onChange={(checked) => updateInventorySettings({ enableMultiLocation: checked })}
-                label="Enable Multiple Locations"
-                description="Track inventory across multiple warehouses or stores"
-              />
-
-              {inventory.enableMultiLocation && (
-                <>
-                  <Input
-                    type="text"
-                    label="Default Location"
-                    value={inventory.defaultLocation}
-                    onChange={(e) => updateInventorySettings({ defaultLocation: e.target.value })}
-                    placeholder="e.g., Main Warehouse"
-                  />
-
-                  <Toggle
-                    checked={inventory.transferBetweenLocations}
-                    onChange={(checked) => updateInventorySettings({ transferBetweenLocations: checked })}
-                    label="Allow Stock Transfers"
-                    description="Enable transferring stock between locations"
-                  />
-                </>
-              )}
-            </div>
-          </div>
-
-          {/* Waste & Adjustment Tracking */}
-          <div className={`p-4 rounded-lg border-2 ${theme === 'dark' ? 'bg-gray-800/50 border-gray-700' : 'bg-gray-50 border-gray-200'}`}>
-            <h4 className={`text-sm font-semibold mb-3 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-              Waste & Adjustment Tracking
-            </h4>
-            <div className="space-y-4">
-              <Toggle
-                checked={inventory.enableWasteTracking}
-                onChange={(checked) => updateInventorySettings({ enableWasteTracking: checked })}
-                label="Enable Waste Tracking"
-                description="Track damaged, expired, or lost inventory"
-              />
-
-              {inventory.enableWasteTracking && (
-                <Toggle
-                  checked={inventory.requireWasteApproval}
-                  onChange={(checked) => updateInventorySettings({ requireWasteApproval: checked })}
-                  label="Require Waste Approval"
-                  description="Require admin approval for waste entries"
-                />
-              )}
-
-              <Toggle
-                checked={inventory.enableStockAdjustment}
-                onChange={(checked) => updateInventorySettings({ enableStockAdjustment: checked })}
-                label="Enable Stock Adjustments"
-                description="Allow manual stock quantity adjustments"
-              />
-
-              {inventory.enableStockAdjustment && (
-                <Toggle
-                  checked={inventory.requireAdjustmentReason}
-                  onChange={(checked) => updateInventorySettings({ requireAdjustmentReason: checked })}
-                  label="Require Adjustment Reason"
-                  description="Require a reason for all stock adjustments"
-                />
-              )}
-            </div>
-          </div>
 
           {/* Restaurant-Specific Settings */}
           {isRestaurant && (
