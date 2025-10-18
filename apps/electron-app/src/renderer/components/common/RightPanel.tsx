@@ -17,6 +17,8 @@ export interface RightPanelProps extends HTMLAttributes<HTMLDivElement> {
   showCloseButton?: boolean
   /** Close on backdrop click */
   closeOnBackdrop?: boolean
+  /** Auto-focus the panel on open (disable if you want child elements to retain focus) */
+  autoFocus?: boolean
   /** Children content */
   children: ReactNode
 }
@@ -52,6 +54,7 @@ export function RightPanel({
   width = 'md',
   showCloseButton = true,
   closeOnBackdrop = true,
+  autoFocus = true,
   className = '',
   children,
   ...props
@@ -84,10 +87,12 @@ export function RightPanel({
       // Store current focus
       previousFocusRef.current = document.activeElement
       
-      // Focus the panel
-      setTimeout(() => {
-        panelRef.current?.focus()
-      }, 100)
+      // Focus the panel only if autoFocus is enabled
+      if (autoFocus) {
+        setTimeout(() => {
+          panelRef.current?.focus()
+        }, 100)
+      }
     }
 
     return () => {
@@ -99,7 +104,7 @@ export function RightPanel({
         (previousFocusRef.current as { focus: () => void }).focus()
       }
     }
-  }, [isOpen, onClose])
+  }, [isOpen, onClose, autoFocus])
 
   // Focus trap - keep focus within panel
   useEffect(() => {

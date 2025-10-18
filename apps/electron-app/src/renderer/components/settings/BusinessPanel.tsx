@@ -580,6 +580,122 @@ export function BusinessPanel() {
           )}
         </div>
       </div>
+
+      {/* Timezone Configuration Section */}
+      <div className={`p-4 rounded-lg ${theme === 'dark' ? 'bg-gray-700/30' : 'bg-gray-50'}`}>
+        <h3 className={`text-lg font-semibold mb-4 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+          Timezone Configuration
+        </h3>
+        <p className={`text-sm mb-4 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+          Set the business timezone for accurate time tracking, reporting, and scheduling
+        </p>
+
+        <div className="space-y-4">
+          <div>
+            <label className={`block text-sm font-medium mb-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+              Business Timezone
+            </label>
+            <select
+              value={business.timezone || 'UTC'}
+              onChange={(e) => updateBusinessSettings({ timezone: e.target.value })}
+              className={`w-full px-4 py-2 rounded-lg min-h-[44px] ${theme === 'dark' ? 'bg-gray-800 border border-gray-600 text-white focus:border-blue-500' : 'bg-white border border-gray-300 text-gray-900 focus:border-blue-500'} focus:outline-none focus:ring-2 focus:ring-blue-500/20`}
+            >
+              {/* UTC and Offset from UTC */}
+              <optgroup label="UTC and Coordinates">
+                <option value="UTC">UTC (Coordinated Universal Time)</option>
+              </optgroup>
+
+              {/* Africa */}
+              <optgroup label="Africa">
+                <option value="Africa/Cairo">Cairo (EET/EEST)</option>
+                <option value="Africa/Johannesburg">Johannesburg (SAST)</option>
+                <option value="Africa/Lagos">Lagos (WAT)</option>
+              </optgroup>
+
+              {/* Asia */}
+              <optgroup label="Asia">
+                <option value="Asia/Shanghai">Shanghai (CST)</option>
+                <option value="Asia/Dubai">Dubai (GST)</option>
+                <option value="Asia/Kolkata">India (IST)</option>
+                <option value="Asia/Bangkok">Bangkok (ICT)</option>
+                <option value="Asia/Singapore">Singapore (SGT)</option>
+                <option value="Asia/Hong_Kong">Hong Kong (HKT)</option>
+                <option value="Asia/Tokyo">Tokyo (JST)</option>
+                <option value="Asia/Seoul">Seoul (KST)</option>
+                <option value="Asia/Manila">Manila (PHT)</option>
+              </optgroup>
+
+              {/* Europe */}
+              <optgroup label="Europe">
+                <option value="Europe/London">London (GMT/BST)</option>
+                <option value="Europe/Paris">Paris (CET/CEST)</option>
+                <option value="Europe/Berlin">Berlin (CET/CEST)</option>
+                <option value="Europe/Amsterdam">Amsterdam (CET/CEST)</option>
+                <option value="Europe/Madrid">Madrid (CET/CEST)</option>
+                <option value="Europe/Rome">Rome (CET/CEST)</option>
+                <option value="Europe/Brussels">Brussels (CET/CEST)</option>
+                <option value="Europe/Vienna">Vienna (CET/CEST)</option>
+                <option value="Europe/Prague">Prague (CET/CEST)</option>
+                <option value="Europe/Warsaw">Warsaw (CET/CEST)</option>
+                <option value="Europe/Moscow">Moscow (MSK)</option>
+                <option value="Europe/Istanbul">Istanbul (EET/EEST)</option>
+              </optgroup>
+
+              {/* Middle East */}
+              <optgroup label="Middle East">
+                <option value="Asia/Riyadh">Saudi Arabia (AST)</option>
+                <option value="Asia/Kuwait">Kuwait (AST)</option>
+                <option value="Asia/Bahrain">Bahrain (AST)</option>
+                <option value="Asia/Qatar">Qatar (AST)</option>
+                <option value="Asia/Oman">Oman (GST)</option>
+                <option value="Asia/Jerusalem">Israel (IST/IDT)</option>
+              </optgroup>
+
+              {/* North America */}
+              <optgroup label="North America">
+                <option value="America/New_York">Eastern Time (EST/EDT)</option>
+                <option value="America/Chicago">Central Time (CST/CDT)</option>
+                <option value="America/Denver">Mountain Time (MST/MDT)</option>
+                <option value="America/Los_Angeles">Pacific Time (PST/PDT)</option>
+                <option value="America/Anchorage">Alaska (AKST/AKDT)</option>
+                <option value="Pacific/Honolulu">Hawaii (HST)</option>
+                <option value="America/Toronto">Toronto (EST/EDT)</option>
+                <option value="America/Mexico_City">Mexico City (CST/CDT)</option>
+              </optgroup>
+
+              {/* South America */}
+              <optgroup label="South America">
+                <option value="America/Sao_Paulo">São Paulo (BRT/BRST)</option>
+                <option value="America/Buenos_Aires">Buenos Aires (ART)</option>
+                <option value="America/Santiago">Santiago (CLT/CLST)</option>
+                <option value="America/Bogota">Bogota (COT)</option>
+                <option value="America/Lima">Lima (PET)</option>
+              </optgroup>
+
+              {/* Australia & Pacific */}
+              <optgroup label="Australia & Pacific">
+                <option value="Australia/Sydney">Sydney (AEDT/AEST)</option>
+                <option value="Australia/Melbourne">Melbourne (AEDT/AEST)</option>
+                <option value="Australia/Brisbane">Brisbane (AEST)</option>
+                <option value="Australia/Perth">Perth (AWST)</option>
+                <option value="Australia/Adelaide">Adelaide (ACDT/ACST)</option>
+                <option value="Pacific/Auckland">Auckland (NZDT/NZST)</option>
+              </optgroup>
+            </select>
+          </div>
+
+          {/* Timezone Information */}
+          <div className={`p-3 rounded-lg ${theme === 'dark' ? 'bg-gray-800 border border-gray-600' : 'bg-white border border-gray-200'}`}>
+            <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+              <span className="font-medium">📍 Current Timezone: </span>
+              {business.timezone || 'UTC'}
+            </p>
+            <p className={`text-xs mt-2 ${theme === 'dark' ? 'text-gray-500' : 'text-gray-500'}`}>
+              This timezone affects transaction timestamps, report generation, business hours scheduling, and shift management throughout the system
+            </p>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

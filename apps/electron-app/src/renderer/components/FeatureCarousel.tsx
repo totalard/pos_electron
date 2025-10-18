@@ -1,10 +1,16 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
+import { useAppStore } from '../stores'
 
 interface Feature {
   title: string
   description: string
   icon: JSX.Element
 }
+
+/**
+ * FeatureCarousel component - Displays rotating features on the login screen
+ * Shows app features with smooth transitions and keyboard navigation support
+ */
 
 const features: Feature[] = [
   {
@@ -90,65 +96,143 @@ const features: Feature[] = [
 ]
 
 export function FeatureCarousel() {
+  const { theme } = useAppStore()
   const [currentIndex, setCurrentIndex] = useState(0)
+  const currentYear = new Date().getFullYear()
 
+  const goToSlide = useCallback((index: number) => {
+    setCurrentIndex(index)
+  }, [])
+
+  const goToNext = useCallback(() => {
+    setCurrentIndex((prev) => (prev + 1) % features.length)
+  }, [])
+
+  const goToPrevious = useCallback(() => {
+    setCurrentIndex((prev) => (prev - 1 + features.length) % features.length)
+  }, [])
+
+  // Auto-advance carousel
   useEffect(() => {
     const interval = setInterval(() => {
-      setCurrentIndex((prev) => (prev + 1) % features.length)
+      goToNext()
     }, 5000) // Change slide every 5 seconds
 
     return () => clearInterval(interval)
-  }, [])
+  }, [goToNext])
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft') {
+        goToPrevious()
+      } else if (e.key === 'ArrowRight') {
+        goToNext()
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [goToNext, goToPrevious])
 
   const currentFeature = features[currentIndex]
 
   return (
-    <div className="h-full flex flex-col items-center justify-center p-12 bg-gradient-to-br from-primary-600 via-primary-700 to-primary-800">
+    <div className={`
+      h-full flex flex-col items-center justify-center p-12
+      ${theme === 'dark'
+        ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-950'
+        : 'bg-gradient-to-br from-primary-600 via-primary-700 to-primary-800'
+      }
+    `}>
       {/* Logo/Brand */}
       <div className="mb-12">
-        <h1 className="text-5xl font-bold text-white mb-2">MidLogic POS</h1>
-        <p className="text-primary-200 text-center text-lg">Modern Point of Sale System</p>
+        <h1 className={`
+          text-5xl font-bold mb-2
+          ${theme === 'dark' ? 'text-white' : 'text-white'}
+        `}>
+          MidLogic POS
+        </h1>
+        <p className={`
+          text-center text-lg
+          ${theme === 'dark' ? 'text-gray-300' : 'text-primary-200'}
+        `}>
+          Modern Point of Sale System
+        </p>
       </div>
 
       {/* Feature Display */}
-      <div className="flex-1 flex flex-col items-center justify-center max-w-md">
+      <div
+        className="flex-1 flex flex-col items-center justify-center max-w-md"
+        role="region"
+        aria-live="polite"
+        aria-atomic="true"
+        id={`feature-${currentIndex}`}
+      >
         {/* Icon */}
-        <div className="w-64 h-64 mb-8 transition-all duration-500 ease-in-out transform hover:scale-105">
+        <div className="w-64 h-64 mb-8 transition-all duration-500 ease-in-out transform hover:scale-105" aria-hidden="true">
           {currentFeature.icon}
         </div>
 
         {/* Title */}
-        <h2 className="text-3xl font-bold text-white mb-4 text-center">
+        <h2 className={`
+          text-3xl font-bold mb-4 text-center
+          ${theme === 'dark' ? 'text-white' : 'text-white'}
+        `}>
           {currentFeature.title}
         </h2>
 
         {/* Description */}
-        <p className="text-primary-100 text-center text-lg leading-relaxed">
+        <p className={`
+          text-center text-lg leading-relaxed
+          ${theme === 'dark' ? 'text-gray-300' : 'text-primary-100'}
+        `}>
           {currentFeature.description}
         </p>
       </div>
 
-      {/* Carousel Indicators */}
-      <div className="flex gap-3 mt-12">
-        {features.map((_, index) => (
+      {/* Carousel Indicators - Touch-safe with minimum 44x44px */}
+      <div className="flex gap-2 mt-12" role="tablist" aria-label="Feature carousel navigation">
+        {features.map((feature, index) => (
           <button
             key={index}
-            onClick={() => setCurrentIndex(index)}
+            onClick={() => goToSlide(index)}
             className={`
-              h-2 rounded-full transition-all duration-300
-              ${index === currentIndex 
-                ? 'w-12 bg-white' 
-                : 'w-2 bg-white/40 hover:bg-white/60'
+              min-w-[44px] min-h-[44px] p-3 rounded-lg transition-all duration-300
+              flex items-center justify-center
+              ${index === currentIndex
+                ? theme === 'dark'
+                  ? 'bg-white/20 hover:bg-white/30'
+                  : 'bg-white/30 hover:bg-white/40'
+                : theme === 'dark'
+                  ? 'bg-gray-700/30 hover:bg-gray-600/40'
+                  : 'bg-white/10 hover:bg-white/20'
               }
             `}
-            aria-label={`Go to slide ${index + 1}`}
-          />
+            role="tab"
+            aria-selected={index === currentIndex}
+            aria-label={`Go to ${feature.title}`}
+            aria-controls={`feature-${index}`}
+          >
+            <div className={`
+              h-2 rounded-full transition-all duration-300
+              ${index === currentIndex
+                ? 'w-8 bg-white'
+                : theme === 'dark'
+                  ? 'w-2 bg-gray-400'
+                  : 'w-2 bg-white/60'
+              }
+            `} />
+          </button>
         ))}
       </div>
 
       {/* Footer */}
-      <div className="mt-8 text-primary-200 text-sm">
-        © 2025 MidLogic. All rights reserved.
+      <div className={`
+        mt-8 text-sm
+        ${theme === 'dark' ? 'text-gray-400' : 'text-primary-200'}
+      `}>
+        © {currentYear} MidLogic. All rights reserved.
       </div>
     </div>
   )

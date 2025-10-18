@@ -47,6 +47,7 @@ export interface BusinessSettings {
   enableBarcodeScanner: boolean // Retail mode
   enableLoyaltyProgram: boolean // Retail mode
   enableQuickCheckout: boolean // Retail mode
+  timezone: string // Business timezone for transactions, reporting, and scheduling
   currencyConfig: {
     code: string
     symbol: string
@@ -276,11 +277,53 @@ export interface IntegrationSettings {
   smtpUsername: string
 }
 
+export interface BackupMetadata {
+  filename: string
+  created_at: string
+  size_bytes: number
+  size_mb: number
+  database_size_bytes: number
+  database_size_mb: number
+  checksum: string
+  compression_enabled: boolean
+  encryption_enabled: boolean
+  backup_type: string
+  selected_tables?: string[] | null
+  status: string
+  error_message?: string | null
+}
+
+export interface BackupFile {
+  filename: string
+  path: string
+  size_bytes: number
+  size_mb: number
+  created_at: string
+  is_compressed: boolean
+  metadata?: BackupMetadata | null
+}
+
+export interface BackupProgress {
+  status: 'idle' | 'pending' | 'in_progress' | 'completed' | 'failed' | 'cancelled'
+  progress: number  // 0-100
+  message: string
+  operation: 'backup' | 'restore' | 'idle'
+  timestamp: string
+  estimatedRemaining?: number | null  // seconds
+}
+
 export interface BackupSettings {
   enableAutoBackup: boolean
   backupInterval: number
   backupLocation: string
   lastBackupDate: string | null
+  
+  // Advanced features
+  compressionEnabled: boolean
+  encryptionEnabled: boolean
+  backupType: 'full' | 'incremental' | 'selective'
+  retentionDays: number
+  maxBackupCount: number
 }
 
 export interface DisplaySettings {
@@ -325,6 +368,11 @@ export interface SettingsState {
   security: SecuritySettings
   about: AboutInfo
 
+  // Backup state
+  backupHistory: BackupFile[]
+  backupProgress: BackupProgress
+  backupCancelToken: { cancelled: boolean }
+
   // Actions
   setSelectedSection: (section: SettingsSection) => void
   loadSettings: () => Promise<void>
@@ -341,7 +389,13 @@ export interface SettingsState {
   setBusinessMode: (mode: BusinessMode) => void
   checkForUpdates: () => Promise<void>
   performBackup: () => Promise<void>
+  performAdvancedBackup: (options: { compression: boolean; backupType: 'full' | 'incremental' | 'selective'; selectedTables?: string[] }) => Promise<void>
   restoreBackup: (filePath: string) => Promise<void>
+  loadBackupHistory: () => Promise<void>
+  deleteBackup: (filename: string) => Promise<void>
+  verifyBackup: (filename: string) => Promise<boolean>
+  cancelBackup: () => void
+  updateBackupProgress: (progress: Partial<BackupProgress>) => void
   reset: () => void
 }
 
@@ -350,6 +404,18 @@ const initialState = {
   selectedSection: 'general' as SettingsSection,
   isLoading: false,
   error: null,
+  
+  // Backup state
+  backupHistory: [] as BackupFile[],
+  backupProgress: {
+    status: 'idle' as const,
+    progress: 0,
+    message: 'Ready',
+    operation: 'idle' as const,
+    timestamp: new Date().toISOString(),
+    estimatedRemaining: null
+  } as BackupProgress,
+  backupCancelToken: { cancelled: false },
 
   general: {
     storeName: 'MidLogic POS',
@@ -385,6 +451,7 @@ const initialState = {
     enableBarcodeScanner: true,
     enableLoyaltyProgram: false,
     enableQuickCheckout: true,
+    timezone: 'UTC',
     currencyConfig: {
       code: 'USD',
       symbol: '$',
@@ -614,7 +681,12 @@ const initialState = {
     enableAutoBackup: false,
     backupInterval: 24,
     backupLocation: '',
-    lastBackupDate: null
+    lastBackupDate: null,
+    compressionEnabled: true,
+    encryptionEnabled: false,
+    backupType: 'full' as const,
+    retentionDays: 30,
+    maxBackupCount: 10
   },
 
   display: {
@@ -842,17 +914,214 @@ export const useSettingsStore = create<SettingsState>()(
         }
       },
 
-      restoreBackup: async (filePath: string) => {
+      performAdvancedBackup: async (options: { compression: boolean; backupType: 'full' | 'incremental' | 'selective'; selectedTables?: string[] }) => {
+        const cancelToken = { cancelled: false }
+        set({ 
+          backupCancelToken: cancelToken,
+          backupProgress: {
+            status: 'pending',
+            progress: 0,
+            message: 'Preparing backup...',
+            operation: 'backup',
+            timestamp: new Date().toISOString(),
+            estimatedRemaining: null
+          }
+        })
+
         try {
-          const result = await settingsAPI.restoreBackup(filePath)
+          const result = await settingsAPI.performAdvancedBackup(
+            {
+              compression_enabled: options.compression,
+              backup_type: options.backupType,
+              selected_tables: options.selectedTables
+            },
+            (progress) => {
+              if (!cancelToken.cancelled) {
+                set({ 
+                  backupProgress: {
+                    status: progress.status as any,
+                    progress: progress.progress,
+                    message: progress.message,
+                    operation: 'backup',
+                    timestamp: new Date().toISOString(),
+                    estimatedRemaining: progress.estimatedRemaining
+                  }
+                })
+              }
+            }
+          )
+
+          const currentState = get()
+          const updatedBackup = {
+            ...currentState.backup,
+            lastBackupDate: new Date().toISOString()
+          }
+          set({ backup: updatedBackup })
+
+          await settingsAPI.updateSettings({ backup: updatedBackup })
+          await get().loadBackupHistory()
+
+          set({
+            backupProgress: {
+              status: 'idle',
+              progress: 0,
+              message: 'Backup completed successfully',
+              operation: 'backup',
+              timestamp: new Date().toISOString(),
+              estimatedRemaining: null
+            }
+          })
+
+          console.log('Advanced backup created:', result.backup_file)
+        } catch (error) {
+          if (cancelToken.cancelled) {
+            set({
+              backupProgress: {
+                status: 'cancelled',
+                progress: 0,
+                message: 'Backup cancelled',
+                operation: 'backup',
+                timestamp: new Date().toISOString(),
+                estimatedRemaining: null
+              }
+            })
+          } else {
+            console.error('Failed to perform advanced backup:', error)
+            set({
+              backupProgress: {
+                status: 'failed',
+                progress: 0,
+                message: error instanceof Error ? error.message : 'Backup failed',
+                operation: 'backup',
+                timestamp: new Date().toISOString(),
+                estimatedRemaining: null
+              }
+            })
+            throw error
+          }
+        }
+      },
+
+      restoreBackup: async (filePath: string) => {
+        const cancelToken = { cancelled: false }
+        set({ 
+          backupCancelToken: cancelToken,
+          backupProgress: {
+            status: 'pending',
+            progress: 0,
+            message: 'Preparing restore...',
+            operation: 'restore',
+            timestamp: new Date().toISOString(),
+            estimatedRemaining: null
+          }
+        })
+
+        try {
+          const result = await settingsAPI.restoreBackup(
+            filePath,
+            (progress) => {
+              if (!cancelToken.cancelled) {
+                set({
+                  backupProgress: {
+                    status: progress.status as any,
+                    progress: progress.progress,
+                    message: progress.message,
+                    operation: 'restore',
+                    timestamp: new Date().toISOString(),
+                    estimatedRemaining: progress.estimatedRemaining
+                  }
+                })
+              }
+            }
+          )
+          
           console.log('Backup restored:', result.message)
+
+          set({
+            backupProgress: {
+              status: 'idle',
+              progress: 0,
+              message: 'Restore completed successfully',
+              operation: 'restore',
+              timestamp: new Date().toISOString(),
+              estimatedRemaining: null
+            }
+          })
 
           // Reload settings after restore
           await get().loadSettings()
         } catch (error) {
-          console.error('Failed to restore backup:', error)
+          if (cancelToken.cancelled) {
+            set({
+              backupProgress: {
+                status: 'cancelled',
+                progress: 0,
+                message: 'Restore cancelled',
+                operation: 'restore',
+                timestamp: new Date().toISOString(),
+                estimatedRemaining: null
+              }
+            })
+          } else {
+            console.error('Failed to restore backup:', error)
+            set({
+              backupProgress: {
+                status: 'failed',
+                progress: 0,
+                message: error instanceof Error ? error.message : 'Restore failed',
+                operation: 'restore',
+                timestamp: new Date().toISOString(),
+                estimatedRemaining: null
+              }
+            })
+            throw error
+          }
+        }
+      },
+
+      loadBackupHistory: async () => {
+        try {
+          const backups = await settingsAPI.listBackups()
+          set({ backupHistory: backups })
+        } catch (error) {
+          console.error('Failed to load backup history:', error)
+        }
+      },
+
+      deleteBackup: async (filename: string) => {
+        try {
+          await settingsAPI.deleteBackup(filename)
+          await get().loadBackupHistory()
+        } catch (error) {
+          console.error('Failed to delete backup:', error)
           throw error
         }
+      },
+
+      verifyBackup: async (filename: string) => {
+        try {
+          const result = await settingsAPI.verifyBackup(filename)
+          return result.verified === true
+        } catch (error) {
+          console.error('Failed to verify backup:', error)
+          return false
+        }
+      },
+
+      cancelBackup: () => {
+        const currentState = get()
+        set({ backupCancelToken: { cancelled: true } })
+      },
+
+      updateBackupProgress: (progress: Partial<BackupProgress>) => {
+        const currentState = get()
+        set({
+          backupProgress: {
+            ...currentState.backupProgress,
+            ...progress,
+            timestamp: new Date().toISOString()
+          }
+        })
       },
 
       reset: () => set(initialState)

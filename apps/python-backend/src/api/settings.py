@@ -4,6 +4,13 @@ Settings API endpoints
 This module provides API endpoints for managing application settings.
 It uses the new normalized Setting model while maintaining backward
 compatibility with the old JSON-based Settings model API.
+
+Enhanced backup/restore functionality includes:
+- Advanced backup options (compression, encryption, selective tables)
+- Backup history and metadata tracking
+- Automatic backup scheduling
+- Progress tracking
+- Integrity verification
 """
 import logging
 import shutil
@@ -15,6 +22,8 @@ from tortoise.exceptions import DoesNotExist
 
 from ..database.models.setting import Setting
 from ..database.defaults import get_default_settings
+from ..utils.backup_manager import BackupManager
+from ..utils.backup_scheduler import BackupScheduler, BackupProgressTracker
 from .schemas import (
     SettingsResponse,
     SettingsUpdate,
@@ -34,11 +43,49 @@ from .schemas import (
     SettingItemResponse,
     SettingItemUpdate,
     SectionSettingsResponse,
-    BulkSettingsUpdate
+    BulkSettingsUpdate,
+    AdvancedBackupRequest,
+    BackupListResponse,
+    BackupMetadata,
+    BackupVerificationResult,
+    RetentionPolicy,
+    ScheduleConfiguration
 )
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
+
+# Global backup manager instance
+_backup_manager: BackupManager = None
+_backup_scheduler: BackupScheduler = None
+_progress_tracker: BackupProgressTracker = None
+
+
+def get_backup_manager() -> BackupManager:
+    """Get or create backup manager instance"""
+    global _backup_manager
+    if _backup_manager is None:
+        from ..database.config import DB_PATH
+        _backup_manager = BackupManager(DB_PATH)
+    return _backup_manager
+
+
+def get_backup_scheduler() -> BackupScheduler:
+    """Get or create backup scheduler instance"""
+    global _backup_scheduler
+    if _backup_scheduler is None:
+        from ..database.config import DB_PATH
+        backup_manager = get_backup_manager()
+        _backup_scheduler = BackupScheduler(backup_manager, DB_PATH)
+    return _backup_scheduler
+
+
+def get_progress_tracker() -> BackupProgressTracker:
+    """Get or create progress tracker instance"""
+    global _progress_tracker
+    if _progress_tracker is None:
+        _progress_tracker = BackupProgressTracker()
+    return _progress_tracker
 
 
 async def ensure_settings_initialized():
@@ -173,40 +220,32 @@ async def update_settings(settings_data: SettingsUpdate):
 @router.post("/backup", status_code=status.HTTP_200_OK)
 async def perform_backup(backup_request: BackupRequest):
     """
-    Perform database backup.
+    Perform database backup (basic, for backward compatibility).
     
     Creates a backup of the SQLite database file.
+    Use /backup/advanced for enhanced backup options.
     """
     try:
-        # Get database path
-        from ..database.config import DB_PATH
+        backup_manager = get_backup_manager()
         
         # Determine backup location
         if backup_request.location:
-            backup_dir = Path(backup_request.location)
-        else:
-            backup_dir = DB_PATH.parent / "backups"
+            backup_manager.backup_dir = Path(backup_request.location)
+            backup_manager.backup_dir.mkdir(parents=True, exist_ok=True)
         
-        # Create backup directory if it doesn't exist
-        backup_dir.mkdir(parents=True, exist_ok=True)
-        
-        # Create backup filename with timestamp
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        backup_file = backup_dir / f"pos_backup_{timestamp}.db"
-        
-        # Copy database file
-        shutil.copy2(DB_PATH, backup_file)
+        # Create basic backup
+        metadata = backup_manager.create_backup(compression=True, backup_type='full')
         
         # Update lastBackupDate setting
         await Setting.update_setting('backup', 'lastBackupDate', datetime.now().isoformat())
         
-        logger.info(f"Backup created successfully: {backup_file}")
+        logger.info(f"Backup created successfully: {metadata.filename}")
         
         return {
             "success": True,
             "message": "Backup created successfully",
-            "backup_file": str(backup_file),
-            "timestamp": timestamp
+            "backup_file": str(backup_manager.backup_dir / metadata.filename),
+            "timestamp": metadata.created_at
         }
         
     except Exception as e:
@@ -217,46 +256,89 @@ async def perform_backup(backup_request: BackupRequest):
         )
 
 
+@router.post("/backup/advanced", status_code=status.HTTP_200_OK)
+async def perform_advanced_backup(backup_request: AdvancedBackupRequest):
+    """
+    Perform advanced database backup with options.
+    
+    Supports:
+    - Compression and encryption
+    - Selective table backup
+    - Different backup types
+    """
+    try:
+        backup_manager = get_backup_manager()
+        
+        # Determine backup location
+        if backup_request.location:
+            backup_manager.backup_dir = Path(backup_request.location)
+            backup_manager.backup_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Create advanced backup
+        metadata = backup_manager.create_backup(
+            compression=backup_request.compression,
+            encryption=backup_request.encryption,
+            backup_type=backup_request.backup_type,
+            selected_tables=backup_request.selected_tables
+        )
+        
+        # Update lastBackupDate setting
+        await Setting.update_setting('backup', 'lastBackupDate', datetime.now().isoformat())
+        
+        logger.info(f"Advanced backup created: {metadata.filename}")
+        
+        return {
+            "success": True,
+            "message": "Backup created successfully",
+            "backup_file": str(backup_manager.backup_dir / metadata.filename),
+            "metadata": metadata.to_dict()
+        }
+        
+    except Exception as e:
+        logger.error(f"Failed to create advanced backup: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to create backup: {str(e)}"
+        )
+
+
 @router.post("/restore", status_code=status.HTTP_200_OK)
 async def restore_backup(restore_request: RestoreRequest):
     """
-    Restore database from backup.
+    Restore database from backup with integrity verification.
     
     WARNING: This will replace the current database with the backup file.
     The application should be restarted after restore.
+    
+    Features:
+    - Automatic pre-restore backup creation
+    - Integrity verification
+    - Support for compressed backups
     """
     try:
-        # Get database path
-        from ..database.config import DB_PATH
-        
-        # Validate backup file exists
         backup_file = Path(restore_request.filePath)
+        
         if not backup_file.exists():
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Backup file not found: {restore_request.filePath}"
             )
         
-        # Create a backup of current database before restore
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        pre_restore_backup = DB_PATH.parent / f"pre_restore_backup_{timestamp}.db"
-        shutil.copy2(DB_PATH, pre_restore_backup)
-        
-        # Restore from backup
-        shutil.copy2(backup_file, DB_PATH)
+        backup_manager = get_backup_manager()
+        result = backup_manager.restore_backup(backup_file, verify_checksum=True)
         
         logger.info(f"Database restored from: {backup_file}")
-        logger.info(f"Pre-restore backup saved to: {pre_restore_backup}")
         
-        return {
-            "success": True,
-            "message": "Database restored successfully. Please restart the application.",
-            "restored_from": str(backup_file),
-            "pre_restore_backup": str(pre_restore_backup)
-        }
+        return result
         
     except HTTPException:
         raise
+    except ValueError as e:
+        logger.error(f"Backup verification failed: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Backup verification failed: {str(e)}"
+        )
     except Exception as e:
         logger.error(f"Failed to restore backup: {e}")
         raise HTTPException(
@@ -294,6 +376,127 @@ async def get_database_info():
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to get database info: {str(e)}"
+        )
+
+
+# ============================================================================
+# Enhanced Backup Management Endpoints
+# ============================================================================
+
+@router.get("/backups", response_model=BackupListResponse, status_code=status.HTTP_200_OK)
+async def list_backups():
+    """
+    List all available backups with metadata.
+    
+    Returns:
+        List of backup files with detailed information
+    """
+    try:
+        backup_manager = get_backup_manager()
+        backups = backup_manager.list_backups()
+        
+        return BackupListResponse(
+            total=len(backups),
+            backups=backups
+        )
+        
+    except Exception as e:
+        logger.error(f"Failed to list backups: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to list backups: {str(e)}"
+        )
+
+
+@router.delete("/backups/{filename}", status_code=status.HTTP_200_OK)
+async def delete_backup(filename: str):
+    """
+    Delete a specific backup file.
+    
+    Args:
+        filename: Name of backup file to delete
+    """
+    try:
+        backup_manager = get_backup_manager()
+        backup_manager.delete_backup(filename)
+        
+        return {
+            "success": True,
+            "message": f"Backup deleted: {filename}"
+        }
+        
+    except FileNotFoundError:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Backup not found: {filename}"
+        )
+    except Exception as e:
+        logger.error(f"Failed to delete backup: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to delete backup: {str(e)}"
+        )
+
+
+@router.post("/backups/{filename}/verify", response_model=BackupVerificationResult)
+async def verify_backup(filename: str):
+    """
+    Verify integrity of a backup file.
+    
+    Args:
+        filename: Name of backup file to verify
+        
+    Returns:
+        Verification result with checksum status
+    """
+    try:
+        backup_manager = get_backup_manager()
+        result = backup_manager.verify_backup(filename)
+        
+        return BackupVerificationResult(**result)
+        
+    except FileNotFoundError:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Backup not found: {filename}"
+        )
+    except Exception as e:
+        logger.error(f"Failed to verify backup: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to verify backup: {str(e)}"
+        )
+
+
+@router.post("/backups/cleanup", status_code=status.HTTP_200_OK)
+async def cleanup_backups(retention_policy: RetentionPolicy):
+    """
+    Clean up old backups based on retention policy.
+    
+    Args:
+        retention_policy: Policy defining retention days and max count
+        
+    Returns:
+        Number of backups deleted
+    """
+    try:
+        backup_manager = get_backup_manager()
+        deleted_count = backup_manager.cleanup_old_backups(
+            retention_days=retention_policy.retention_days,
+            max_backups=retention_policy.max_backup_count
+        )
+        
+        return {
+            "success": True,
+            "deleted_count": deleted_count,
+            "message": f"Cleanup completed: {deleted_count} backups deleted"
+        }
+        
+    except Exception as e:
+        logger.error(f"Failed to cleanup backups: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to cleanup backups: {str(e)}"
         )
 
 # ===== NEW GRANULAR SETTINGS ENDPOINTS =====

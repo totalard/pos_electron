@@ -60,43 +60,43 @@ export function NumericKeypad({
   // Touch-safe button sizing: minimum 44x44px for touch targets
   // All buttons have exact same size: 64x64px (exceeds 44x44px minimum)
   const buttonBaseClass = `
-    w-16 h-16 rounded-lg font-bold text-xl
+    w-16 h-16 rounded-xl font-bold text-xl
     transition-all duration-150 ease-in-out
     transform active:scale-95 hover:scale-105
     focus:outline-none focus:ring-2 focus:ring-offset-1
     disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:hover:scale-100
-    shadow-md hover:shadow-lg
+    shadow-lg hover:shadow-xl
     flex items-center justify-center
-    flex-shrink-0
+    flex-shrink-0 backdrop-blur-sm border
   `
 
   const digitButtonClass = `
     ${buttonBaseClass}
     ${theme === 'dark'
-      ? 'bg-gray-700 text-white hover:bg-gray-600 focus:ring-primary-400/50 border border-gray-600 active:bg-gray-500'
-      : 'bg-white text-gray-900 hover:bg-gray-100 focus:ring-primary-500/50 border border-gray-300 active:bg-gray-200'
+      ? 'bg-gray-700/50 text-gray-100 hover:bg-gray-600/70 focus:ring-primary-400/50 border-gray-600/50 active:bg-gray-500 hover:text-white'
+      : 'bg-white/70 text-gray-900 hover:bg-white/90 focus:ring-primary-500/50 border-gray-300/50 active:bg-gray-100 hover:shadow-2xl'
     }
   `
 
   const actionButtonClass = `
     ${buttonBaseClass}
     ${theme === 'dark'
-      ? 'bg-primary-600 text-white hover:bg-primary-500 focus:ring-primary-400/50 active:bg-primary-700'
-      : 'bg-primary-600 text-white hover:bg-primary-700 focus:ring-primary-500/50 active:bg-primary-800'
+      ? 'bg-gradient-to-br from-primary-600 to-primary-700 text-white hover:from-primary-500 hover:to-primary-600 focus:ring-primary-400/50 border-primary-600/50 active:from-primary-700 active:to-primary-800'
+      : 'bg-gradient-to-br from-primary-600 to-primary-700 text-white hover:from-primary-700 hover:to-primary-800 focus:ring-primary-500/50 border-primary-600/50 active:from-primary-800 active:to-primary-900'
     }
   `
 
   const clearButtonClass = `
     ${buttonBaseClass}
     ${theme === 'dark'
-      ? 'bg-red-600 text-white hover:bg-red-500 focus:ring-red-400/50 active:bg-red-700'
-      : 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500/50 active:bg-red-800'
+      ? 'bg-gradient-to-br from-red-600 to-red-700 text-white hover:from-red-500 hover:to-red-600 focus:ring-red-400/50 border-red-600/50 active:from-red-700 active:to-red-800'
+      : 'bg-gradient-to-br from-red-600 to-red-700 text-white hover:from-red-700 hover:to-red-800 focus:ring-red-500/50 border-red-600/50 active:from-red-800 active:to-red-900'
     }
   `
 
   return (
     <div
-      className={`grid grid-cols-3 gap-2 max-w-[216px] mx-auto ${className}`}
+      className={`grid grid-cols-3 gap-3 max-w-[248px] mx-auto ${className}`}
       tabIndex={0}
     >
       {/* Row 1: 1, 2, 3 */}

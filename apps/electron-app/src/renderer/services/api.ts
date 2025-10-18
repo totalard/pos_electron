@@ -372,6 +372,11 @@ export interface BackupSettings {
   backupInterval: number
   backupLocation: string
   lastBackupDate: string | null
+  compressionEnabled?: boolean
+  encryptionEnabled?: boolean
+  backupType?: 'full' | 'incremental' | 'selective'
+  retentionDays?: number
+  maxBackupCount?: number
 }
 
 export interface DisplaySettings {
@@ -451,7 +456,7 @@ export const settingsAPI = {
   },
 
   /**
-   * Perform database backup
+   * Perform basic database backup
    */
   async performBackup(location?: string): Promise<{
     success: boolean
@@ -468,9 +473,45 @@ export const settingsAPI = {
   },
 
   /**
+   * Perform advanced database backup with compression, encryption, and selective options
+   */
+  async performAdvancedBackup(
+    options: {
+      compression_enabled: boolean
+      backup_type: 'full' | 'incremental' | 'selective'
+      selected_tables?: string[]
+    },
+    onProgress?: (progress: { status: string; progress: number; message: string; estimatedRemaining?: number }) => void
+  ): Promise<{
+    success: boolean
+    message: string
+    backup_file: string
+    size_bytes: number
+    checksum: string
+    compressed: boolean
+    timestamp: string
+  }> {
+    const response = await fetch(`${API_BASE_URL}/settings/backup/advanced`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(options)
+    })
+    
+    // Simulate progress updates if callback is provided
+    if (onProgress) {
+      onProgress({ status: 'in_progress', progress: 50, message: 'Creating backup...' })
+    }
+    
+    return handleResponse(response)
+  },
+
+  /**
    * Restore database from backup
    */
-  async restoreBackup(filePath: string): Promise<{
+  async restoreBackup(
+    filePath: string,
+    onProgress?: (progress: { status: string; progress: number; message: string; estimatedRemaining?: number }) => void
+  ): Promise<{
     success: boolean
     message: string
     restored_from: string
@@ -480,6 +521,86 @@ export const settingsAPI = {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ filePath })
+    })
+    
+    // Simulate progress updates if callback is provided
+    if (onProgress) {
+      onProgress({ status: 'in_progress', progress: 50, message: 'Restoring from backup...' })
+    }
+    
+    return handleResponse(response)
+  },
+
+  /**
+   * List all available backups
+   */
+  async listBackups(): Promise<Array<{
+    filename: string
+    path: string
+    size_bytes: number
+    size_mb: number
+    created_at: string
+    is_compressed: boolean
+    metadata?: {
+      checksum: string
+      compression_enabled: boolean
+      encryption_enabled: boolean
+      backup_type: string
+      database_size_bytes: number
+      database_size_mb: number
+      status: string
+    }
+  }>> {
+    const response = await fetch(`${API_BASE_URL}/settings/backups`)
+    const data = await handleResponse<{
+      total: number
+      backups: Array<{
+        filename: string
+        path: string
+        size_bytes: number
+        size_mb: number
+        created_at: string
+        is_compressed: boolean
+        metadata?: {
+          checksum: string
+          compression_enabled: boolean
+          encryption_enabled: boolean
+          backup_type: string
+          database_size_bytes: number
+          database_size_mb: number
+          status: string
+        }
+      }>
+    }>(response)
+    return data.backups
+  },
+
+  /**
+   * Delete a specific backup
+   */
+  async deleteBackup(filename: string): Promise<{
+    success: boolean
+    message: string
+    deleted_file: string
+  }> {
+    const response = await fetch(`${API_BASE_URL}/settings/backups/${filename}`, {
+      method: 'DELETE'
+    })
+    return handleResponse(response)
+  },
+
+  /**
+   * Verify backup integrity
+   */
+  async verifyBackup(filename: string): Promise<{
+    verified: boolean
+    filename: string
+    checksum_match: boolean
+    file_exists: boolean
+    message: string
+  }> {
+    const response = await fetch(`${API_BASE_URL}/settings/backups/${filename}/verify`, {
+      method: 'POST'
     })
     return handleResponse(response)
   },

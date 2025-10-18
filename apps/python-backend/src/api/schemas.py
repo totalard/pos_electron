@@ -552,3 +552,105 @@ class BackupRequest(BaseModel):
 class RestoreRequest(BaseModel):
     """Schema for restore request"""
     filePath: str = Field(..., min_length=1)
+
+
+# ============================================================================
+# Enhanced Backup Schemas
+# ============================================================================
+
+class BackupSettingsEnhanced(BaseModel):
+    """Enhanced backup settings with advanced features"""
+    enableAutoBackup: bool = Field(default=False)
+    backupInterval: int = Field(default=24, ge=1)
+    backupLocation: str = Field(default="")
+    lastBackupDate: Optional[str] = None
+    
+    # Advanced features
+    compressionEnabled: bool = Field(default=True)
+    encryptionEnabled: bool = Field(default=False)
+    backupType: str = Field(default="full")  # full, incremental, selective
+    retentionDays: int = Field(default=30, ge=1)
+    maxBackupCount: int = Field(default=10, ge=1)
+    
+    class Config:
+        from_attributes = True
+
+
+class BackupMetadata(BaseModel):
+    """Backup metadata"""
+    filename: str
+    created_at: str
+    size_bytes: int
+    size_mb: float
+    database_size_bytes: int
+    database_size_mb: float
+    checksum: str
+    compression_enabled: bool
+    encryption_enabled: bool
+    backup_type: str
+    selected_tables: Optional[List[str]] = None
+    status: str = "success"
+    error_message: Optional[str] = None
+
+
+class BackupInfo(BaseModel):
+    """Information about a backup file"""
+    filename: str
+    path: str
+    size_bytes: int
+    size_mb: float
+    created_at: str
+    is_compressed: bool
+    metadata: Optional[BackupMetadata] = None
+
+
+class BackupListResponse(BaseModel):
+    """Response for listing backups"""
+    total: int
+    backups: List[BackupInfo]
+
+
+class AdvancedBackupRequest(BaseModel):
+    """Advanced backup request with options"""
+    location: Optional[str] = None
+    compression: bool = Field(default=True)
+    encryption: bool = Field(default=False)
+    backup_type: str = Field(default="full")  # full, incremental, selective
+    selected_tables: Optional[List[str]] = None
+
+
+class BackupProgressUpdate(BaseModel):
+    """Progress update during backup/restore"""
+    status: str  # pending, in_progress, completed, failed, cancelled
+    progress: int = Field(ge=0, le=100)
+    message: str
+    timestamp: str
+
+
+class BackupVerificationResult(BaseModel):
+    """Result of backup verification"""
+    filename: str
+    valid: bool
+    checksum_match: bool
+    error: Optional[str] = None
+
+
+class RetentionPolicy(BaseModel):
+    """Backup retention policy"""
+    retention_days: int = Field(default=30, ge=1)
+    max_backup_count: int = Field(default=10, ge=1)
+    cleanup_on_backup: bool = Field(default=True)
+
+
+class ScheduleConfiguration(BaseModel):
+    """Backup schedule configuration"""
+    enabled: bool = Field(default=False)
+    schedule_type: str = Field(default="interval")  # interval, daily, weekly, monthly
+    interval_hours: int = Field(default=24, ge=1)
+    scheduled_time: Optional[str] = None  # HH:MM format
+    scheduled_days: Optional[List[str]] = None  # ["mon", "tue", ...]
+    
+    # Retention and notifications
+    retention_policy: RetentionPolicy = Field(default_factory=RetentionPolicy)
+    notify_on_success: bool = Field(default=False)
+    notify_on_failure: bool = Field(default=True)
