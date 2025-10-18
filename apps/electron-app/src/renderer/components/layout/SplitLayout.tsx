@@ -71,7 +71,7 @@ export function SplitLayout({
   return (
     <div
       className={`
-        flex
+        flex h-full
         ${gapClasses[gap]}
         ${className}
       `}
@@ -81,7 +81,7 @@ export function SplitLayout({
       <div
         className={`
           ${widthClasses[leftWidth]}
-          rounded-xl overflow-hidden
+          rounded-xl overflow-y-auto
           ${borderClass}
           ${theme === 'dark' ? 'bg-gray-800/50' : 'bg-white'}
         `}
@@ -93,7 +93,7 @@ export function SplitLayout({
       <div
         className={`
           flex-1
-          rounded-xl overflow-hidden
+          rounded-xl overflow-y-auto
           ${borderClass}
           ${theme === 'dark' ? 'bg-gray-800/50' : 'bg-white'}
         `}

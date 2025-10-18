@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useAppStore } from '../stores'
-import { TabBar } from './pos'
+import { POSHeader, POSFooter } from './pos'
+import { Button, IconButton } from './common'
 
 interface Tab {
   id: string
@@ -15,15 +16,21 @@ interface SaleScreenProps {
 export function SaleScreen({ onBack }: SaleScreenProps) {
   const { theme } = useAppStore()
   const [tabs, setTabs] = useState<Tab[]>([
-    { id: '1', name: 'Tab 1', items: 0 }
+    { id: '1', name: 'Sale #1', items: 0 }
   ])
   const [activeTabId, setActiveTabId] = useState('1')
+
+  // Mock transaction data
+  const [subtotal] = useState(0)
+  const [tax] = useState(0)
+  const [total] = useState(0)
+  const [itemCount] = useState(0)
 
   const addNewTab = () => {
     const newTabId = String(tabs.length + 1)
     const newTab: Tab = {
       id: newTabId,
-      name: `Tab ${newTabId}`,
+      name: `Sale #${newTabId}`,
       items: 0
     }
     setTabs([...tabs, newTab])
@@ -32,26 +39,46 @@ export function SaleScreen({ onBack }: SaleScreenProps) {
 
   const closeTab = (tabId: string) => {
     if (tabs.length === 1) return // Don't close the last tab
-    
+
     const newTabs = tabs.filter(tab => tab.id !== tabId)
     setTabs(newTabs)
-    
+
     // If closing active tab, switch to the first tab
     if (activeTabId === tabId) {
       setActiveTabId(newTabs[0].id)
     }
   }
 
+  const handleCheckout = () => {
+    console.log('Checkout clicked')
+    // TODO: Implement checkout logic
+  }
+
+  const handleDiscount = () => {
+    console.log('Discount clicked')
+    // TODO: Implement discount logic
+  }
+
+  const handleVoid = () => {
+    console.log('Void clicked')
+    // TODO: Implement void logic
+  }
+
+  const handlePark = () => {
+    console.log('Park clicked')
+    // TODO: Implement park transaction logic
+  }
+
   return (
     <div className={`
       fixed inset-0 z-50 flex flex-col
-      ${theme === 'dark' 
-        ? 'bg-gray-900' 
+      ${theme === 'dark'
+        ? 'bg-gray-900'
         : 'bg-gray-50'
       }
     `}>
-      {/* Header with Tabs */}
-      <TabBar
+      {/* Header with Tabs and User Info */}
+      <POSHeader
         tabs={tabs.map(tab => ({
           id: tab.id,
           name: tab.name,
@@ -63,6 +90,19 @@ export function SaleScreen({ onBack }: SaleScreenProps) {
         onAddTab={addNewTab}
         closeable
         minTabs={1}
+        actions={
+          <IconButton
+            icon={
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            }
+            label="Close POS"
+            onClick={onBack}
+            variant="ghost"
+            size="sm"
+          />
+        }
       />
 
       {/* Main Content - Coming Soon Placeholder */}
@@ -152,29 +192,55 @@ export function SaleScreen({ onBack }: SaleScreenProps) {
         </div>
       </main>
 
-      {/* Footer */}
-      <footer className={`
-        border-t px-6 py-4
-        ${theme === 'dark' 
-          ? 'bg-gray-800 border-gray-700' 
-          : 'bg-white border-gray-200'
+      {/* Footer with Transaction Summary and Actions */}
+      <POSFooter
+        subtotal={subtotal}
+        tax={tax}
+        total={total}
+        itemCount={itemCount}
+        actions={
+          <>
+            <Button
+              onClick={handleDiscount}
+              variant="secondary"
+              size="md"
+              className="min-h-[44px]"
+            >
+              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+              </svg>
+              Discount
+            </Button>
+            <Button
+              onClick={handleVoid}
+              variant="secondary"
+              size="md"
+              className="min-h-[44px]"
+            >
+              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+              Void
+            </Button>
+            <Button
+              onClick={handlePark}
+              variant="secondary"
+              size="md"
+              className="min-h-[44px]"
+            >
+              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+              </svg>
+              Park
+            </Button>
+          </>
         }
-      `}>
-        <div className="flex items-center justify-between">
-          <p className={`
-            text-sm
-            ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}
-          `}>
-            Active Tab: {tabs.find(t => t.id === activeTabId)?.name}
-          </p>
-          <p className={`
-            text-sm
-            ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}
-          `}>
-            {tabs.length} tab{tabs.length === 1 ? '' : 's'} open
-          </p>
-        </div>
-      </footer>
+        primaryAction={{
+          label: 'Checkout',
+          onClick: handleCheckout,
+          disabled: itemCount === 0
+        }}
+      />
     </div>
   )
 }

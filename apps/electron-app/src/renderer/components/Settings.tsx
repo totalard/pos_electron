@@ -96,11 +96,7 @@ export function Settings({ onBack }: SettingsProps) {
       <div className="flex-1 overflow-hidden p-4">
         <SplitLayout
           left={<SettingsNavigation />}
-          right={
-            <div className="h-full overflow-y-auto">
-              {renderContentPanel()}
-            </div>
-          }
+          right={renderContentPanel()}
           leftWidth={4}
           gap="md"
         />

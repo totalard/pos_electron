@@ -58,14 +58,16 @@ export function NumericKeypad({
   }, [disabled, onDigitPress, onBackspace, onClear, onSubmit])
 
   // Touch-safe button sizing: minimum 44x44px for touch targets
+  // All buttons have exact same size: 64x64px (exceeds 44x44px minimum)
   const buttonBaseClass = `
-    min-w-[56px] min-h-[56px] w-16 h-16 rounded-lg font-bold text-xl
+    w-16 h-16 rounded-lg font-bold text-xl
     transition-all duration-150 ease-in-out
     transform active:scale-95 hover:scale-105
     focus:outline-none focus:ring-2 focus:ring-offset-1
     disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:hover:scale-100
     shadow-md hover:shadow-lg
     flex items-center justify-center
+    flex-shrink-0
   `
 
   const digitButtonClass = `
@@ -94,7 +96,7 @@ export function NumericKeypad({
 
   return (
     <div
-      className={`grid grid-cols-3 gap-1.5 ${className}`}
+      className={`grid grid-cols-3 gap-2 max-w-[216px] mx-auto ${className}`}
       tabIndex={0}
     >
       {/* Row 1: 1, 2, 3 */}

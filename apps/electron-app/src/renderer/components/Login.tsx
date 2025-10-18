@@ -199,7 +199,7 @@ export function Login({ onAuthenticated }: LoginProps) {
               </div>
 
               {/* PIN Display */}
-              <div className="mb-8">
+              <div className="mb-8 max-w-sm mx-auto">
                 <div className="flex justify-center items-center gap-4 mb-4 p-6 rounded-2xl bg-white/80 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 backdrop-blur-sm shadow-lg">
                   {Array.from({ length: 6 }).map((_, index) => (
                     <div
@@ -207,7 +207,7 @@ export function Login({ onAuthenticated }: LoginProps) {
                       className={`
                         w-4 h-4 rounded-full transition-all duration-300
                         ${index < pin.length
-                          ? 'bg-primary-600 dark:bg-primary-400 scale-110' 
+                          ? 'bg-primary-600 dark:bg-primary-400 scale-110'
                           : 'bg-gray-200 dark:bg-gray-600 border-2 border-gray-300 dark:border-gray-500'
                         }
                       `}

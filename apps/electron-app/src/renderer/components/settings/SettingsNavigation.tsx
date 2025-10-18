@@ -173,9 +173,8 @@ export function SettingsNavigation() {
   }
 
   return (
-    <div className="h-full overflow-y-auto">
-      <div className="p-4 space-y-3">
-        {visibleItems.map((item) => {
+    <div className="p-4 space-y-3">
+      {visibleItems.map((item) => {
           const colors = getColorClasses(item.color, selectedSection === item.id)
           const isSelected = selectedSection === item.id
 
@@ -252,7 +251,6 @@ export function SettingsNavigation() {
             </button>
           )
         })}
-      </div>
     </div>
   )
 }
