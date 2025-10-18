@@ -12,7 +12,13 @@ from .inventory import (
 )
 from .settings import Settings  # DEPRECATED: Use Setting (singular) instead
 from .setting import Setting, SettingDataType  # New normalized settings model
-from .tax_rule import TaxRule, TaxType
+from .tax_rule import (
+    TaxRule,
+    TaxType,
+    TaxCalculationMethod,
+    TaxInclusionType,
+    RoundingMethod
+)
 
 __all__ = [
     "BaseModel",
@@ -30,5 +36,8 @@ __all__ = [
     "SettingDataType",
     "TaxRule",
     "TaxType",
+    "TaxCalculationMethod",
+    "TaxInclusionType",
+    "RoundingMethod",
 ]
 

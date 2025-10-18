@@ -478,18 +478,40 @@ class TaxRuleCreate(BaseModel):
     description: Optional[str] = None
     tax_type: str = Field(default="simple")
     rate: float = Field(default=0, ge=0, le=100)
+
+    # Tax calculation configuration
+    calculation_method: str = Field(default="percentage")
+    fixed_amount: Optional[float] = Field(None, ge=0)
+    inclusion_type: str = Field(default="exclusive")
+    rounding_method: str = Field(default="round_half_up")
+
+    # GST fields
     hsn_code: Optional[str] = Field(None, max_length=20)
     sac_code: Optional[str] = Field(None, max_length=20)
     cgst_rate: Optional[float] = Field(None, ge=0, le=100)
     sgst_rate: Optional[float] = Field(None, ge=0, le=100)
     igst_rate: Optional[float] = Field(None, ge=0, le=100)
     cess_rate: Optional[float] = Field(None, ge=0, le=100)
+
+    # Applicability rules
     applies_to_categories: list = Field(default_factory=list)
+    applies_to_products: list = Field(default_factory=list)
     min_amount: Optional[float] = Field(None, ge=0)
     max_amount: Optional[float] = Field(None, ge=0)
     customer_types: list = Field(default_factory=list)
+
+    # Tax exemption
+    is_tax_exempt: bool = Field(default=False)
+
+    # Date range
+    effective_from: Optional[str] = None  # ISO date string
+    effective_to: Optional[str] = None  # ISO date string
+
+    # Compound tax
     is_compound: bool = Field(default=False)
     compound_on_taxes: list = Field(default_factory=list)
+
+    # Status
     is_active: bool = Field(default=True)
     priority: int = Field(default=0)
 
@@ -500,18 +522,40 @@ class TaxRuleUpdate(BaseModel):
     description: Optional[str] = None
     tax_type: Optional[str] = None
     rate: Optional[float] = Field(None, ge=0, le=100)
+
+    # Tax calculation configuration
+    calculation_method: Optional[str] = None
+    fixed_amount: Optional[float] = Field(None, ge=0)
+    inclusion_type: Optional[str] = None
+    rounding_method: Optional[str] = None
+
+    # GST fields
     hsn_code: Optional[str] = Field(None, max_length=20)
     sac_code: Optional[str] = Field(None, max_length=20)
     cgst_rate: Optional[float] = Field(None, ge=0, le=100)
     sgst_rate: Optional[float] = Field(None, ge=0, le=100)
     igst_rate: Optional[float] = Field(None, ge=0, le=100)
     cess_rate: Optional[float] = Field(None, ge=0, le=100)
+
+    # Applicability rules
     applies_to_categories: Optional[list] = None
+    applies_to_products: Optional[list] = None
     min_amount: Optional[float] = Field(None, ge=0)
     max_amount: Optional[float] = Field(None, ge=0)
     customer_types: Optional[list] = None
+
+    # Tax exemption
+    is_tax_exempt: Optional[bool] = None
+
+    # Date range
+    effective_from: Optional[str] = None
+    effective_to: Optional[str] = None
+
+    # Compound tax
     is_compound: Optional[bool] = None
     compound_on_taxes: Optional[list] = None
+
+    # Status
     is_active: Optional[bool] = None
     priority: Optional[int] = None
 
@@ -523,20 +567,44 @@ class TaxRuleResponse(BaseModel):
     description: Optional[str]
     tax_type: str
     rate: float
+
+    # Tax calculation configuration
+    calculation_method: str
+    fixed_amount: Optional[float]
+    inclusion_type: str
+    rounding_method: str
+
+    # GST fields
     hsn_code: Optional[str]
     sac_code: Optional[str]
     cgst_rate: Optional[float]
     sgst_rate: Optional[float]
     igst_rate: Optional[float]
     cess_rate: Optional[float]
+
+    # Applicability rules
     applies_to_categories: list
+    applies_to_products: list
     min_amount: Optional[float]
     max_amount: Optional[float]
     customer_types: list
+
+    # Tax exemption
+    is_tax_exempt: bool
+
+    # Date range
+    effective_from: Optional[str]
+    effective_to: Optional[str]
+
+    # Compound tax
     is_compound: bool
     compound_on_taxes: list
+
+    # Status
     is_active: bool
     priority: int
+
+    # Metadata
     created_at: str
     updated_at: str
     created_by: Optional[int]

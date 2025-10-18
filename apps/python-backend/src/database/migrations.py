@@ -385,6 +385,79 @@ async def remove_deprecated_inventory_settings() -> Dict[str, Any]:
     return stats
 
 
+async def add_tax_rule_columns() -> Dict[str, any]:
+    """
+    Add new columns to tax_rules table for enhanced tax configuration.
+
+    Adds:
+    - calculation_method (percentage/fixed_amount)
+    - fixed_amount
+    - inclusion_type (inclusive/exclusive)
+    - rounding_method
+    - applies_to_products
+    - is_tax_exempt
+    - effective_from
+    - effective_to
+
+    Returns:
+        Dict with migration statistics
+    """
+    stats = {
+        'columns_added': 0,
+        'columns_skipped': 0,
+        'errors': []
+    }
+
+    try:
+        async with in_transaction() as conn:
+            # Check if tax_rules table exists
+            table_check = await conn.execute_query_dict(
+                "SELECT name FROM sqlite_master WHERE type='table' AND name='tax_rules'"
+            )
+
+            if not table_check:
+                logger.info("tax_rules table does not exist yet, skipping migration")
+                return stats
+
+            # Get existing columns
+            columns_result = await conn.execute_query_dict("PRAGMA table_info(tax_rules)")
+            existing_columns = {col['name'] for col in columns_result}
+
+            # Define new columns to add
+            new_columns = {
+                'calculation_method': "ALTER TABLE tax_rules ADD COLUMN calculation_method VARCHAR(20) DEFAULT 'percentage'",
+                'fixed_amount': "ALTER TABLE tax_rules ADD COLUMN fixed_amount DECIMAL(10,2)",
+                'inclusion_type': "ALTER TABLE tax_rules ADD COLUMN inclusion_type VARCHAR(20) DEFAULT 'exclusive'",
+                'rounding_method': "ALTER TABLE tax_rules ADD COLUMN rounding_method VARCHAR(20) DEFAULT 'round_half_up'",
+                'applies_to_products': "ALTER TABLE tax_rules ADD COLUMN applies_to_products TEXT DEFAULT '[]'",
+                'is_tax_exempt': "ALTER TABLE tax_rules ADD COLUMN is_tax_exempt INTEGER DEFAULT 0",
+                'effective_from': "ALTER TABLE tax_rules ADD COLUMN effective_from DATE",
+                'effective_to': "ALTER TABLE tax_rules ADD COLUMN effective_to DATE"
+            }
+
+            # Add missing columns
+            for column_name, alter_sql in new_columns.items():
+                if column_name not in existing_columns:
+                    try:
+                        await conn.execute_query(alter_sql)
+                        stats['columns_added'] += 1
+                        logger.info(f"Added column '{column_name}' to tax_rules table")
+                    except Exception as e:
+                        stats['errors'].append(f"Failed to add column '{column_name}': {e}")
+                        logger.error(f"Failed to add column '{column_name}': {e}")
+                else:
+                    stats['columns_skipped'] += 1
+                    logger.debug(f"Column '{column_name}' already exists in tax_rules table")
+
+            logger.info(f"Tax rules migration completed: {stats['columns_added']} columns added, {stats['columns_skipped']} skipped")
+
+    except Exception as e:
+        stats['errors'].append(f"Tax rules migration failed: {e}")
+        logger.error(f"Tax rules migration failed: {e}")
+
+    return stats
+
+
 async def run_all_migrations() -> Dict[str, any]:
     """
     Run all pending migrations in the correct order.
@@ -456,6 +529,17 @@ async def run_all_migrations() -> Dict[str, any]:
 
         if cleanup_stats['errors']:
             logger.warning(f"Deprecated settings cleanup had errors: {cleanup_stats['errors']}")
+
+        # Migration 5: Add tax rule columns for enhanced tax configuration
+        logger.info("Running migration: Add tax rule columns")
+        tax_columns_stats = await add_tax_rule_columns()
+        results['migrations_run'].append({
+            'name': 'add_tax_rule_columns',
+            'stats': tax_columns_stats
+        })
+
+        if tax_columns_stats['errors']:
+            logger.warning(f"Tax rule columns migration had errors: {tax_columns_stats['errors']}")
 
         results['success'] = True
         logger.info("All migrations completed successfully")
@@ -574,6 +658,29 @@ async def check_migrations_needed() -> List[str]:
                         logger.debug("New setting table doesn't exist yet")
             except Exception as e:
                 logger.debug(f"Could not check for settings migration: {e}")
+
+            # Check if tax_rules columns migration is needed
+            try:
+                tax_tables = await conn.execute_query_dict(
+                    "SELECT name FROM sqlite_master WHERE type='table' AND name='tax_rules'"
+                )
+
+                if tax_tables:
+                    columns = await conn.execute_query_dict("PRAGMA table_info(tax_rules)")
+                    column_names = [col['name'] for col in columns]
+
+                    # Check for new tax rule columns
+                    new_tax_columns = ['calculation_method', 'fixed_amount', 'inclusion_type',
+                                      'rounding_method', 'applies_to_products', 'is_tax_exempt',
+                                      'effective_from', 'effective_to']
+
+                    missing_columns = [col for col in new_tax_columns if col not in column_names]
+
+                    if missing_columns:
+                        needed.append('add_tax_rule_columns')
+                        logger.info(f"Tax rules columns migration needed: {', '.join(missing_columns)}")
+            except Exception as e:
+                logger.debug(f"Could not check for tax rules migration: {e}")
 
     except Exception as e:
         logger.error(f"Failed to check migration status: {e}")

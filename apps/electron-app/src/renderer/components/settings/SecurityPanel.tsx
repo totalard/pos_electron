@@ -1,35 +1,119 @@
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import { useAppStore, useSettingsStore, usePinStore } from '../../stores'
 import { authAPI } from '../../services/api'
+
+/**
+ * Enhanced Security Panel with WCAG AA Contrast Compliance
+ *
+ * Features:
+ * - Improved visual design with better hierarchy
+ * - WCAG AA compliant text contrast (4.5:1 for normal text, 3:1 for large text)
+ * - Enhanced security posture overview with accessible badges
+ * - Touch-safe UI elements (minimum 44x44px)
+ * - Theme-aware styling with proper contrast in both light and dark modes
+ * - Clear visual feedback for all interactive elements
+ */
+
+const EMPTY_PIN = ''
+const MIN_PIN_LENGTH = 6
+
+const POLICY_REQUIREMENTS = {
+  requirePinForRefunds: {
+    label: 'Refund Authorization',
+    description: 'Prevent unauthorized refunds by enforcing manager approval.'
+  },
+  requirePinForVoids: {
+    label: 'Void Protection',
+    description: 'Ensure voided transactions are verified by a supervisor.'
+  },
+  requirePinForDiscounts: {
+    label: 'Discount Oversight',
+    description: 'Keep promotional pricing under control with manager authorization.'
+  },
+  sessionTimeout: {
+    label: 'Session Timeout',
+    description: 'Reduce unattended terminal risk by applying idle session limits.'
+  }
+} as const
+
+const policyDescriptions = (Object.entries(POLICY_REQUIREMENTS) as Array<[
+  keyof typeof POLICY_REQUIREMENTS,
+  { label: string; description: string }
+]>).map(([id, value]) => ({
+  id,
+  title: value.label,
+  description: value.description
+}))
+
+const scoreThresholds = [
+  { limit: 80, label: 'Excellent', color: { light: 'text-emerald-700', dark: 'text-emerald-300' } },
+  { limit: 60, label: 'Stable', color: { light: 'text-blue-700', dark: 'text-blue-300' } },
+  { limit: 40, label: 'At Risk', color: { light: 'text-amber-700', dark: 'text-amber-300' } },
+  { limit: 0, label: 'Critical', color: { light: 'text-red-700', dark: 'text-red-300' } }
+] as const
 
 export function SecurityPanel() {
   const { theme } = useAppStore()
   const { security, updateSecuritySettings } = useSettingsStore()
   const { currentUser } = usePinStore()
-  
-  const [oldPin, setOldPin] = useState('')
-  const [newPin, setNewPin] = useState('')
-  const [confirmPin, setConfirmPin] = useState('')
-  const [pinError, setPinError] = useState('')
-  const [pinSuccess, setPinSuccess] = useState('')
+
+  const [oldPin, setOldPin] = useState(EMPTY_PIN)
+  const [newPin, setNewPin] = useState(EMPTY_PIN)
+  const [confirmPin, setConfirmPin] = useState(EMPTY_PIN)
+  const [pinError, setPinError] = useState(EMPTY_PIN)
+  const [pinSuccess, setPinSuccess] = useState(EMPTY_PIN)
   const [isChangingPin, setIsChangingPin] = useState(false)
 
-  const handleSecurityChange = async (field: keyof typeof security, value: boolean | number) => {
+    const policyStatuses = Object.entries({
+    requirePinForRefunds: security.requirePinForRefunds,
+    requirePinForVoids: security.requirePinForVoids,
+    requirePinForDiscounts: security.requirePinForDiscounts,
+    sessionTimeout: security.sessionTimeout > 0
+  }) as Array<[
+    keyof typeof POLICY_REQUIREMENTS,
+    boolean
+  ]>
+
+  const policyStatusMap = Object.fromEntries(policyStatuses) as Record<
+    keyof typeof POLICY_REQUIREMENTS,
+    boolean
+  >
+  const enabledCount = policyStatuses.filter(([, status]) => status).length
+  const totalPolicies = policyStatuses.length
+  const policyScore = totalPolicies > 0 ? Math.round((enabledCount / totalPolicies) * 100) : 0
+  const scoreDefinition = scoreThresholds.find(({ limit }) => policyScore >= limit) ?? scoreThresholds.at(-1)!
+  const pendingPolicies = policyStatuses
+    .filter(([, status]) => !status)
+    .map(([policyKey]) => POLICY_REQUIREMENTS[policyKey])
+  const pendingCount = pendingPolicies.length
+  const scoreColorClass = theme === 'dark' ? scoreDefinition.color.dark : scoreDefinition.color.light
+  // Enhanced badge classes with better contrast
+  const activeBadgeClass = theme === 'dark'
+    ? 'bg-blue-900/40 text-blue-200 border border-blue-700'
+    : 'bg-blue-100 text-blue-800 border border-blue-300'
+  const pendingBadgeClass = pendingCount === 0
+    ? theme === 'dark'
+      ? 'bg-emerald-900/40 text-emerald-200 border border-emerald-700'
+      : 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+    : theme === 'dark'
+      ? 'bg-amber-900/40 text-amber-200 border border-amber-700'
+      : 'bg-amber-100 text-amber-800 border border-amber-300'
+
+  const handleSecurityChange = useCallback(async (field: keyof typeof security, value: boolean | number) => {
     await updateSecuritySettings({ [field]: value })
-  }
+  }, [updateSecuritySettings])
 
-  const handlePinChange = async () => {
-    setPinError('')
-    setPinSuccess('')
+  const handlePinChange = useCallback(async () => {
+    setPinError(EMPTY_PIN)
+    setPinSuccess(EMPTY_PIN)
 
-    // Validation
     if (!oldPin || !newPin || !confirmPin) {
       setPinError('All fields are required')
       return
     }
 
-    if (newPin.length !== 6 || !/^\d{6}$/.test(newPin)) {
-      setPinError('New PIN must be exactly 6 digits')
+    if (newPin.length !== MIN_PIN_LENGTH || !/^\d{6}$/.test(newPin)) {
+      setPinError(`New PIN must be exactly ${MIN_PIN_LENGTH} digits`)
       return
     }
 
@@ -49,46 +133,132 @@ export function SecurityPanel() {
       if (currentUser) {
         await authAPI.changePin(currentUser.id, oldPin, newPin)
         setPinSuccess('PIN changed successfully')
-        setOldPin('')
-        setNewPin('')
-        setConfirmPin('')
+        setOldPin(EMPTY_PIN)
+        setNewPin(EMPTY_PIN)
+        setConfirmPin(EMPTY_PIN)
       }
     } catch (error) {
       setPinError(error instanceof Error ? error.message : 'Failed to change PIN')
     } finally {
       setIsChangingPin(false)
     }
-  }
+  }, [confirmPin, currentUser, newPin, oldPin])
 
   return (
     <div className="p-6 space-y-6">
-      {/* Panel Header */}
+      {/* Panel Header - Enhanced contrast */}
       <div className="mb-6">
         <h2 className={`
           text-2xl font-bold mb-2
           ${theme === 'dark' ? 'text-white' : 'text-gray-900'}
         `}>
-          Security Settings
+          Security Controls
         </h2>
         <p className={`
           text-sm
-          ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}
+          ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}
         `}>
-          Manage security and access control settings
+          Strengthen compliance, authentication, and account protection policies
         </p>
       </div>
 
-      {/* PIN Change Section */}
+      {/* Security Posture Overview - Enhanced design and contrast */}
       <div className={`
-        p-4 rounded-lg
-        ${theme === 'dark' ? 'bg-gray-700/30' : 'bg-gray-50'}
+        p-5 rounded-lg border shadow-sm
+        ${theme === 'dark' ? 'bg-gray-800/50 border-gray-700' : 'bg-white border-gray-200'}
       `}>
-        <h3 className={`
-          text-lg font-semibold mb-4
-          ${theme === 'dark' ? 'text-white' : 'text-gray-900'}
-        `}>
-          Change PIN
-        </h3>
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-5">
+          <div>
+            <h3 className={`
+              text-lg font-bold mb-1
+              ${theme === 'dark' ? 'text-white' : 'text-gray-900'}
+            }`}>
+              Security Posture Overview
+            </h3>
+            <p className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+              Summary of active policies and recommended hardening actions
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <div className={`px-4 py-2 rounded-lg text-sm font-medium shadow-sm ${activeBadgeClass}`}>
+              <span className="font-bold">{enabledCount}</span> Active Policy{enabledCount === 1 ? '' : 'ies'}
+            </div>
+            <div className={`px-4 py-2 rounded-lg text-sm font-medium shadow-sm ${pendingBadgeClass}`}>
+              <span className="font-bold">{pendingCount}</span> Pending Safeguard{pendingCount === 1 ? '' : 's'}
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
+          <div className={`p-4 rounded-lg border ${
+            theme === 'dark' ? 'bg-gray-800/60 border-gray-700' : 'bg-gray-50 border-gray-200'
+          }`}>
+            <p className={`font-bold mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+              Overall Posture
+            </p>
+            <div className="flex items-baseline gap-2">
+              <span className={`text-3xl font-bold ${scoreColorClass}`}>{policyScore}</span>
+              <span className={`text-lg ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>%</span>
+            </div>
+            <p className={`mt-2 font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+              {scoreDefinition.label}
+            </p>
+          </div>
+
+          {policyDescriptions.map(({ id, title, description }) => (
+            <div
+              key={id}
+              className={`p-4 rounded-lg border ${
+                theme === 'dark' ? 'bg-gray-800/60 border-gray-700' : 'bg-gray-50 border-gray-200'
+              }`}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <p className={`font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                  {title}
+                </p>
+                <span className={`text-xs px-2 py-1 rounded-full font-medium border ${
+                  policyStatusMap[id]
+                    ? theme === 'dark'
+                      ? 'bg-emerald-900/40 text-emerald-200 border-emerald-700'
+                      : 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                    : theme === 'dark'
+                      ? 'bg-amber-900/40 text-amber-200 border-amber-700'
+                      : 'bg-amber-100 text-amber-800 border-amber-300'
+                }`}>
+                  {policyStatusMap[id] ? 'Active' : 'Pending'}
+                </span>
+              </div>
+              <p className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                {description}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* PIN Change Section - Enhanced design */}
+      <div className={`
+        p-5 rounded-lg border shadow-sm
+        ${theme === 'dark' ? 'bg-gray-800/50 border-gray-700' : 'bg-white border-gray-200'}
+      `}>
+        <div className="flex items-center gap-3 mb-5">
+          <div className={`p-3 rounded-lg ${
+            theme === 'dark' ? 'bg-blue-900/40' : 'bg-blue-100'
+          }`}>
+            <span className="text-2xl" aria-hidden="true">🔑</span>
+          </div>
+          <div>
+            <h3 className={`
+              text-lg font-bold
+              ${theme === 'dark' ? 'text-white' : 'text-gray-900'}
+            `}>
+              Change PIN
+            </h3>
+            <p className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+              Update your personal identification number
+            </p>
+          </div>
+        </div>
 
         <div className="space-y-4 max-w-md">
           {/* Old PIN */}
@@ -172,32 +342,53 @@ export function SecurityPanel() {
             />
           </div>
 
-          {/* Error/Success Messages */}
+          {/* Error/Success Messages - Enhanced contrast */}
           {pinError && (
-            <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20">
-              <p className="text-sm text-red-500">{pinError}</p>
+            <div className={`p-4 rounded-lg border shadow-sm ${
+              theme === 'dark'
+                ? 'bg-red-900/30 border-red-700'
+                : 'bg-red-50 border-red-300'
+            }`}>
+              <p className={`text-sm font-medium flex items-center gap-2 ${
+                theme === 'dark' ? 'text-red-200' : 'text-red-800'
+              }`}>
+                <span aria-hidden="true">⚠️</span>
+                {pinError}
+              </p>
             </div>
           )}
           {pinSuccess && (
-            <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/20">
-              <p className="text-sm text-green-500">{pinSuccess}</p>
+            <div className={`p-4 rounded-lg border shadow-sm ${
+              theme === 'dark'
+                ? 'bg-green-900/30 border-green-700'
+                : 'bg-green-50 border-green-300'
+            }`}>
+              <p className={`text-sm font-medium flex items-center gap-2 ${
+                theme === 'dark' ? 'text-green-200' : 'text-green-800'
+              }`}>
+                <span aria-hidden="true">✓</span>
+                {pinSuccess}
+              </p>
             </div>
           )}
 
-          {/* Change PIN Button - Touch-safe 44x44px minimum */}
+          {/* Change PIN Button - Touch-safe 44x44px minimum with enhanced styling */}
           <button
             onClick={handlePinChange}
             disabled={isChangingPin}
             className={`
-              w-full px-6 py-3 rounded-lg font-medium
-              transition-all duration-200
+              w-full px-6 py-3 rounded-lg font-semibold text-base
+              transition-all duration-200 shadow-sm
               min-h-[44px]
               ${isChangingPin
-                ? 'bg-gray-400 cursor-not-allowed'
-                : 'bg-blue-500 hover:bg-blue-600 active:bg-blue-700'
+                ? theme === 'dark'
+                  ? 'bg-gray-600 cursor-not-allowed text-gray-400'
+                  : 'bg-gray-300 cursor-not-allowed text-gray-500'
+                : theme === 'dark'
+                  ? 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white'
+                  : 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white'
               }
-              text-white
-              focus:outline-none focus:ring-2 focus:ring-blue-500/20
+              focus:outline-none focus:ring-2 focus:ring-blue-500/50
             `}
             aria-label="Change PIN"
           >
@@ -206,24 +397,36 @@ export function SecurityPanel() {
         </div>
       </div>
 
-      {/* Session & Access Control Section */}
+      {/* Session & Access Control Section - Enhanced design */}
       <div className={`
-        p-4 rounded-lg
-        ${theme === 'dark' ? 'bg-gray-700/30' : 'bg-gray-50'}
+        p-5 rounded-lg border shadow-sm
+        ${theme === 'dark' ? 'bg-gray-800/50 border-gray-700' : 'bg-white border-gray-200'}
       `}>
-        <h3 className={`
-          text-lg font-semibold mb-4
-          ${theme === 'dark' ? 'text-white' : 'text-gray-900'}
-        `}>
-          Session & Access Control
-        </h3>
+        <div className="flex items-center gap-3 mb-5">
+          <div className={`p-3 rounded-lg ${
+            theme === 'dark' ? 'bg-purple-900/40' : 'bg-purple-100'
+          }`}>
+            <span className="text-2xl" aria-hidden="true">⚙️</span>
+          </div>
+          <div>
+            <h3 className={`
+              text-lg font-bold
+              ${theme === 'dark' ? 'text-white' : 'text-gray-900'}
+            `}>
+              Session & Access Control
+            </h3>
+            <p className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+              Configure timeout and authorization policies
+            </p>
+          </div>
+        </div>
 
-        <div className="space-y-4">
-          {/* Session Timeout */}
+        <div className="space-y-5">
+          {/* Session Timeout - Enhanced */}
           <div>
             <label className={`
-              block text-sm font-medium mb-2
-              ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}
+              block text-sm font-semibold mb-2
+              ${theme === 'dark' ? 'text-gray-200' : 'text-gray-800'}
             `}>
               Session Timeout (minutes, 0 = disabled)
             </label>
@@ -234,37 +437,39 @@ export function SecurityPanel() {
               min={0}
               max={1440}
               className={`
-                w-full px-4 py-3 rounded-lg
-                transition-colors duration-200
+                w-full px-4 py-3 rounded-lg text-base font-medium
+                transition-colors duration-200 shadow-sm
                 min-h-[44px]
                 ${theme === 'dark'
-                  ? 'bg-gray-800 border border-gray-600 text-white focus:border-blue-500'
-                  : 'bg-white border border-gray-300 text-gray-900 focus:border-blue-500'
+                  ? 'bg-gray-700 border border-gray-600 text-white focus:border-blue-400'
+                  : 'bg-white border border-gray-300 text-gray-900 focus:border-blue-600'
                 }
-                focus:outline-none focus:ring-2 focus:ring-blue-500/20
+                focus:outline-none focus:ring-2 focus:ring-blue-500/30
               `}
               aria-label="Session timeout in minutes"
             />
             <p className={`
-              text-xs mt-1
-              ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}
+              text-sm mt-2
+              ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}
             `}>
               Automatically log out after period of inactivity
             </p>
           </div>
 
-          {/* Require PIN for Refunds */}
-          <div className="flex items-center justify-between min-h-[44px]">
+          {/* Require PIN for Refunds - Enhanced */}
+          <div className={`flex items-center justify-between min-h-[44px] p-4 rounded-lg border ${
+            theme === 'dark' ? 'bg-gray-800/40 border-gray-700' : 'bg-gray-50 border-gray-200'
+          }`}>
             <div>
               <label className={`
-                text-sm font-medium
-                ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}
+                text-sm font-semibold
+                ${theme === 'dark' ? 'text-gray-200' : 'text-gray-800'}
               `}>
                 Require PIN for Refunds
               </label>
               <p className={`
-                text-xs
-                ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}
+                text-sm mt-1
+                ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}
               `}>
                 Require PIN verification to process refunds
               </p>
@@ -272,16 +477,21 @@ export function SecurityPanel() {
             <button
               onClick={() => handleSecurityChange('requirePinForRefunds', !security.requirePinForRefunds)}
               className={`
-                relative inline-flex h-8 w-14 items-center rounded-full
-                transition-colors duration-200
-                focus:outline-none focus:ring-2 focus:ring-blue-500/20
-                ${security.requirePinForRefunds ? 'bg-blue-500' : 'bg-gray-300'}
+                relative inline-flex h-8 w-14 items-center rounded-full flex-shrink-0
+                transition-colors duration-200 shadow-sm
+                focus:outline-none focus:ring-2 focus:ring-blue-500/50
+                ${security.requirePinForRefunds
+                  ? 'bg-blue-600'
+                  : theme === 'dark' ? 'bg-gray-600' : 'bg-gray-300'
+                }
               `}
               aria-label="Toggle require PIN for refunds"
+              aria-checked={security.requirePinForRefunds}
+              role="switch"
             >
               <span
                 className={`
-                  inline-block h-6 w-6 transform rounded-full bg-white
+                  inline-block h-6 w-6 transform rounded-full bg-white shadow-md
                   transition-transform duration-200
                   ${security.requirePinForRefunds ? 'translate-x-7' : 'translate-x-1'}
                 `}
@@ -289,18 +499,20 @@ export function SecurityPanel() {
             </button>
           </div>
 
-          {/* Require PIN for Voids */}
-          <div className="flex items-center justify-between min-h-[44px]">
+          {/* Require PIN for Voids - Enhanced */}
+          <div className={`flex items-center justify-between min-h-[44px] p-4 rounded-lg border ${
+            theme === 'dark' ? 'bg-gray-800/40 border-gray-700' : 'bg-gray-50 border-gray-200'
+          }`}>
             <div>
               <label className={`
-                text-sm font-medium
-                ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}
+                text-sm font-semibold
+                ${theme === 'dark' ? 'text-gray-200' : 'text-gray-800'}
               `}>
                 Require PIN for Voids
               </label>
               <p className={`
-                text-xs
-                ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}
+                text-sm mt-1
+                ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}
               `}>
                 Require PIN verification to void transactions
               </p>
@@ -308,16 +520,21 @@ export function SecurityPanel() {
             <button
               onClick={() => handleSecurityChange('requirePinForVoids', !security.requirePinForVoids)}
               className={`
-                relative inline-flex h-8 w-14 items-center rounded-full
-                transition-colors duration-200
-                focus:outline-none focus:ring-2 focus:ring-blue-500/20
-                ${security.requirePinForVoids ? 'bg-blue-500' : 'bg-gray-300'}
+                relative inline-flex h-8 w-14 items-center rounded-full flex-shrink-0
+                transition-colors duration-200 shadow-sm
+                focus:outline-none focus:ring-2 focus:ring-blue-500/50
+                ${security.requirePinForVoids
+                  ? 'bg-blue-600'
+                  : theme === 'dark' ? 'bg-gray-600' : 'bg-gray-300'
+                }
               `}
               aria-label="Toggle require PIN for voids"
+              aria-checked={security.requirePinForVoids}
+              role="switch"
             >
               <span
                 className={`
-                  inline-block h-6 w-6 transform rounded-full bg-white
+                  inline-block h-6 w-6 transform rounded-full bg-white shadow-md
                   transition-transform duration-200
                   ${security.requirePinForVoids ? 'translate-x-7' : 'translate-x-1'}
                 `}
@@ -325,18 +542,20 @@ export function SecurityPanel() {
             </button>
           </div>
 
-          {/* Require PIN for Discounts */}
-          <div className="flex items-center justify-between min-h-[44px]">
+          {/* Require PIN for Discounts - Enhanced */}
+          <div className={`flex items-center justify-between min-h-[44px] p-4 rounded-lg border ${
+            theme === 'dark' ? 'bg-gray-800/40 border-gray-700' : 'bg-gray-50 border-gray-200'
+          }`}>
             <div>
               <label className={`
-                text-sm font-medium
-                ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}
+                text-sm font-semibold
+                ${theme === 'dark' ? 'text-gray-200' : 'text-gray-800'}
               `}>
                 Require PIN for Discounts
               </label>
               <p className={`
-                text-xs
-                ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}
+                text-sm mt-1
+                ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}
               `}>
                 Require PIN verification to apply discounts
               </p>
@@ -344,16 +563,21 @@ export function SecurityPanel() {
             <button
               onClick={() => handleSecurityChange('requirePinForDiscounts', !security.requirePinForDiscounts)}
               className={`
-                relative inline-flex h-8 w-14 items-center rounded-full
-                transition-colors duration-200
-                focus:outline-none focus:ring-2 focus:ring-blue-500/20
-                ${security.requirePinForDiscounts ? 'bg-blue-500' : 'bg-gray-300'}
+                relative inline-flex h-8 w-14 items-center rounded-full flex-shrink-0
+                transition-colors duration-200 shadow-sm
+                focus:outline-none focus:ring-2 focus:ring-blue-500/50
+                ${security.requirePinForDiscounts
+                  ? 'bg-blue-600'
+                  : theme === 'dark' ? 'bg-gray-600' : 'bg-gray-300'
+                }
               `}
               aria-label="Toggle require PIN for discounts"
+              aria-checked={security.requirePinForDiscounts}
+              role="switch"
             >
               <span
                 className={`
-                  inline-block h-6 w-6 transform rounded-full bg-white
+                  inline-block h-6 w-6 transform rounded-full bg-white shadow-md
                   transition-transform duration-200
                   ${security.requirePinForDiscounts ? 'translate-x-7' : 'translate-x-1'}
                 `}
