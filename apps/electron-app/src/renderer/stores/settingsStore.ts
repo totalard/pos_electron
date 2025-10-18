@@ -169,19 +169,37 @@ export interface ReceiptSettings {
   showQRCode: boolean
   qrCodeContent: 'receipt_id' | 'receipt_url' | 'custom'
 
-  // Receipt Layout
-  paperWidth: '58mm' | '80mm' | 'custom'
+  // Paper Size Configuration
+  paperType: 'thermal' | 'standard' | 'custom'
+  paperWidth: '58mm' | '80mm' | '110mm' | 'A4' | 'Letter' | 'custom'
+  paperHeight: 'continuous' | 'A4' | 'Letter' | 'custom'
   customPaperWidth: number
+  customPaperHeight: number
+  paperUnit: 'mm' | 'inches'
+
+  // Font Configuration
   fontFamily: 'monospace' | 'sans-serif' | 'serif'
-  fontSize: 'small' | 'medium' | 'large'
+  headerFontSize: number
+  itemFontSize: number
+  totalFontSize: number
+  footerFontSize: number
+  headerFontWeight: 'normal' | 'bold'
+  itemFontWeight: 'normal' | 'bold'
+  totalFontWeight: 'normal' | 'bold'
+  footerFontWeight: 'normal' | 'bold'
+  characterSpacing: number
+  lineHeight: number
+
+  // Layout & Spacing
   lineSpacing: 'compact' | 'normal' | 'relaxed'
   marginTop: number
   marginBottom: number
   marginLeft: number
   marginRight: number
+  sectionSpacing: number
 
   // Template Options
-  activeTemplate: 'standard' | 'compact' | 'detailed' | 'custom'
+  activeTemplate: 'standard' | 'compact' | 'detailed' | 'minimal' | 'custom'
   customTemplates: Array<{
     id: string
     name: string
@@ -489,16 +507,34 @@ const initialState = {
     showQRCode: false,
     qrCodeContent: 'receipt_id' as const,
 
-    // Receipt Layout
+    // Paper Size Configuration
+    paperType: 'thermal' as const,
     paperWidth: '80mm' as const,
+    paperHeight: 'continuous' as const,
     customPaperWidth: 80,
+    customPaperHeight: 297,
+    paperUnit: 'mm' as const,
+
+    // Font Configuration
     fontFamily: 'monospace' as const,
-    fontSize: 'medium' as const,
+    headerFontSize: 14,
+    itemFontSize: 12,
+    totalFontSize: 13,
+    footerFontSize: 11,
+    headerFontWeight: 'bold' as const,
+    itemFontWeight: 'normal' as const,
+    totalFontWeight: 'bold' as const,
+    footerFontWeight: 'normal' as const,
+    characterSpacing: 0,
+    lineHeight: 1.2,
+
+    // Layout & Spacing
     lineSpacing: 'normal' as const,
     marginTop: 5,
     marginBottom: 5,
     marginLeft: 5,
     marginRight: 5,
+    sectionSpacing: 10,
 
     // Template Options
     activeTemplate: 'standard' as const,

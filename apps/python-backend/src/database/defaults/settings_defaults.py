@@ -420,6 +420,159 @@ def get_default_settings() -> List[Dict[str, Any]]:
             'data_type': 'string',
             'description': 'Receipt paper size'
         },
+        # New comprehensive receipt settings
+        {
+            'section': 'receipts',
+            'key': 'paperType',
+            'value': 'thermal',
+            'default_value': 'thermal',
+            'data_type': 'string',
+            'description': 'Paper type: thermal, standard, or custom'
+        },
+        {
+            'section': 'receipts',
+            'key': 'paperWidth',
+            'value': '80mm',
+            'default_value': '80mm',
+            'data_type': 'string',
+            'description': 'Paper width: 58mm, 80mm, 110mm, A4, Letter, or custom'
+        },
+        {
+            'section': 'receipts',
+            'key': 'paperHeight',
+            'value': 'continuous',
+            'default_value': 'continuous',
+            'data_type': 'string',
+            'description': 'Paper height: continuous, A4, Letter, or custom'
+        },
+        {
+            'section': 'receipts',
+            'key': 'customPaperWidth',
+            'value': '80',
+            'default_value': '80',
+            'data_type': 'number',
+            'description': 'Custom paper width in mm or inches'
+        },
+        {
+            'section': 'receipts',
+            'key': 'customPaperHeight',
+            'value': '297',
+            'default_value': '297',
+            'data_type': 'number',
+            'description': 'Custom paper height in mm or inches'
+        },
+        {
+            'section': 'receipts',
+            'key': 'paperUnit',
+            'value': 'mm',
+            'default_value': 'mm',
+            'data_type': 'string',
+            'description': 'Paper measurement unit: mm or inches'
+        },
+        {
+            'section': 'receipts',
+            'key': 'fontFamily',
+            'value': 'monospace',
+            'default_value': 'monospace',
+            'data_type': 'string',
+            'description': 'Font family: monospace, sans-serif, or serif'
+        },
+        {
+            'section': 'receipts',
+            'key': 'headerFontSize',
+            'value': '14',
+            'default_value': '14',
+            'data_type': 'number',
+            'description': 'Header font size in pixels'
+        },
+        {
+            'section': 'receipts',
+            'key': 'itemFontSize',
+            'value': '12',
+            'default_value': '12',
+            'data_type': 'number',
+            'description': 'Item font size in pixels'
+        },
+        {
+            'section': 'receipts',
+            'key': 'totalFontSize',
+            'value': '13',
+            'default_value': '13',
+            'data_type': 'number',
+            'description': 'Total font size in pixels'
+        },
+        {
+            'section': 'receipts',
+            'key': 'footerFontSize',
+            'value': '11',
+            'default_value': '11',
+            'data_type': 'number',
+            'description': 'Footer font size in pixels'
+        },
+        {
+            'section': 'receipts',
+            'key': 'headerFontWeight',
+            'value': 'bold',
+            'default_value': 'bold',
+            'data_type': 'string',
+            'description': 'Header font weight: normal or bold'
+        },
+        {
+            'section': 'receipts',
+            'key': 'itemFontWeight',
+            'value': 'normal',
+            'default_value': 'normal',
+            'data_type': 'string',
+            'description': 'Item font weight: normal or bold'
+        },
+        {
+            'section': 'receipts',
+            'key': 'totalFontWeight',
+            'value': 'bold',
+            'default_value': 'bold',
+            'data_type': 'string',
+            'description': 'Total font weight: normal or bold'
+        },
+        {
+            'section': 'receipts',
+            'key': 'footerFontWeight',
+            'value': 'normal',
+            'default_value': 'normal',
+            'data_type': 'string',
+            'description': 'Footer font weight: normal or bold'
+        },
+        {
+            'section': 'receipts',
+            'key': 'characterSpacing',
+            'value': '0',
+            'default_value': '0',
+            'data_type': 'number',
+            'description': 'Character spacing in pixels'
+        },
+        {
+            'section': 'receipts',
+            'key': 'lineHeight',
+            'value': '1.2',
+            'default_value': '1.2',
+            'data_type': 'number',
+            'description': 'Line height multiplier'
+        },
+        {
+            'section': 'receipts',
+            'key': 'sectionSpacing',
+            'value': '10',
+            'default_value': '10',
+            'data_type': 'number',
+            'description': 'Spacing between receipt sections in pixels'
+        },
+        {
+            'section': 'receipts',
+            'key': 'activeTemplate',
+            'value': 'standard',
+            'default_value': 'standard',
+            'data_type': 'string',
+            'description': 'Active receipt template: standard, compact, detailed, minimal, or custom'
+        },
 
         # ===== DISPLAY SETTINGS =====
         {
