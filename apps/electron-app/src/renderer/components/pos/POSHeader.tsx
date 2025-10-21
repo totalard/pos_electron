@@ -2,7 +2,7 @@ import { ReactNode } from 'react'
 import { useAppStore, useSessionStore } from '../../stores'
 import { usePinStore } from '../../stores'
 import { TabBar, Tab } from './TabBar'
-import { Avatar, Button } from '../common'
+import { Avatar, Button, InternetStatusIndicator } from '../common'
 
 /**
  * POSHeader component props
@@ -58,19 +58,6 @@ export function POSHeader({
   const { currentUser } = usePinStore()
   const { activeSession } = useSessionStore()
 
-  // Get current date and time
-  const now = new Date()
-  const dateStr = now.toLocaleDateString('en-US', { 
-    weekday: 'short', 
-    month: 'short', 
-    day: 'numeric',
-    year: 'numeric'
-  })
-  const timeStr = now.toLocaleTimeString('en-US', { 
-    hour: '2-digit', 
-    minute: '2-digit'
-  })
-
   // Get avatar color based on user's avatar_color
   const getAvatarColor = (): 'blue' | 'green' | 'purple' | 'orange' | 'pink' | 'cyan' | 'indigo' | 'red' | 'teal' | 'amber' => {
     if (currentUser?.avatar_color) {
@@ -119,7 +106,7 @@ export function POSHeader({
           )}
         </div>
 
-        {/* Center: Session Info, Date & Time */}
+        {/* Center: Session Info */}
         <div className="flex items-center gap-6">
           {/* Session Info */}
           {activeSession && (
@@ -140,43 +127,12 @@ export function POSHeader({
               </div>
             </div>
           )}
-          
-          <div className="flex items-center gap-2">
-            <svg className={`w-4 h-4 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-            <span className={`
-              text-sm font-medium
-              ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}
-            `}>
-              {dateStr}
-            </span>
-          </div>
-          <div className="flex items-center gap-2">
-            <svg className={`w-4 h-4 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <span className={`
-              text-sm font-medium
-              ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}
-            `}>
-              {timeStr}
-            </span>
-          </div>
         </div>
 
         {/* Right: Connection Status & Actions */}
         <div className="flex items-center gap-4">
-          {/* Connection Status */}
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-            <span className={`
-              text-xs font-medium
-              ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}
-            `}>
-              Online
-            </span>
-          </div>
+          {/* Internet Connection Status */}
+          <InternetStatusIndicator showLabel={true} size="sm" />
 
           {/* Close Session Button */}
           {activeSession && onCloseSession && (

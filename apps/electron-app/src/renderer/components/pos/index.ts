@@ -19,6 +19,9 @@ export type { POSHeaderProps } from './POSHeader'
 export { POSFooter } from './POSFooter'
 export type { POSFooterProps } from './POSFooter'
 
+export { POSStatusFooter } from './POSStatusFooter'
+export type { POSStatusFooterProps } from './POSStatusFooter'
+
 export { POSProductGrid } from './POSProductGrid'
 export type { POSProductGridProps } from './POSProductGrid'
 
@@ -46,3 +49,5 @@ export { SwipeableCartItem } from './SwipeableCartItem'
 export { BillSplitManager } from './BillSplitManager'
 export { SessionCreationDialog } from './SessionCreationDialog'
 export { SessionClosureDialog } from './SessionClosureDialog'
+export { CustomerSelector } from './CustomerSelector'
+export type { CustomerSelectorProps } from './CustomerSelector'

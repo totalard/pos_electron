@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useAppStore, usePOSStore, useProductStore, useSettingsStore, useSessionStore, usePinStore } from '../stores'
-import { POSHeader, POSFooter, POSProductGrid, POSProductList, POSCategorySidebar, POSCart, POSSearchBar, POSActionButton, CheckoutModal, DiscountDialog, ItemDiscountDialog, CashManagementDialog, EmailReceiptDialog, SessionCreationDialog, SessionClosureDialog } from './pos'
+import { POSHeader, POSFooter, POSProductGrid, POSProductList, POSCategorySidebar, POSCart, POSSearchBar, POSActionButton, CheckoutModal, DiscountDialog, ItemDiscountDialog, CashManagementDialog, EmailReceiptDialog, SessionCreationDialog, SessionClosureDialog, CustomerSelector, POSStatusFooter } from './pos'
 import { TableSelector, OrderTypeSelector, ProductCustomizationDialog } from './restaurant'
-import { ConfirmDialog } from './common/ConfirmDialog'
+import { ConfirmDialog, ResizablePanel } from './common'
 import { useBarcodeScanner } from '../hooks'
 import { posSessionAPI } from '../services/api'
 import type { EnhancedProduct } from '../services/api'
@@ -288,8 +288,9 @@ export function SaleScreen({ onBack }: SaleScreenProps) {
     alert(`Receipt will be sent to ${email}`)
   }
 
+  const [showCustomerSelector, setShowCustomerSelector] = useState(false)
+
   const handleCustomer = () => {
-    const { setShowCustomerSelector } = usePOSStore.getState()
     setShowCustomerSelector(true)
   }
 
@@ -344,16 +345,8 @@ export function SaleScreen({ onBack }: SaleScreenProps) {
     preventOnInputFocus: true
   })
 
-  return (
-    <div className={`
-      fixed inset-0 z-50 flex
-      ${theme === 'dark'
-        ? 'bg-gray-900'
-        : 'bg-gray-50'
-      }
-    `}>
-      {/* Left Section (2/3) - Header, Categories, Products, and Footer */}
-      <div className="w-2/3 flex flex-col overflow-hidden">
+  const leftPanel = (
+    <div className="flex flex-col overflow-hidden h-full">
         {/* Main Content Area */}
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* Header with Tabs and User Info */}
@@ -619,20 +612,42 @@ export function SaleScreen({ onBack }: SaleScreenProps) {
           </>
         }
       />
-      </div>
 
-      {/* Right Section (1/3) - Cart - Full Height */}
-      <div className={`
-        w-1/3 border-l flex flex-col
-        ${theme === 'dark' ? 'border-gray-700 bg-gray-800/30' : 'border-gray-200 bg-white'}
-      `}>
-        <POSCart 
-          showCustomer 
-          onCustomerSelect={handleCustomer}
-          onCheckout={handleCheckout}
-          checkoutDisabled={itemCount === 0}
-        />
-      </div>
+      {/* Status Footer */}
+      <POSStatusFooter />
+    </div>
+  )
+
+  const rightPanel = (
+    <div className={`
+      border-l flex flex-col h-full
+      ${theme === 'dark' ? 'border-gray-700 bg-gray-800/30' : 'border-gray-200 bg-white'}
+    `}>
+      <POSCart 
+        showCustomer 
+        onCustomerSelect={handleCustomer}
+        onCheckout={handleCheckout}
+        checkoutDisabled={itemCount === 0}
+      />
+    </div>
+  )
+
+  return (
+    <div className={`
+      fixed inset-0 z-50 flex flex-col
+      ${theme === 'dark'
+        ? 'bg-gray-900'
+        : 'bg-gray-50'
+      }
+    `}>
+      <ResizablePanel
+        leftPanel={leftPanel}
+        rightPanel={rightPanel}
+        defaultLeftWidth={66.67}
+        minLeftWidth={40}
+        maxLeftWidth={80}
+        storageKey="pos-screen-split"
+      />
 
       {/* Dialogs */}
       <CheckoutModal
@@ -747,6 +762,12 @@ export function SaleScreen({ onBack }: SaleScreenProps) {
           }}
         />
       )}
+
+      {/* Customer Selector */}
+      <CustomerSelector
+        isOpen={showCustomerSelector}
+        onClose={() => setShowCustomerSelector(false)}
+      />
     </div>
   )
 }

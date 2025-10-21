@@ -1,14 +1,16 @@
 import { useState, useEffect } from 'react'
 import { useAppStore, usePinStore, useSettingsStore } from '../stores'
 import { MenuCard } from './pos'
-import { Grid } from './layout'
+import { Grid, PageHeader } from './layout'
 import { ThemeToggle } from './common'
 
 interface DashboardProps {
   onNavigate: (screen: 'sales' | 'products' | 'inventory' | 'users' | 'settings' | 'customers' | 'transactions' | 'restaurant') => void
+  onLock?: () => void
+  onLogout?: () => void
 }
 
-export function Dashboard({ onNavigate }: DashboardProps) {
+export function Dashboard({ onNavigate, onLock, onLogout }: DashboardProps) {
   const { theme } = useAppStore()
   const { currentUser } = usePinStore()
   const { business } = useSettingsStore()
@@ -176,6 +178,42 @@ export function Dashboard({ onNavigate }: DashboardProps) {
                   {currentTime.toLocaleDateString()}
                 </p>
               </div>
+              {onLock && (
+                <button
+                  onClick={onLock}
+                  className={`
+                    p-3 rounded-xl transition-all duration-200
+                    transform hover:scale-110 active:scale-95
+                    ${theme === 'dark'
+                      ? 'bg-gray-700 hover:bg-gray-600 text-gray-300'
+                      : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
+                    }
+                  `}
+                  title="Lock Screen"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                </button>
+              )}
+              {onLogout && (
+                <button
+                  onClick={onLogout}
+                  className={`
+                    p-3 rounded-xl transition-all duration-200
+                    transform hover:scale-110 active:scale-95
+                    ${theme === 'dark'
+                      ? 'bg-gray-700 hover:bg-gray-600 text-gray-300'
+                      : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
+                    }
+                  `}
+                  title="Logout"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                  </svg>
+                </button>
+              )}
               {currentUser?.role === 'admin' && (
                 <button
                   onClick={() => onNavigate('settings')}

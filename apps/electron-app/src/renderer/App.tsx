@@ -12,6 +12,7 @@ import { TransactionManagementScreen } from './components/transactions/Transacti
 import { RestaurantManagementScreen } from './components/restaurant'
 import { Walkthrough, defaultWalkthroughSteps } from './components/walkthrough'
 import { ErrorModal } from './components/common/ErrorModal'
+import { LockScreen } from './components/LockScreen'
 
 const API_BASE_URL = 'http://localhost:8000/api'
 
@@ -20,6 +21,7 @@ type AppScreen = 'splash' | 'walkthrough' | 'pin' | 'dashboard' | 'sales' | 'pro
 function App() {
   const [currentScreen, setCurrentScreen] = useState<AppScreen>('splash')
   const [walkthroughChecked, setWalkthroughChecked] = useState(false)
+  const [isLocked, setIsLocked] = useState(false)
   const { theme } = useAppStore()
   const { reset: resetPin, initializeSystem, currentUser } = usePinStore()
 
@@ -64,6 +66,25 @@ function App() {
     setCurrentScreen('dashboard')
   }
 
+  // Handle lock screen
+  const handleLock = () => {
+    if (currentUser) {
+      setIsLocked(true)
+    }
+  }
+
+  // Handle unlock
+  const handleUnlock = () => {
+    setIsLocked(false)
+  }
+
+  // Handle logout
+  const handleLogout = () => {
+    resetPin()
+    setCurrentScreen('pin')
+    setIsLocked(false)
+  }
+
   // Handle walkthrough completion - proceed to login
   const handleWalkthroughComplete = () => {
     setCurrentScreen('pin')
@@ -92,6 +113,10 @@ function App() {
 
   return (
     <div className="h-screen w-screen overflow-hidden">
+      {/* Lock Screen Overlay */}
+      {isLocked && <LockScreen onUnlock={handleUnlock} />}
+      
+      {/* Main App Content */}
       {currentScreen === 'splash' && (
         <SplashScreen
           onComplete={handleSplashComplete}
@@ -113,7 +138,7 @@ function App() {
       )}
 
       {currentScreen === 'dashboard' && (
-        <Dashboard onNavigate={handleNavigate} />
+        <Dashboard onNavigate={handleNavigate} onLock={handleLock} onLogout={handleLogout} />
       )}
 
       {currentScreen === 'sales' && (

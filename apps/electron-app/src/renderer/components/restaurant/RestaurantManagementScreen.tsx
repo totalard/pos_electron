@@ -22,6 +22,21 @@ interface ManagementCard {
 export function RestaurantManagementScreen({ onBack }: RestaurantManagementScreenProps) {
   const { theme } = useAppStore()
   const { restaurant } = useSettingsStore()
+
+  // Safeguard: Ensure restaurant object exists
+  if (!restaurant) {
+    return (
+      <div className={`
+        h-screen w-screen flex items-center justify-center
+        ${theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'}
+      `}>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <p className={theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}>Loading...</p>
+        </div>
+      </div>
+    )
+  }
   
   const [showFloorTableEditor, setShowFloorTableEditor] = useState(false)
   const [showChargesManager, setShowChargesManager] = useState(false)
@@ -32,7 +47,7 @@ export function RestaurantManagementScreen({ onBack }: RestaurantManagementScree
   const managementCards: ManagementCard[] = [
     {
       id: 'waiters',
-      title: 'Waiter Management',
+      title: 'Waiters',
       description: 'Manage waiters/servers',
       count: restaurant.waiters.length,
       activeCount: restaurant.waiters.filter(w => w.isActive).length,
@@ -46,7 +61,7 @@ export function RestaurantManagementScreen({ onBack }: RestaurantManagementScree
     },
     {
       id: 'floors',
-      title: 'Floor & Table Management',
+      title: 'Floors & Tables',
       description: 'Manage floors and tables',
       count: restaurant.tables.length,
       activeCount: restaurant.floors.length,
@@ -74,7 +89,7 @@ export function RestaurantManagementScreen({ onBack }: RestaurantManagementScree
     },
     {
       id: 'reservations',
-      title: 'Reservations Management',
+      title: 'Reservations',
       description: 'Manage table reservations',
       color: 'orange',
       icon: (
@@ -86,7 +101,7 @@ export function RestaurantManagementScreen({ onBack }: RestaurantManagementScree
     },
     {
       id: 'addresses',
-      title: 'Delivery Address Management',
+      title: 'Delivery Addresses',
       description: 'Manage customer addresses',
       color: 'indigo',
       icon: (
@@ -150,7 +165,7 @@ export function RestaurantManagementScreen({ onBack }: RestaurantManagementScree
     `}>
       {/* Header */}
       <PageHeader
-        title="Restaurant Management"
+        title="Restaurant"
         subtitle="Manage all restaurant operations"
         showBackButton
         onBack={onBack}

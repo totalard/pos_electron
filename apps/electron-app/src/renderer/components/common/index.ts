@@ -54,3 +54,9 @@ export type { CurrencyDisplayProps } from './CurrencyDisplay'
 export { CurrencyInput } from './CurrencyInput'
 export type { CurrencyInputProps } from './CurrencyInput'
 
+export { ResizablePanel } from './ResizablePanel'
+export type { ResizablePanelProps } from './ResizablePanel'
+
+export { InternetStatusIndicator } from './InternetStatusIndicator'
+export type { InternetStatusIndicatorProps } from './InternetStatusIndicator'
+
