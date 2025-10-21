@@ -1,4 +1,4 @@
-import { HTMLAttributes, ReactNode, useEffect } from 'react'
+import { HTMLAttributes, ReactNode, useEffect, useState } from 'react'
 import { useAppStore } from '../../stores'
 
 /**
@@ -19,6 +19,8 @@ export interface ToastProps extends HTMLAttributes<HTMLDivElement> {
   position?: 'top' | 'bottom'
   /** Icon to display */
   icon?: ReactNode
+  /** Show progress bar */
+  showProgress?: boolean
 }
 
 /**
@@ -31,6 +33,7 @@ export interface ToastProps extends HTMLAttributes<HTMLDivElement> {
  * - Theme-aware styling
  * - Multiple types (success, error, warning, info)
  * - Smooth animations
+ * - Optional progress bar
  * 
  * @example
  * ```tsx
@@ -40,6 +43,7 @@ export interface ToastProps extends HTMLAttributes<HTMLDivElement> {
  *   message="User deleted successfully"
  *   type="success"
  *   duration={3000}
+ *   showProgress={true}
  * />
  * ```
  */
@@ -51,10 +55,12 @@ export function Toast({
   duration = 3000,
   position = 'top',
   icon,
+  showProgress = false,
   className = '',
   ...props
 }: ToastProps) {
   const { theme } = useAppStore()
+  const [progress, setProgress] = useState(100)
 
   // Auto-close after duration
   useEffect(() => {
@@ -66,6 +72,24 @@ export function Toast({
       return () => clearTimeout(timer)
     }
   }, [isOpen, duration, onClose])
+
+  // Progress bar animation
+  useEffect(() => {
+    if (isOpen && showProgress && duration > 0) {
+      setProgress(100)
+      const interval = 50 // Update every 50ms
+      const decrement = (interval / duration) * 100
+      
+      const progressTimer = setInterval(() => {
+        setProgress((prev) => {
+          const next = prev - decrement
+          return next <= 0 ? 0 : next
+        })
+      }, interval)
+
+      return () => clearInterval(progressTimer)
+    }
+  }, [isOpen, showProgress, duration])
 
   if (!isOpen) return null
 
@@ -119,6 +143,7 @@ export function Toast({
     >
       <div
         className={`
+          relative overflow-hidden
           flex items-center gap-3 px-6 py-4 rounded-lg shadow-2xl
           min-h-[60px] max-w-md
           ${typeStyles[type].bg}
@@ -152,6 +177,16 @@ export function Toast({
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
+
+        {/* Progress Bar */}
+        {showProgress && duration > 0 && (
+          <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/20">
+            <div
+              className="h-full bg-white/60 transition-all duration-50 ease-linear"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+        )}
       </div>
     </div>
   )
