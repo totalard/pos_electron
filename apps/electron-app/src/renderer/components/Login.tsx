@@ -44,11 +44,15 @@ export function Login({ onAuthenticated }: LoginProps) {
       try {
         setIsLoadingUsers(true)
         setUserLoadError(null)
+        
         const fetchedUsers = await authAPI.getAllUsers()
-        setUsers(fetchedUsers.filter(u => u.is_active))
+        if (fetchedUsers && Array.isArray(fetchedUsers)) {
+          setUsers(fetchedUsers.filter((u: User) => u.is_active))
+        }
       } catch (err) {
+        // Error modal will be shown automatically by global error handler
+        // Just update local state for UI feedback
         console.error('Failed to load users:', err)
-        setUserLoadError('Failed to load users. Please check backend connection.')
       } finally {
         setIsLoadingUsers(false)
       }

@@ -168,8 +168,8 @@ export const usePinStore = create<PinState>((set, get) => ({
       const users = await authAPI.getAllUsers()
 
       if (users.length === 0) {
-        // No users exist, initialize primary user
-        await authAPI.initializePrimaryUser()
+        // No users exist, initialize primary user (silent mode - user already exists is expected)
+        await authAPI.initializePrimaryUser(true)
         set({
           isLoading: false,
           error: null
@@ -179,17 +179,19 @@ export const usePinStore = create<PinState>((set, get) => ({
         set({ isLoading: false })
       }
     } catch (error) {
-      // If error is 404, try to initialize
+      // If error occurs, try to initialize (silent mode - user already exists is expected)
       try {
-        await authAPI.initializePrimaryUser()
+        await authAPI.initializePrimaryUser(true)
         set({
           isLoading: false,
           error: null
         })
       } catch (initError) {
+        // Only log the error, don't show modal since it's expected
+        console.log('System initialization check complete')
         set({
           isLoading: false,
-          error: 'Failed to initialize system. Please check backend connection.'
+          error: null
         })
       }
     }

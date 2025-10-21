@@ -380,9 +380,19 @@ export interface StockTransactionCreate {
 export { APIError } from '../utils/jsonrpc'
 
 // Helper function to handle responses with JSON-RPC
-async function handleResponse<T>(response: Response): Promise<T> {
-  const { parseJSONRPCResponse } = await import('../utils/jsonrpc')
-  return parseJSONRPCResponse<T>(response)
+async function handleResponse<T>(response: Response, silent = false): Promise<T> {
+  const { parseJSONRPCResponse, APIError } = await import('../utils/jsonrpc')
+  const { useErrorStore } = await import('../stores/errorStore')
+  
+  try {
+    return await parseJSONRPCResponse<T>(response)
+  } catch (error) {
+    // Show error modal automatically unless silent mode
+    if (!silent && error instanceof APIError) {
+      useErrorStore.getState().showError(error)
+    }
+    throw error
+  }
 }
 
 // ============================================================================
@@ -393,12 +403,12 @@ export const authAPI = {
   /**
    * Initialize the primary user on first app launch
    */
-  async initializePrimaryUser(): Promise<User> {
+  async initializePrimaryUser(silent = false): Promise<User> {
     const response = await fetch(`${API_BASE_URL}/auth/initialize`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' }
     })
-    return handleResponse<User>(response)
+    return handleResponse<User>(response, silent)
   },
 
   /**

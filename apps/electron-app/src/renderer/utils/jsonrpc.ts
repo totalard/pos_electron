@@ -1,8 +1,9 @@
 /**
- * JSON-RPC 2.0 Client Implementation
+ * JSON-RPC 2.0 Client Implementation with Global Error Handling
  */
 
 import { isDevelopment } from './env'
+import { useErrorStore } from '../stores/errorStore'
 
 /**
  * JSON-RPC 2.0 Error object
@@ -96,6 +97,7 @@ export class APIError extends Error {
 
 /**
  * Parse JSON-RPC response and handle errors
+ * Also supports plain JSON responses for backwards compatibility
  */
 export async function parseJSONRPCResponse<T>(response: Response): Promise<T> {
   // Check if response is ok (2xx status)
@@ -135,15 +137,23 @@ export async function parseJSONRPCResponse<T>(response: Response): Promise<T> {
 
   // Parse successful response
   try {
-    const jsonRpcResponse: JSONRPCResponse<T> = await response.json()
+    const data = await response.json()
     
-    // Check for JSON-RPC error even in successful HTTP response
-    if (jsonRpcResponse.error) {
-      throw new APIError(jsonRpcResponse.error)
+    // Check if it's a JSON-RPC response
+    if (data && typeof data === 'object' && 'jsonrpc' in data) {
+      const jsonRpcResponse = data as JSONRPCResponse<T>
+      
+      // Check for JSON-RPC error even in successful HTTP response
+      if (jsonRpcResponse.error) {
+        throw new APIError(jsonRpcResponse.error)
+      }
+      
+      // Return the result from JSON-RPC response
+      return jsonRpcResponse.result as T
     }
     
-    // Return the result
-    return jsonRpcResponse.result as T
+    // Plain JSON response (not JSON-RPC wrapped)
+    return data as T
   } catch (error) {
     if (error instanceof APIError) {
       throw error
@@ -159,30 +169,44 @@ export async function parseJSONRPCResponse<T>(response: Response): Promise<T> {
 }
 
 /**
- * Create a JSON-RPC request wrapper
+ * Create a JSON-RPC request wrapper with automatic global error handling
  */
 export async function jsonRpcFetch<T>(
   url: string,
-  options?: RequestInit
+  options?: RequestInit & { silent?: boolean }
 ): Promise<T> {
   try {
     const response = await fetch(url, options)
     return await parseJSONRPCResponse<T>(response)
   } catch (error) {
-    // Re-throw APIError as-is
-    if (error instanceof APIError) {
-      throw error
+    // Convert to APIError if needed
+    const apiError = error instanceof APIError 
+      ? error 
+      : new APIError({
+          code: -32603,
+          message: error instanceof Error ? error.message : 'Network error',
+          data: { 
+            type: error instanceof Error ? error.constructor.name : 'Unknown',
+            detail: error instanceof Error ? error.message : String(error)
+          }
+        })
+    
+    // Show error modal automatically unless silent mode
+    if (!options?.silent) {
+      useErrorStore.getState().showError(apiError)
     }
     
-    // Network or other errors
-    throw new APIError({
-      code: -32603,
-      message: error instanceof Error ? error.message : 'Network error',
-      data: { 
-        type: error instanceof Error ? error.constructor.name : 'Unknown',
-        detail: error instanceof Error ? error.message : String(error)
-      }
-    })
+    // Log error for debugging
+    if (isDevelopment()) {
+      console.error('API Error:', {
+        code: apiError.code,
+        message: apiError.message,
+        data: apiError.data
+      })
+    }
+    
+    // Re-throw the error for component-level handling if needed
+    throw apiError
   }
 }
 

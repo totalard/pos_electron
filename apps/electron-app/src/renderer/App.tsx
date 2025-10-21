@@ -26,7 +26,7 @@ function App() {
   const handleSplashComplete = async () => {
     // Check if walkthrough should be shown
     try {
-      const response = await fetch(`${API_BASE_URL}/settings/display/show_walkthrough`)
+      const response = await fetch(`${API_BASE_URL}/settings/display/show_walkthrough`, { silent: true } as any)
       const data = await response.json()
       const shouldShowWalkthrough = data?.value !== false
 
@@ -36,9 +36,10 @@ function App() {
         setCurrentScreen('pin')
       }
     } catch {
-      // If setting doesn't exist, show walkthrough by default
+      // If setting doesn't exist, show walkthrough by default (silent error)
       setCurrentScreen('walkthrough')
     }
+    
     setWalkthroughChecked(true)
   }
 
