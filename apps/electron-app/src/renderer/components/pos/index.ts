@@ -37,3 +37,7 @@ export type { POSSearchBarProps } from './POSSearchBar'
 export { POSActionButton } from './POSActionButton'
 export type { POSActionButtonProps, POSActionButtonVariant } from './POSActionButton'
 
+export { CheckoutModal } from './CheckoutModal'
+export { DiscountDialog } from './DiscountDialog'
+export { CashManagementDialog } from './CashManagementDialog'
+export { EmailReceiptDialog } from './EmailReceiptDialog'

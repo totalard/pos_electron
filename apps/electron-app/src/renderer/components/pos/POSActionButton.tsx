@@ -1,17 +1,17 @@
-import { ButtonHTMLAttributes, ReactNode } from 'react'
+import { ButtonHTMLAttributes, ReactNode, useState } from 'react'
 import { useAppStore } from '../../stores'
 
 /**
  * Color variant types for POS action buttons
+ * Unified professional color scheme for consistent UI
  */
 export type POSActionButtonVariant = 
-  | 'primary'    // Blue - default actions
-  | 'secondary'  // Gray - neutral actions
-  | 'success'    // Green - positive actions (cash in, complete)
-  | 'warning'    // Yellow/Orange - caution actions (drawer, park)
-  | 'danger'     // Red - destructive actions (void, cash out)
-  | 'info'       // Cyan - informational actions (email, print)
-  | 'purple'     // Purple - special actions (gift, loyalty)
+  | 'primary'    // Primary action (checkout)
+  | 'secondary'  // Standard actions (most buttons)
+  | 'success'    // Positive actions (cash in)
+  | 'warning'    // Caution actions (park, drawer)
+  | 'danger'     // Destructive actions (void, cash out)
+  | 'neutral'    // Neutral actions (discount, email, etc.)
 
 /**
  * POSActionButton component props
@@ -31,15 +31,19 @@ export interface POSActionButtonProps extends ButtonHTMLAttributes<HTMLButtonEle
   isLoading?: boolean
   /** Badge count (optional) */
   badge?: number
+  /** Tooltip text (optional) */
+  tooltip?: string
 }
 
 /**
  * Reusable POS Action Button component with consistent styling
  * 
  * Features:
- * - Multiple color variants for different action types
- * - Icon support with proper alignment
- * - Touch-friendly sizing (min 44x44px)
+ * - Square layout with icon on top, text on bottom
+ * - Unified professional color scheme
+ * - Smooth micro-interaction animations
+ * - Ripple effect on click
+ * - Touch-friendly sizing (min 80x80px)
  * - Theme-aware design
  * - Optional badge for counts
  * - Loading state
@@ -64,64 +68,83 @@ export function POSActionButton({
   badge,
   disabled,
   className = '',
+  tooltip,
+  onClick,
   ...props
 }: POSActionButtonProps) {
   const { theme } = useAppStore()
+  const [ripples, setRipples] = useState<Array<{ x: number; y: number; id: number }>>([])
 
-  // Size classes - all touch-safe (min 44x44px)
+  const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    if (disabled || isLoading) return
+    
+    // Create ripple effect
+    const button = e.currentTarget
+    const rect = button.getBoundingClientRect()
+    const x = e.clientX - rect.left
+    const y = e.clientY - rect.top
+    const id = Date.now()
+    
+    setRipples(prev => [...prev, { x, y, id }])
+    
+    // Remove ripple after animation
+    setTimeout(() => {
+      setRipples(prev => prev.filter(r => r.id !== id))
+    }, 600)
+    
+    onClick?.(e)
+  }
+
+  // Square size classes - touch-safe (min 80x80px for md)
   const sizeClasses = {
-    sm: 'px-3 py-2 text-sm min-h-[44px]',
-    md: 'px-4 py-2.5 text-base min-h-[44px]',
-    lg: 'px-6 py-3 text-lg min-h-[48px]'
+    sm: 'w-16 h-16 text-xs',
+    md: 'w-20 h-20 text-sm',
+    lg: 'w-24 h-24 text-base'
   }
 
   // Icon size classes
   const iconSizeClasses = {
-    sm: 'w-4 h-4',
-    md: 'w-5 h-5',
-    lg: 'w-6 h-6'
+    sm: 'w-6 h-6',
+    md: 'w-8 h-8',
+    lg: 'w-10 h-10'
   }
 
-  // Variant classes with theme support
+  // Unified professional variant classes with subtle theme support
   const variantClasses = {
     primary: theme === 'dark'
-      ? 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white border-blue-500'
-      : 'bg-blue-500 hover:bg-blue-600 active:bg-blue-700 text-white border-blue-400',
+      ? 'bg-blue-600 hover:bg-blue-700 text-white border-blue-500/30 shadow-blue-500/20'
+      : 'bg-blue-600 hover:bg-blue-700 text-white border-blue-500/30 shadow-blue-500/20',
     
     secondary: theme === 'dark'
-      ? 'bg-gray-700 hover:bg-gray-600 active:bg-gray-800 text-gray-200 border-gray-600'
-      : 'bg-gray-200 hover:bg-gray-300 active:bg-gray-400 text-gray-900 border-gray-300',
+      ? 'bg-gray-700 hover:bg-gray-600 text-gray-100 border-gray-600/30 shadow-gray-600/20'
+      : 'bg-gray-100 hover:bg-gray-200 text-gray-700 border-gray-300/30 shadow-gray-400/20',
     
     success: theme === 'dark'
-      ? 'bg-green-600 hover:bg-green-700 active:bg-green-800 text-white border-green-500'
-      : 'bg-green-500 hover:bg-green-600 active:bg-green-700 text-white border-green-400',
+      ? 'bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-500/30 shadow-emerald-500/20'
+      : 'bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-500/30 shadow-emerald-500/20',
     
     warning: theme === 'dark'
-      ? 'bg-orange-600 hover:bg-orange-700 active:bg-orange-800 text-white border-orange-500'
-      : 'bg-orange-500 hover:bg-orange-600 active:bg-orange-700 text-white border-orange-400',
+      ? 'bg-amber-600 hover:bg-amber-700 text-white border-amber-500/30 shadow-amber-500/20'
+      : 'bg-amber-600 hover:bg-amber-700 text-white border-amber-500/30 shadow-amber-500/20',
     
     danger: theme === 'dark'
-      ? 'bg-red-600 hover:bg-red-700 active:bg-red-800 text-white border-red-500'
-      : 'bg-red-500 hover:bg-red-600 active:bg-red-700 text-white border-red-400',
+      ? 'bg-rose-600 hover:bg-rose-700 text-white border-rose-500/30 shadow-rose-500/20'
+      : 'bg-rose-600 hover:bg-rose-700 text-white border-rose-500/30 shadow-rose-500/20',
     
-    info: theme === 'dark'
-      ? 'bg-cyan-600 hover:bg-cyan-700 active:bg-cyan-800 text-white border-cyan-500'
-      : 'bg-cyan-500 hover:bg-cyan-600 active:bg-cyan-700 text-white border-cyan-400',
-    
-    purple: theme === 'dark'
-      ? 'bg-purple-600 hover:bg-purple-700 active:bg-purple-800 text-white border-purple-500'
-      : 'bg-purple-500 hover:bg-purple-600 active:bg-purple-700 text-white border-purple-400'
+    neutral: theme === 'dark'
+      ? 'bg-slate-700 hover:bg-slate-600 text-slate-100 border-slate-600/30 shadow-slate-600/20'
+      : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-300/30 shadow-slate-400/20'
   }
 
   const baseClasses = `
-    rounded-lg font-medium
-    transition-all duration-200 ease-out
-    transform hover:scale-105 active:scale-95
-    hover:shadow-lg active:shadow-md
+    rounded-xl font-medium
+    transition-all duration-300 ease-out
+    transform hover:scale-105 hover:-translate-y-0.5 active:scale-95 active:translate-y-0
+    hover:shadow-lg active:shadow-sm
     focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-opacity-50
-    disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100
-    flex items-center justify-center gap-2
-    border relative
+    disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:translate-y-0
+    flex flex-col items-center justify-center gap-1.5
+    border relative overflow-hidden
     ${fullWidth ? 'w-full' : ''}
     ${sizeClasses[size]}
     ${variantClasses[variant]}
@@ -133,23 +156,47 @@ export function POSActionButton({
       className={baseClasses}
       disabled={disabled || isLoading}
       aria-label={label}
+      title={tooltip || label}
+      onClick={handleClick}
       {...props}
     >
+      {/* Ripple effects */}
+      {ripples.map(ripple => (
+        <span
+          key={ripple.id}
+          className="absolute rounded-full bg-white/30 animate-ping pointer-events-none"
+          style={{
+            left: ripple.x - 10,
+            top: ripple.y - 10,
+            width: 20,
+            height: 20,
+          }}
+        />
+      ))}
+
       {isLoading ? (
         <>
-          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white" />
-          <span>Loading...</span>
+          <div className={`animate-spin rounded-full border-2 border-current border-t-transparent ${iconSizeClasses[size]}`} />
+          <span className="text-xs font-semibold">Loading...</span>
         </>
       ) : (
         <>
-          <span className={`flex-shrink-0 ${iconSizeClasses[size]}`}>
+          {/* Icon on top */}
+          <span className={`flex-shrink-0 ${iconSizeClasses[size]} transition-transform duration-300 group-hover:scale-110`}>
             {icon}
           </span>
-          <span className="truncate">{label}</span>
+          
+          {/* Label on bottom */}
+          <span className="font-semibold leading-tight text-center px-1">
+            {label}
+          </span>
+          
+          {/* Badge */}
           {badge !== undefined && badge > 0 && (
             <span className={`
-              ml-1 px-2 py-0.5 rounded-full text-xs font-bold
-              ${theme === 'dark' ? 'bg-white/20' : 'bg-black/20'}
+              absolute -top-1 -right-1 px-1.5 py-0.5 rounded-full text-xs font-bold
+              ${theme === 'dark' ? 'bg-red-500 text-white' : 'bg-red-500 text-white'}
+              shadow-lg
             `}>
               {badge}
             </span>

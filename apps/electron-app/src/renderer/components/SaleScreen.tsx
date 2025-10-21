@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useAppStore, usePOSStore, useProductStore, useSettingsStore } from '../stores'
-import { POSHeader, POSFooter, POSProductGrid, POSProductList, POSCategorySidebar, POSCart, POSSearchBar, POSActionButton } from './pos'
+import { POSHeader, POSFooter, POSProductGrid, POSProductList, POSCategorySidebar, POSCart, POSSearchBar, POSActionButton, CheckoutModal, DiscountDialog, CashManagementDialog, EmailReceiptDialog } from './pos'
+import { ConfirmDialog } from './common/ConfirmDialog'
 import { useBarcodeScanner } from '../hooks'
 import type { EnhancedProduct } from '../services/api'
 
@@ -24,6 +25,9 @@ export function SaleScreen({ onBack }: SaleScreenProps) {
     setSelectedCategory,
     setSearchQuery,
     addToCart,
+    clearCart,
+    voidTransaction,
+    parkTransaction,
     getCartItemCount,
     getCartSubtotal,
     getCartTax,
@@ -31,6 +35,16 @@ export function SaleScreen({ onBack }: SaleScreenProps) {
   } = usePOSStore()
   const { products, categories, fetchProducts, fetchCategories, lookupByBarcode } = useProductStore()
   const [isLoadingProducts, setIsLoadingProducts] = useState(false)
+  
+  // Dialog states
+  const [showCheckoutModal, setShowCheckoutModal] = useState(false)
+  const [showDiscountDialog, setShowDiscountDialog] = useState(false)
+  const [showCashInDialog, setShowCashInDialog] = useState(false)
+  const [showCashOutDialog, setShowCashOutDialog] = useState(false)
+  const [showEmailDialog, setShowEmailDialog] = useState(false)
+  const [showVoidConfirm, setShowVoidConfirm] = useState(false)
+  const [showParkConfirm, setShowParkConfirm] = useState(false)
+  const [giftReceiptMode, setGiftReceiptMode] = useState(false)
 
   // Initialize first transaction if none exists
   useEffect(() => {
@@ -118,53 +132,108 @@ export function SaleScreen({ onBack }: SaleScreenProps) {
   }
 
   const handleCheckout = () => {
-    console.log('Checkout clicked')
-    // TODO: Implement checkout logic
+    if (itemCount === 0) return
+    setShowCheckoutModal(true)
+  }
+
+  const handleCheckoutComplete = (paymentMethod: string, amountPaid: number) => {
+    console.log('Payment completed:', { paymentMethod, amountPaid, total })
+    // TODO: Send to backend and print receipt
+    alert(`Payment successful! Method: ${paymentMethod}, Amount: ₹${amountPaid}`)
+    clearCart()
   }
 
   const handleDiscount = () => {
-    console.log('Discount clicked')
-    // TODO: Implement discount logic
+    if (itemCount === 0) return
+    setShowDiscountDialog(true)
   }
 
   const handleVoid = () => {
-    console.log('Void clicked')
-    // TODO: Implement void logic
+    if (itemCount === 0) return
+    setShowVoidConfirm(true)
+  }
+
+  const handleVoidConfirm = () => {
+    if (!activeTransactionId) return
+    voidTransaction(activeTransactionId)
+    clearCart()
+    setShowVoidConfirm(false)
+    alert('Transaction voided successfully')
   }
 
   const handlePark = () => {
-    console.log('Park clicked')
-    // TODO: Implement park transaction logic
+    if (itemCount === 0) return
+    setShowParkConfirm(true)
+  }
+
+  const handleParkConfirm = () => {
+    if (!activeTransactionId) return
+    parkTransaction(activeTransactionId)
+    createTransaction()
+    setShowParkConfirm(false)
+    alert('Transaction parked successfully')
   }
 
   const handleOpenDrawer = () => {
-    console.log('Open Drawer clicked')
-    // TODO: Implement cash drawer open logic
+    console.log('Opening cash drawer...')
+    // TODO: Send command to cash drawer hardware
+    alert('Cash drawer opened')
   }
 
   const handleCashIn = () => {
-    console.log('Cash In clicked')
-    // TODO: Implement cash in logic
+    setShowCashInDialog(true)
+  }
+
+  const handleCashInSubmit = (amount: number, reason: string) => {
+    console.log('Cash In:', { amount, reason })
+    // TODO: Send to backend
+    alert(`Cash In: ₹${amount} - ${reason}`)
   }
 
   const handleCashOut = () => {
-    console.log('Cash Out clicked')
-    // TODO: Implement cash out logic
+    setShowCashOutDialog(true)
+  }
+
+  const handleCashOutSubmit = (amount: number, reason: string) => {
+    console.log('Cash Out:', { amount, reason })
+    // TODO: Send to backend
+    alert(`Cash Out: ₹${amount} - ${reason}`)
   }
 
   const handleAddCarryBag = () => {
-    console.log('Add Carry Bag clicked')
-    // TODO: Implement add carry bag to cart logic
+    // Create a carry bag product and add to cart
+    const carryBagProduct: EnhancedProduct = {
+      id: 0,
+      name: 'Carry Bag',
+      sku: 'BAG-001',
+      base_price: 5,
+      is_active: true,
+      category_id: 0,
+      category_name: 'Accessories',
+      stock_quantity: 999,
+      product_type: 'simple',
+      low_stock_threshold: 10,
+      track_inventory: false,
+      image_paths: [],
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    }
+    addToCart(carryBagProduct, 1)
   }
 
   const handleGiftReceipt = () => {
-    console.log('Gift Receipt clicked')
-    // TODO: Implement gift receipt logic
+    setGiftReceiptMode(!giftReceiptMode)
+    alert(giftReceiptMode ? 'Gift receipt mode disabled' : 'Gift receipt mode enabled')
   }
 
   const handleEmailReceipt = () => {
-    console.log('Email Receipt clicked')
-    // TODO: Implement email receipt logic
+    setShowEmailDialog(true)
+  }
+
+  const handleEmailSend = (email: string) => {
+    console.log('Email receipt to:', email)
+    // TODO: Send to backend
+    alert(`Receipt will be sent to ${email}`)
   }
 
   // Barcode scanner integration
@@ -317,7 +386,7 @@ export function SaleScreen({ onBack }: SaleScreenProps) {
             />
             <POSActionButton
               label="Carry Bag"
-              variant="info"
+              variant="neutral"
               size="md"
               onClick={handleAddCarryBag}
               icon={
@@ -328,7 +397,7 @@ export function SaleScreen({ onBack }: SaleScreenProps) {
             />
             <POSActionButton
               label="Discount"
-              variant="secondary"
+              variant="neutral"
               size="md"
               onClick={handleDiscount}
               icon={
@@ -339,7 +408,7 @@ export function SaleScreen({ onBack }: SaleScreenProps) {
             />
             <POSActionButton
               label="Gift Receipt"
-              variant="purple"
+              variant="neutral"
               size="md"
               onClick={handleGiftReceipt}
               icon={
@@ -350,7 +419,7 @@ export function SaleScreen({ onBack }: SaleScreenProps) {
             />
             <POSActionButton
               label="Email"
-              variant="info"
+              variant="neutral"
               size="md"
               onClick={handleEmailReceipt}
               icon={
@@ -388,6 +457,60 @@ export function SaleScreen({ onBack }: SaleScreenProps) {
           onClick: handleCheckout,
           disabled: itemCount === 0
         }}
+      />
+
+      {/* Dialogs */}
+      <CheckoutModal
+        isOpen={showCheckoutModal}
+        onClose={() => setShowCheckoutModal(false)}
+        onComplete={handleCheckoutComplete}
+      />
+
+      <DiscountDialog
+        isOpen={showDiscountDialog}
+        onClose={() => setShowDiscountDialog(false)}
+      />
+
+      <CashManagementDialog
+        isOpen={showCashInDialog}
+        onClose={() => setShowCashInDialog(false)}
+        type="in"
+        onSubmit={handleCashInSubmit}
+      />
+
+      <CashManagementDialog
+        isOpen={showCashOutDialog}
+        onClose={() => setShowCashOutDialog(false)}
+        type="out"
+        onSubmit={handleCashOutSubmit}
+      />
+
+      <EmailReceiptDialog
+        isOpen={showEmailDialog}
+        onClose={() => setShowEmailDialog(false)}
+        onSend={handleEmailSend}
+      />
+
+      <ConfirmDialog
+        isOpen={showVoidConfirm}
+        onClose={() => setShowVoidConfirm(false)}
+        onConfirm={handleVoidConfirm}
+        title="Void Transaction"
+        message="Are you sure you want to void this transaction? This action cannot be undone."
+        confirmText="Void"
+        cancelText="Cancel"
+        variant="danger"
+      />
+
+      <ConfirmDialog
+        isOpen={showParkConfirm}
+        onClose={() => setShowParkConfirm(false)}
+        onConfirm={handleParkConfirm}
+        title="Park Transaction"
+        message="Park this transaction and start a new one?"
+        confirmText="Park"
+        cancelText="Cancel"
+        variant="warning"
       />
     </div>
   )
