@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useAppStore, useProductStore } from '../../stores'
-import { Button, LoadingSpinner, ErrorMessage, Input, Toggle } from '../common'
-import { FormField, FormSection, Select, TextArea } from '../forms'
+import { Button, LoadingSpinner, ErrorMessage, Input } from '../common'
+import { TextArea, NumberInput, Checkbox, TouchSelect } from '../forms'
+import { CategorySelector } from './CategorySelector'
 import type { EnhancedProduct, EnhancedProductCreate } from '../../services/api'
 
 interface ProductFormProps {
@@ -108,72 +109,69 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
         {error && <ErrorMessage message={error} />}
         
         {/* Basic Information */}
-        <FormSection title="Basic Information">
+        <div className="space-y-4">
+          <h3 className={`text-lg font-semibold ${
+            theme === 'dark' ? 'text-white' : 'text-gray-900'
+          }`}>Basic Information</h3>
+          
           <Input
-            label="Product Name"
             type="text"
             value={formData.name}
             onChange={(e) => handleChange('name', e.target.value)}
             required
-            placeholder="Enter product name"
+            placeholder="Product Name *"
           />
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input
-              label="SKU"
               type="text"
               value={formData.sku || ''}
               onChange={(e) => handleChange('sku', e.target.value)}
-              placeholder="Stock Keeping Unit"
+              placeholder="SKU (Stock Keeping Unit)"
             />
             
             <Input
-              label="Barcode"
               type="text"
               value={formData.barcode || ''}
               onChange={(e) => handleChange('barcode', e.target.value)}
-              placeholder="Product barcode"
+              placeholder="Barcode"
             />
           </div>
           
           <TextArea
-            label="Description"
             value={formData.description || ''}
             onChange={(e) => handleChange('description', e.target.value)}
             rows={3}
             placeholder="Product description (optional)"
           />
-        </FormSection>
+        </div>
         
         {/* Classification */}
-        <FormSection title="Classification">
-          <div className="grid grid-cols-2 gap-4">
-            <FormField label="Product Type" required>
-              <Select
-                value={formData.product_type || 'simple'}
-                onChange={(value) => handleChange('product_type', value)}
-                options={[
-                  { value: 'simple', label: 'Simple Product' },
-                  { value: 'variation', label: 'Product with Variations' },
-                  { value: 'bundle', label: 'Bundle Product' },
-                  { value: 'service', label: 'Service' }
-                ]}
-              />
-            </FormField>
+        <div className="space-y-4">
+          <h3 className={`text-lg font-semibold ${
+            theme === 'dark' ? 'text-white' : 'text-gray-900'
+          }`}>Classification</h3>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <TouchSelect<string>
+              value={formData.product_type || 'simple'}
+              options={[
+                { value: 'simple', label: 'Simple Product', description: 'Single product with direct pricing' },
+                { value: 'variation', label: 'Product with Variations', description: 'Product with variants (size, color, etc.)' },
+                { value: 'bundle', label: 'Bundle Product', description: 'Bundle of multiple products' },
+                { value: 'service', label: 'Service', description: 'Service without inventory' }
+              ]}
+              onChange={(value) => handleChange('product_type', value)}
+              placeholder="Product Type *"
+              required
+            />
 
-            <FormField label="Category">
-              <Select
-                value={formData.category_id?.toString() || ''}
-                onChange={(value) => handleChange('category_id', value ? Number(value) : undefined)}
-                options={[
-                  { value: '', label: 'No Category' },
-                  ...categories.map(cat => ({
-                    value: cat.id.toString(),
-                    label: cat.name
-                  }))
-                ]}
-              />
-            </FormField>
+            <CategorySelector
+              value={formData.category_id || null}
+              categories={categories}
+              onChange={(id) => handleChange('category_id', id || undefined)}
+              clearable
+            />
           </div>
 
           {/* Product Type Hints */}
@@ -224,103 +222,93 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
               </div>
             </div>
           )}
-        </FormSection>
+        </div>
         
         {/* Pricing */}
-        <FormSection title="Pricing">
+        <div className="space-y-4">
+          <h3 className={`text-lg font-semibold ${
+            theme === 'dark' ? 'text-white' : 'text-gray-900'
+          }`}>Pricing</h3>
+          
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Input
-              label="Selling Price"
-              type="number"
-              step="0.01"
-              min="0"
+            <NumberInput
               value={formData.base_price}
-              onChange={(e) => handleChange('base_price', parseFloat(e.target.value) || 0)}
-              required
-              placeholder="0.00"
-              icon={
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              }
+              onChange={(value) => handleChange('base_price', value)}
+              min={0}
+              step={0.01}
+              allowDecimal
+              decimalPlaces={2}
+              showButtons
+              placeholder="Selling Price *"
             />
             
-            <Input
-              label="Cost Price"
-              type="number"
-              step="0.01"
-              min="0"
-              value={formData.cost_price || ''}
-              onChange={(e) => handleChange('cost_price', e.target.value ? parseFloat(e.target.value) : undefined)}
-              placeholder="0.00"
-              helperText="Optional: for profit margin calculation"
-              icon={
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              }
+            <NumberInput
+              value={formData.cost_price || 0}
+              onChange={(value) => handleChange('cost_price', value || undefined)}
+              min={0}
+              step={0.01}
+              allowDecimal
+              decimalPlaces={2}
+              showButtons
+              placeholder="Cost Price (optional)"
+              helperText="For profit margin calculation"
             />
           </div>
-        </FormSection>
+        </div>
         
         {/* Inventory */}
         {showInventorySection && (
-          <FormSection title="Inventory">
-            <Toggle
+          <div className="space-y-4">
+            <h3 className={`text-lg font-semibold ${
+              theme === 'dark' ? 'text-white' : 'text-gray-900'
+            }`}>Inventory</h3>
+            
+            <Checkbox
               label="Track Inventory"
+              description="Enable to track stock levels for this product"
               checked={formData.track_inventory ?? true}
               onChange={(checked) => handleChange('track_inventory', checked)}
-              description="Enable to track stock levels for this product"
             />
 
             {formData.track_inventory && (
               <>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                  <Input
-                    label="Stock Quantity"
-                    type="number"
-                    min="0"
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <NumberInput
                     value={formData.stock_quantity || 0}
-                    onChange={(e) => handleChange('stock_quantity', parseInt(e.target.value) || 0)}
-                    required
-                    placeholder="0"
-                    icon={
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                      </svg>
-                    }
+                    onChange={(value) => handleChange('stock_quantity', value)}
+                    min={0}
+                    showButtons
+                    placeholder="Stock Quantity *"
                   />
 
-                  <Input
-                    label="Low Stock Threshold"
-                    type="number"
-                    min="0"
+                  <NumberInput
                     value={formData.low_stock_threshold || 10}
-                    onChange={(e) => handleChange('low_stock_threshold', parseInt(e.target.value) || 10)}
-                    placeholder="10"
+                    onChange={(value) => handleChange('low_stock_threshold', value)}
+                    min={0}
+                    showButtons
+                    placeholder="Low Stock Threshold"
                     helperText="Alert when stock falls below this level"
-                    icon={
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                      </svg>
-                    }
                   />
                 </div>
 
                 <div className={`
-                  mt-3 p-3 rounded-lg text-xs
+                  p-3 rounded-lg text-xs
                   ${theme === 'dark' ? 'bg-blue-900/20 text-blue-300 border border-blue-800' : 'bg-blue-50 text-blue-700 border border-blue-200'}
                 `}>
                   <strong>Tip:</strong> Set a low stock threshold to receive alerts when inventory runs low. This helps prevent stockouts.
                 </div>
               </>
             )}
-          </FormSection>
+          </div>
         )}
 
         {/* Bundle/Variation Info */}
         {(formData.product_type === 'bundle' || formData.product_type === 'variation') && (
-          <FormSection title={formData.product_type === 'bundle' ? 'Bundle Components' : 'Product Variations'}>
+          <div className="space-y-4">
+            <h3 className={`text-lg font-semibold ${
+              theme === 'dark' ? 'text-white' : 'text-gray-900'
+            }`}>{formData.product_type === 'bundle' ? 'Bundle Components' : 'Product Variations'}</h3>
+            
             <div className={`
               p-4 rounded-lg text-sm text-center
               ${theme === 'dark' ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-700'}
@@ -338,19 +326,22 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
                 }
               </p>
             </div>
-          </FormSection>
+          </div>
         )}
         
         {/* Notes */}
-        <FormSection title="Additional Information">
+        <div className="space-y-4">
+          <h3 className={`text-lg font-semibold ${
+            theme === 'dark' ? 'text-white' : 'text-gray-900'
+          }`}>Additional Information</h3>
+          
           <TextArea
-            label="Notes"
             value={formData.notes || ''}
             onChange={(e) => handleChange('notes', e.target.value)}
             rows={3}
             placeholder="Internal notes about this product (optional)"
           />
-        </FormSection>
+        </div>
       </div>
       
       {/* Form Actions */}

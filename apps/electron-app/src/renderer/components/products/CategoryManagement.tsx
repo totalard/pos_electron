@@ -1,7 +1,10 @@
 import { useState, useEffect } from 'react'
 import { useAppStore, useProductStore } from '../../stores'
-import { Button, LoadingSpinner, ErrorMessage, Badge, Input, Toggle, IconButton } from '../common'
-import { TextArea } from '../forms'
+import { Button, LoadingSpinner, ErrorMessage } from '../common'
+import { TextArea, NumberInput } from '../forms'
+import { CategoryTree } from './CategoryTree'
+import { CategorySelector } from './CategorySelector'
+import { Checkbox } from '../forms'
 import type { ProductCategory, ProductCategoryCreate } from '../../services/api'
 
 interface CategoryManagementProps {
@@ -21,9 +24,11 @@ export function CategoryManagement({ onClose }: CategoryManagementProps) {
   } = useProductStore()
   
   const [editingCategory, setEditingCategory] = useState<ProductCategory | null>(null)
+  const [parentCategory, setParentCategory] = useState<number | null>(null)
   const [formData, setFormData] = useState<ProductCategoryCreate>({
     name: '',
     description: '',
+    parent_category_id: undefined,
     display_order: 0,
     is_active: true
   })
@@ -37,9 +42,11 @@ export function CategoryManagement({ onClose }: CategoryManagementProps) {
       setFormData({
         name: editingCategory.name,
         description: editingCategory.description,
+        parent_category_id: editingCategory.parent_category_id,
         display_order: editingCategory.display_order,
         is_active: editingCategory.is_active
       })
+      setParentCategory(editingCategory.parent_category_id || null)
     }
   }, [editingCategory])
   
@@ -61,10 +68,12 @@ export function CategoryManagement({ onClose }: CategoryManagementProps) {
       setFormData({
         name: '',
         description: '',
+        parent_category_id: undefined,
         display_order: 0,
         is_active: true
       })
       setEditingCategory(null)
+      setParentCategory(null)
       
       // Refresh categories
       await fetchCategories()
@@ -79,9 +88,23 @@ export function CategoryManagement({ onClose }: CategoryManagementProps) {
   
   const handleCancelEdit = () => {
     setEditingCategory(null)
+    setParentCategory(null)
     setFormData({
       name: '',
       description: '',
+      parent_category_id: undefined,
+      display_order: 0,
+      is_active: true
+    })
+  }
+
+  const handleAddChild = (parent: ProductCategory) => {
+    setEditingCategory(null)
+    setParentCategory(parent.id)
+    setFormData({
+      name: '',
+      description: '',
+      parent_category_id: parent.id,
       display_order: 0,
       is_active: true
     })
@@ -115,19 +138,29 @@ export function CategoryManagement({ onClose }: CategoryManagementProps) {
         {error && <ErrorMessage message={error} className="mb-4" />}
         
         <form onSubmit={handleSubmit} className="space-y-4">
-          <Input
-            label="Category Name"
-            type="text"
-            value={formData.name}
-            onChange={(e) => handleChange('name', e.target.value)}
-            required
-            placeholder="Enter category name"
-            icon={
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-              </svg>
-            }
-          />
+          <div className="space-y-1">
+            <label className={`block text-sm font-medium ${
+              theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+            }`}>
+              Category Name <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              value={formData.name}
+              onChange={(e) => handleChange('name', e.target.value)}
+              required
+              placeholder="Enter category name"
+              className={`
+                w-full px-4 py-3 rounded-lg text-base min-h-[44px]
+                transition-colors duration-200
+                ${theme === 'dark'
+                  ? 'bg-gray-800 border border-gray-600 text-white placeholder-gray-400 focus:border-primary-500'
+                  : 'bg-white border border-gray-300 text-gray-900 placeholder-gray-500 focus:border-primary-500'
+                }
+                focus:outline-none focus:ring-2 focus:ring-primary-500/20
+              `}
+            />
+          </div>
           
           <TextArea
             label="Description"
@@ -136,45 +169,55 @@ export function CategoryManagement({ onClose }: CategoryManagementProps) {
             rows={2}
             placeholder="Category description (optional)"
           />
+
+          <CategorySelector
+            label="Parent Category"
+            value={parentCategory}
+            categories={categories}
+            onChange={(id) => {
+              setParentCategory(id)
+              handleChange('parent_category_id', id || undefined)
+            }}
+            clearable
+            helperText="Leave empty for top-level category"
+            excludeIds={editingCategory ? [editingCategory.id] : []}
+          />
           
-          <Input
+          <NumberInput
             label="Display Order"
-            type="number"
-            min="0"
-            value={formData.display_order}
-            onChange={(e) => handleChange('display_order', parseInt(e.target.value) || 0)}
-            placeholder="0"
+            value={formData.display_order || 0}
+            onChange={(value) => handleChange('display_order', value)}
+            min={0}
+            showButtons
             helperText="Lower numbers appear first"
           />
           
-          <div className="flex items-center justify-between">
-            <Toggle
-              label="Active"
-              checked={formData.is_active ?? true}
-              onChange={(checked) => handleChange('is_active', checked)}
-              description="Show this category in the product list"
-            />
-            
-            <div className="flex gap-2">
-              {editingCategory && (
-                <Button
-                  type="button"
-                  variant="secondary"
-                  size="sm"
-                  onClick={handleCancelEdit}
-                >
-                  Cancel
-                </Button>
-              )}
+          <Checkbox
+            label="Active"
+            description="Show this category in the product list"
+            checked={formData.is_active ?? true}
+            onChange={(checked) => handleChange('is_active', checked)}
+          />
+          
+          <div className="flex gap-2 justify-end">
+            {editingCategory && (
               <Button
-                type="submit"
-                variant="primary"
+                type="button"
+                variant="secondary"
                 size="sm"
-                disabled={isLoading}
+                onClick={handleCancelEdit}
               >
-                {editingCategory ? 'Update' : 'Add'}
+                Cancel
               </Button>
-            </div>
+            )}
+            <Button
+              type="submit"
+              variant="primary"
+              size="sm"
+              disabled={isLoading}
+            >
+              {editingCategory ? 'Update' : 'Add'}
+            </Button>
           </div>
         </form>
       </div>
@@ -204,81 +247,17 @@ export function CategoryManagement({ onClose }: CategoryManagementProps) {
         )}
         
         {!isLoading && categories.length > 0 && (
-          <div className="space-y-3">
-            {categories
-              .sort((a, b) => a.display_order - b.display_order)
-              .map(category => (
-                <div
-                  key={category.id}
-                  className={`
-                    p-4 rounded-lg border
-                    ${theme === 'dark'
-                      ? 'bg-gray-800/50 border-gray-700'
-                      : 'bg-white border-gray-200'
-                    }
-                    ${editingCategory?.id === category.id ? 'ring-2 ring-blue-500' : ''}
-                  `}
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h4 className={`
-                          font-semibold
-                          ${theme === 'dark' ? 'text-white' : 'text-gray-900'}
-                        `}>
-                          {category.name}
-                        </h4>
-                        <Badge
-                          color={category.is_active ? 'green' : 'gray'}
-                          size="sm"
-                        >
-                          {category.is_active ? 'Active' : 'Inactive'}
-                        </Badge>
-                      </div>
-                      {category.description && (
-                        <p className={`
-                          text-sm mb-2
-                          ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}
-                        `}>
-                          {category.description}
-                        </p>
-                      )}
-                      <div className={`
-                        text-xs
-                        ${theme === 'dark' ? 'text-gray-500' : 'text-gray-500'}
-                      `}>
-                        Order: {category.display_order}
-                      </div>
-                    </div>
-                    
-                    <div className="flex gap-2 ml-4">
-                      <IconButton
-                        variant="secondary"
-                        size="md"
-                        onClick={() => handleEdit(category)}
-                        label="Edit category"
-                        icon={
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                        }
-                      />
-                      <IconButton
-                        variant="danger"
-                        size="md"
-                        onClick={() => handleDelete(category.id)}
-                        label="Delete category"
-                        icon={
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                        }
-                      />
-                    </div>
-                  </div>
-                </div>
-              ))}
-          </div>
+          <CategoryTree
+            categories={categories}
+            selectedId={editingCategory?.id}
+            onSelect={handleEdit}
+            onEdit={handleEdit}
+            onDelete={(cat) => handleDelete(cat.id)}
+            onAddChild={handleAddChild}
+            showActions={true}
+            showSearch={true}
+            emptyMessage="No categories found"
+          />
         )}
       </div>
     </div>

@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 import { useAppStore, useProductStore } from '../../stores'
 import { PageHeader, PageContainer, SplitLayout } from '../layout'
 import { Button, LoadingSpinner, ErrorMessage, RightPanel, IconButton, ThemeToggle, Input } from '../common'
-import { Select } from '../forms'
+import { TouchSelect } from '../forms'
+import { categoriesToOptions } from '../../utils/categoryTree'
 import { ProductForm } from './ProductForm'
 import { CategoryManagement } from './CategoryManagement'
 import { ProductDetailView } from './ProductDetailView'
@@ -129,27 +130,35 @@ export function ProductsScreen({ onBack }: ProductsScreenProps) {
         />
 
         {/* Category Filter */}
-        <Select
-          value={filters.categoryId || ''}
-          onChange={(e) => handleCategoryFilter(e.target.value ? Number(e.target.value) : null)}
-        >
-          <option value="">All Categories</option>
-          {categories.map(cat => (
-            <option key={cat.id} value={cat.id}>{cat.name}</option>
-          ))}
-        </Select>
+        <TouchSelect<number | null>
+          label="Category"
+          value={filters.categoryId}
+          options={[
+            { value: null, label: 'All Categories' },
+            ...categoriesToOptions(categories)
+          ]}
+          onChange={handleCategoryFilter}
+          searchable
+          clearable
+          placeholder="All Categories"
+        />
 
         {/* Product Type Filter */}
-        <Select
-          value={filters.productType || ''}
-          onChange={(e) => handleProductTypeFilter(e.target.value || null)}
-        >
-          <option value="">All Types</option>
-          <option value="simple">Simple</option>
-          <option value="variation">Variation</option>
-          <option value="bundle">Bundle</option>
-          <option value="service">Service</option>
-        </Select>
+        <TouchSelect<string | null>
+          label="Product Type"
+          value={filters.productType}
+          options={[
+            { value: null, label: 'All Types' },
+            { value: 'simple', label: 'Simple', description: 'Single product with direct pricing' },
+            { value: 'variation', label: 'Variation', description: 'Product with variants (size, color, etc.)' },
+            { value: 'bundle', label: 'Bundle', description: 'Bundle of multiple products' },
+            { value: 'service', label: 'Service', description: 'Service without inventory' }
+          ]}
+          onChange={handleProductTypeFilter}
+          searchable
+          clearable
+          placeholder="All Types"
+        />
 
         {/* Clear Filters */}
         {(filters.search || filters.categoryId || filters.productType) && (
