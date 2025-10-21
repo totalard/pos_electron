@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useAppStore, useSettingsStore, BusinessMode } from '../../stores'
 import { useCurrency } from '../../hooks/useCurrency'
+import { FormSection, TouchSelect, Toggle, Checkbox, NumberInput } from '../forms'
 
 export function BusinessPanel() {
   const { theme } = useAppStore()
@@ -53,6 +54,59 @@ export function BusinessPanel() {
     { code: 'BHD', symbol: 'د.ب', name: 'Bahraini Dinar', decimals: 3 },
     { code: 'OMR', symbol: 'ر.ع', name: 'Omani Rial', decimals: 3 },
     { code: 'QAR', symbol: 'ر.ق', name: 'Qatari Riyal', decimals: 2 }
+  ]
+
+  const timezones = [
+    { value: 'UTC', label: 'UTC (Coordinated Universal Time)', description: 'UTC and Coordinates' },
+    { value: 'Africa/Cairo', label: 'Cairo (EET/EEST)', description: 'Africa' },
+    { value: 'Africa/Johannesburg', label: 'Johannesburg (SAST)', description: 'Africa' },
+    { value: 'Africa/Lagos', label: 'Lagos (WAT)', description: 'Africa' },
+    { value: 'Asia/Shanghai', label: 'Shanghai (CST)', description: 'Asia' },
+    { value: 'Asia/Dubai', label: 'Dubai (GST)', description: 'Asia' },
+    { value: 'Asia/Kolkata', label: 'India (IST)', description: 'Asia' },
+    { value: 'Asia/Bangkok', label: 'Bangkok (ICT)', description: 'Asia' },
+    { value: 'Asia/Singapore', label: 'Singapore (SGT)', description: 'Asia' },
+    { value: 'Asia/Hong_Kong', label: 'Hong Kong (HKT)', description: 'Asia' },
+    { value: 'Asia/Tokyo', label: 'Tokyo (JST)', description: 'Asia' },
+    { value: 'Asia/Seoul', label: 'Seoul (KST)', description: 'Asia' },
+    { value: 'Asia/Manila', label: 'Manila (PHT)', description: 'Asia' },
+    { value: 'Europe/London', label: 'London (GMT/BST)', description: 'Europe' },
+    { value: 'Europe/Paris', label: 'Paris (CET/CEST)', description: 'Europe' },
+    { value: 'Europe/Berlin', label: 'Berlin (CET/CEST)', description: 'Europe' },
+    { value: 'Europe/Amsterdam', label: 'Amsterdam (CET/CEST)', description: 'Europe' },
+    { value: 'Europe/Madrid', label: 'Madrid (CET/CEST)', description: 'Europe' },
+    { value: 'Europe/Rome', label: 'Rome (CET/CEST)', description: 'Europe' },
+    { value: 'Europe/Brussels', label: 'Brussels (CET/CEST)', description: 'Europe' },
+    { value: 'Europe/Vienna', label: 'Vienna (CET/CEST)', description: 'Europe' },
+    { value: 'Europe/Prague', label: 'Prague (CET/CEST)', description: 'Europe' },
+    { value: 'Europe/Warsaw', label: 'Warsaw (CET/CEST)', description: 'Europe' },
+    { value: 'Europe/Moscow', label: 'Moscow (MSK)', description: 'Europe' },
+    { value: 'Europe/Istanbul', label: 'Istanbul (EET/EEST)', description: 'Europe' },
+    { value: 'Asia/Riyadh', label: 'Saudi Arabia (AST)', description: 'Middle East' },
+    { value: 'Asia/Kuwait', label: 'Kuwait (AST)', description: 'Middle East' },
+    { value: 'Asia/Bahrain', label: 'Bahrain (AST)', description: 'Middle East' },
+    { value: 'Asia/Qatar', label: 'Qatar (AST)', description: 'Middle East' },
+    { value: 'Asia/Oman', label: 'Oman (GST)', description: 'Middle East' },
+    { value: 'Asia/Jerusalem', label: 'Israel (IST/IDT)', description: 'Middle East' },
+    { value: 'America/New_York', label: 'Eastern Time (EST/EDT)', description: 'North America' },
+    { value: 'America/Chicago', label: 'Central Time (CST/CDT)', description: 'North America' },
+    { value: 'America/Denver', label: 'Mountain Time (MST/MDT)', description: 'North America' },
+    { value: 'America/Los_Angeles', label: 'Pacific Time (PST/PDT)', description: 'North America' },
+    { value: 'America/Anchorage', label: 'Alaska (AKST/AKDT)', description: 'North America' },
+    { value: 'Pacific/Honolulu', label: 'Hawaii (HST)', description: 'North America' },
+    { value: 'America/Toronto', label: 'Toronto (EST/EDT)', description: 'North America' },
+    { value: 'America/Mexico_City', label: 'Mexico City (CST/CDT)', description: 'North America' },
+    { value: 'America/Sao_Paulo', label: 'São Paulo (BRT/BRST)', description: 'South America' },
+    { value: 'America/Buenos_Aires', label: 'Buenos Aires (ART)', description: 'South America' },
+    { value: 'America/Santiago', label: 'Santiago (CLT/CLST)', description: 'South America' },
+    { value: 'America/Bogota', label: 'Bogota (COT)', description: 'South America' },
+    { value: 'America/Lima', label: 'Lima (PET)', description: 'South America' },
+    { value: 'Australia/Sydney', label: 'Sydney (AEDT/AEST)', description: 'Australia & Pacific' },
+    { value: 'Australia/Melbourne', label: 'Melbourne (AEDT/AEST)', description: 'Australia & Pacific' },
+    { value: 'Australia/Brisbane', label: 'Brisbane (AEST)', description: 'Australia & Pacific' },
+    { value: 'Australia/Perth', label: 'Perth (AWST)', description: 'Australia & Pacific' },
+    { value: 'Australia/Adelaide', label: 'Adelaide (ACDT/ACST)', description: 'Australia & Pacific' },
+    { value: 'Pacific/Auckland', label: 'Auckland (NZDT/NZST)', description: 'Australia & Pacific' }
   ]
 
   return (
@@ -190,295 +244,136 @@ export function BusinessPanel() {
 
       {/* Restaurant Mode Features */}
       {business.mode === 'restaurant' && (
-        <div className={`
-          p-4 rounded-lg animate-fadeIn
-          ${theme === 'dark' ? 'bg-gray-700/30' : 'bg-gray-50'}
-        `}>
-          <h3 className={`
-            text-lg font-semibold mb-4
-            ${theme === 'dark' ? 'text-white' : 'text-gray-900'}
-          `}>
-            Restaurant Features
-          </h3>
-
+        <FormSection
+          title="Restaurant Features"
+          description="Configure restaurant-specific features"
+        >
           <div className="space-y-4">
-            {/* Table Management */}
-            <div className="flex items-center justify-between">
-              <div>
-                <h4 className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                  Table Management
-                </h4>
-                <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-                  Enable table assignment and management
-                </p>
-              </div>
-              <button
-                onClick={() => handleToggle('enableTableManagement', !business.enableTableManagement)}
-                className={`
-                  relative inline-flex h-6 w-11 items-center rounded-full transition-colors
-                  ${business.enableTableManagement ? 'bg-blue-500' : theme === 'dark' ? 'bg-gray-600' : 'bg-gray-300'}
-                `}
-              >
-                <span
-                  className={`
-                    inline-block h-4 w-4 transform rounded-full bg-white transition-transform
-                    ${business.enableTableManagement ? 'translate-x-6' : 'translate-x-1'}
-                  `}
-                />
-              </button>
-            </div>
-
-            {/* Reservations */}
-            <div className="flex items-center justify-between">
-              <div>
-                <h4 className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                  Reservations
-                </h4>
-                <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-                  Enable table reservation system
-                </p>
-              </div>
-              <button
-                onClick={() => handleToggle('enableReservations', !business.enableReservations)}
-                className={`
-                  relative inline-flex h-6 w-11 items-center rounded-full transition-colors
-                  ${business.enableReservations ? 'bg-blue-500' : theme === 'dark' ? 'bg-gray-600' : 'bg-gray-300'}
-                `}
-              >
-                <span
-                  className={`
-                    inline-block h-4 w-4 transform rounded-full bg-white transition-transform
-                    ${business.enableReservations ? 'translate-x-6' : 'translate-x-1'}
-                  `}
-                />
-              </button>
-            </div>
-
-            {/* Kitchen Display */}
-            <div className="flex items-center justify-between">
-              <div>
-                <h4 className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                  Kitchen Display System
-                </h4>
-                <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-                  Send orders to kitchen display
-                </p>
-              </div>
-              <button
-                onClick={() => handleToggle('enableKitchenDisplay', !business.enableKitchenDisplay)}
-                className={`
-                  relative inline-flex h-6 w-11 items-center rounded-full transition-colors
-                  ${business.enableKitchenDisplay ? 'bg-blue-500' : theme === 'dark' ? 'bg-gray-600' : 'bg-gray-300'}
-                `}
-              >
-                <span
-                  className={`
-                    inline-block h-4 w-4 transform rounded-full bg-white transition-transform
-                    ${business.enableKitchenDisplay ? 'translate-x-6' : 'translate-x-1'}
-                  `}
-                />
-              </button>
-            </div>
+            <Toggle
+              checked={business.enableTableManagement}
+              onChange={(checked) => handleToggle('enableTableManagement', checked)}
+              label="Table Management"
+              description="Enable table assignment and management"
+            />
+            <Toggle
+              checked={business.enableReservations}
+              onChange={(checked) => handleToggle('enableReservations', checked)}
+              label="Reservations"
+              description="Enable table reservation system"
+            />
+            <Toggle
+              checked={business.enableKitchenDisplay}
+              onChange={(checked) => handleToggle('enableKitchenDisplay', checked)}
+              label="Kitchen Display System"
+              description="Send orders to kitchen display"
+            />
           </div>
-        </div>
+        </FormSection>
       )}
 
       {/* Retail Mode Features */}
       {business.mode === 'retail' && (
-        <div className={`
-          p-4 rounded-lg animate-fadeIn
-          ${theme === 'dark' ? 'bg-gray-700/30' : 'bg-gray-50'}
-        `}>
-          <h3 className={`
-            text-lg font-semibold mb-4
-            ${theme === 'dark' ? 'text-white' : 'text-gray-900'}
-          `}>
-            Retail Features
-          </h3>
-
+        <FormSection
+          title="Retail Features"
+          description="Configure retail-specific features"
+        >
           <div className="space-y-4">
-            {/* Barcode Scanner */}
-            <div className="flex items-center justify-between">
-              <div>
-                <h4 className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                  Barcode Scanner
-                </h4>
-                <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-                  Enable barcode scanning for products
-                </p>
-              </div>
-              <button
-                onClick={() => handleToggle('enableBarcodeScanner', !business.enableBarcodeScanner)}
-                className={`
-                  relative inline-flex h-6 w-11 items-center rounded-full transition-colors
-                  ${business.enableBarcodeScanner ? 'bg-blue-500' : theme === 'dark' ? 'bg-gray-600' : 'bg-gray-300'}
-                `}
-              >
-                <span
-                  className={`
-                    inline-block h-4 w-4 transform rounded-full bg-white transition-transform
-                    ${business.enableBarcodeScanner ? 'translate-x-6' : 'translate-x-1'}
-                  `}
-                />
-              </button>
-            </div>
-
-            {/* Loyalty Program */}
-            <div className="flex items-center justify-between">
-              <div>
-                <h4 className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                  Loyalty Program
-                </h4>
-                <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-                  Enable customer loyalty rewards
-                </p>
-              </div>
-              <button
-                onClick={() => handleToggle('enableLoyaltyProgram', !business.enableLoyaltyProgram)}
-                className={`
-                  relative inline-flex h-6 w-11 items-center rounded-full transition-colors
-                  ${business.enableLoyaltyProgram ? 'bg-blue-500' : theme === 'dark' ? 'bg-gray-600' : 'bg-gray-300'}
-                `}
-              >
-                <span
-                  className={`
-                    inline-block h-4 w-4 transform rounded-full bg-white transition-transform
-                    ${business.enableLoyaltyProgram ? 'translate-x-6' : 'translate-x-1'}
-                  `}
-                />
-              </button>
-            </div>
-
-            {/* Quick Checkout */}
-            <div className="flex items-center justify-between">
-              <div>
-                <h4 className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                  Quick Checkout
-                </h4>
-                <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-                  Enable fast checkout process
-                </p>
-              </div>
-              <button
-                onClick={() => handleToggle('enableQuickCheckout', !business.enableQuickCheckout)}
-                className={`
-                  relative inline-flex h-6 w-11 items-center rounded-full transition-colors
-                  ${business.enableQuickCheckout ? 'bg-blue-500' : theme === 'dark' ? 'bg-gray-600' : 'bg-gray-300'}
-                `}
-              >
-                <span
-                  className={`
-                    inline-block h-4 w-4 transform rounded-full bg-white transition-transform
-                    ${business.enableQuickCheckout ? 'translate-x-6' : 'translate-x-1'}
-                  `}
-                />
-              </button>
-            </div>
+            <Toggle
+              checked={business.enableBarcodeScanner}
+              onChange={(checked) => handleToggle('enableBarcodeScanner', checked)}
+              label="Barcode Scanner"
+              description="Enable barcode scanning for products"
+            />
+            <Toggle
+              checked={business.enableLoyaltyProgram}
+              onChange={(checked) => handleToggle('enableLoyaltyProgram', checked)}
+              label="Loyalty Program"
+              description="Enable customer loyalty rewards"
+            />
+            <Toggle
+              checked={business.enableQuickCheckout}
+              onChange={(checked) => handleToggle('enableQuickCheckout', checked)}
+              label="Quick Checkout"
+              description="Enable fast checkout process"
+            />
           </div>
-        </div>
+        </FormSection>
       )}
 
       {/* Currency Configuration Section */}
-      <div className={`p-4 rounded-lg ${theme === 'dark' ? 'bg-gray-700/30' : 'bg-gray-50'}`}>
-        <h3 className={`text-lg font-semibold mb-4 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-          Currency Configuration
-        </h3>
-
+      <FormSection
+        title="Currency Configuration"
+        description="Configure currency display and formatting"
+      >
         <div className="space-y-4">
           {/* Currency Selection */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className={`block text-sm font-medium mb-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
-                Currency
-              </label>
-              <select
-                value={business.currencyConfig.code}
-                onChange={(e) => {
-                  const selected = currencies.find(c => c.code === e.target.value)
-                  if (selected) {
-                    handleCurrencyChange('code', selected.code)
-                    handleCurrencyChange('symbol', selected.symbol)
-                    handleCurrencyChange('decimalPlaces', selected.decimals)
-                  }
-                }}
-                className={`w-full px-4 py-2 rounded-lg min-h-[44px] ${theme === 'dark' ? 'bg-gray-800 border border-gray-600 text-white focus:border-blue-500' : 'bg-white border border-gray-300 text-gray-900 focus:border-blue-500'} focus:outline-none focus:ring-2 focus:ring-blue-500/20`}
-              >
-                {currencies.map(curr => (
-                  <option key={curr.code} value={curr.code}>{curr.code} - {curr.name}</option>
-                ))}
-              </select>
-            </div>
+            <TouchSelect
+              label="Currency"
+              value={business.currencyConfig.code}
+              options={currencies.map(curr => ({
+                value: curr.code,
+                label: `${curr.code} - ${curr.name}`
+              }))}
+              onChange={(value) => {
+                const selected = currencies.find(c => c.code === value)
+                if (selected) {
+                  handleCurrencyChange('code', selected.code)
+                  handleCurrencyChange('symbol', selected.symbol)
+                  handleCurrencyChange('decimalPlaces', selected.decimals)
+                }
+              }}
+              searchable
+            />
 
-            <div>
-              <label className={`block text-sm font-medium mb-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
-                Symbol Position
-              </label>
-              <select
-                value={business.currencyConfig.symbolPosition}
-                onChange={(e) => handleCurrencyChange('symbolPosition', e.target.value)}
-                className={`w-full px-4 py-2 rounded-lg min-h-[44px] ${theme === 'dark' ? 'bg-gray-800 border border-gray-600 text-white focus:border-blue-500' : 'bg-white border border-gray-300 text-gray-900 focus:border-blue-500'} focus:outline-none focus:ring-2 focus:ring-blue-500/20`}
-              >
-                <option value="before">Before Amount ({business.currencyConfig.symbol}100)</option>
-                <option value="after">After Amount (100{business.currencyConfig.symbol})</option>
-              </select>
-            </div>
+            <TouchSelect
+              label="Symbol Position"
+              value={business.currencyConfig.symbolPosition}
+              options={[
+                { value: 'before', label: `Before Amount (${business.currencyConfig.symbol}100)` },
+                { value: 'after', label: `After Amount (100${business.currencyConfig.symbol})` }
+              ]}
+              onChange={(value) => handleCurrencyChange('symbolPosition', value as string)}
+            />
 
-            <div>
-              <label className={`block text-sm font-medium mb-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
-                Decimal Places
-              </label>
-              <input
-                type="number"
-                min="0"
-                max="3"
-                value={business.currencyConfig.decimalPlaces}
-                onChange={(e) => handleCurrencyChange('decimalPlaces', parseInt(e.target.value))}
-                className={`w-full px-4 py-2 rounded-lg min-h-[44px] ${theme === 'dark' ? 'bg-gray-800 border border-gray-600 text-white focus:border-blue-500' : 'bg-white border border-gray-300 text-gray-900 focus:border-blue-500'} focus:outline-none focus:ring-2 focus:ring-blue-500/20`}
-              />
-            </div>
+            <NumberInput
+              label="Decimal Places"
+              value={business.currencyConfig.decimalPlaces}
+              onChange={(value) => handleCurrencyChange('decimalPlaces', value)}
+              min={0}
+              max={3}
+              step={1}
+              showButtons
+            />
 
-            <div>
-              <label className={`block text-sm font-medium mb-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
-                Thousand Separator
-              </label>
-              <select
-                value={business.currencyConfig.thousandSeparator}
-                onChange={(e) => handleCurrencyChange('thousandSeparator', e.target.value)}
-                className={`w-full px-4 py-2 rounded-lg min-h-[44px] ${theme === 'dark' ? 'bg-gray-800 border border-gray-600 text-white focus:border-blue-500' : 'bg-white border border-gray-300 text-gray-900 focus:border-blue-500'} focus:outline-none focus:ring-2 focus:ring-blue-500/20`}
-              >
-                <option value=",">Comma (1,234.56)</option>
-                <option value=".">Period (1.234,56)</option>
-                <option value=" ">Space (1 234.56)</option>
-                <option value="">None (1234.56)</option>
-              </select>
-            </div>
+            <TouchSelect
+              label="Thousand Separator"
+              value={business.currencyConfig.thousandSeparator}
+              options={[
+                { value: ',', label: 'Comma (1,234.56)' },
+                { value: '.', label: 'Period (1.234,56)' },
+                { value: ' ', label: 'Space (1 234.56)' },
+                { value: '', label: 'None (1234.56)' }
+              ]}
+              onChange={(value) => handleCurrencyChange('thousandSeparator', value as string)}
+            />
 
-            <div>
-              <label className={`block text-sm font-medium mb-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
-                Decimal Separator
-              </label>
-              <select
-                value={business.currencyConfig.decimalSeparator}
-                onChange={(e) => handleCurrencyChange('decimalSeparator', e.target.value)}
-                className={`w-full px-4 py-2 rounded-lg min-h-[44px] ${theme === 'dark' ? 'bg-gray-800 border border-gray-600 text-white focus:border-blue-500' : 'bg-white border border-gray-300 text-gray-900 focus:border-blue-500'} focus:outline-none focus:ring-2 focus:ring-blue-500/20`}
-              >
-                <option value=".">Period (1,234.56)</option>
-                <option value=",">Comma (1.234,56)</option>
-              </select>
-            </div>
+            <TouchSelect
+              label="Decimal Separator"
+              value={business.currencyConfig.decimalSeparator}
+              options={[
+                { value: '.', label: 'Period (1,234.56)' },
+                { value: ',', label: 'Comma (1.234,56)' }
+              ]}
+              onChange={(value) => handleCurrencyChange('decimalSeparator', value as string)}
+            />
 
             <div className="flex items-center">
-              <label className="flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={business.currencyConfig.showCurrencyCode}
-                  onChange={(e) => handleCurrencyChange('showCurrencyCode', e.target.checked)}
-                  className="w-5 h-5 rounded"
-                />
-                <span className={`ml-3 text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
-                  Show Currency Code
-                </span>
-              </label>
+              <Checkbox
+                checked={business.currencyConfig.showCurrencyCode}
+                onChange={(checked) => handleCurrencyChange('showCurrencyCode', checked)}
+                label="Show Currency Code"
+              />
             </div>
           </div>
 
@@ -501,53 +396,32 @@ export function BusinessPanel() {
                 India-Specific Settings
               </h4>
               <div className="space-y-3">
-                <label className="flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={business.currencyConfig.regionSpecific.india.enabled}
-                    onChange={(e) => handleCurrencyChange('regionSpecific.india.enabled', e.target.checked)}
-                    className="w-5 h-5 rounded"
-                  />
-                  <span className={`ml-3 text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
-                    Enable India-Specific Features
-                  </span>
-                </label>
+                <Checkbox
+                  checked={business.currencyConfig.regionSpecific.india.enabled}
+                  onChange={(checked) => handleCurrencyChange('regionSpecific.india.enabled', checked)}
+                  label="Enable India-Specific Features"
+                />
                 {business.currencyConfig.regionSpecific.india.enabled && (
-                  <>
-                    <label className="flex items-center cursor-pointer ml-8">
-                      <input
-                        type="checkbox"
-                        checked={business.currencyConfig.regionSpecific.india.gstEnabled}
-                        onChange={(e) => handleCurrencyChange('regionSpecific.india.gstEnabled', e.target.checked)}
-                        className="w-5 h-5 rounded"
-                      />
-                      <span className={`ml-3 text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-                        Enable GST
-                      </span>
-                    </label>
-                    <label className="flex items-center cursor-pointer ml-8">
-                      <input
-                        type="checkbox"
-                        checked={business.currencyConfig.regionSpecific.india.showPaisa}
-                        onChange={(e) => handleCurrencyChange('regionSpecific.india.showPaisa', e.target.checked)}
-                        className="w-5 h-5 rounded"
-                      />
-                      <span className={`ml-3 text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-                        Show Paisa (Decimal Places)
-                      </span>
-                    </label>
-                    <label className="flex items-center cursor-pointer ml-8">
-                      <input
-                        type="checkbox"
-                        checked={business.currencyConfig.regionSpecific.india.useIndianNumbering}
-                        onChange={(e) => handleCurrencyChange('regionSpecific.india.useIndianNumbering', e.target.checked)}
-                        className="w-5 h-5 rounded"
-                      />
-                      <span className={`ml-3 text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-                        Use Indian Numbering System (Lakhs/Crores)
-                      </span>
-                    </label>
-                  </>
+                  <div className="ml-8 space-y-3">
+                    <Checkbox
+                      checked={business.currencyConfig.regionSpecific.india.gstEnabled}
+                      onChange={(checked) => handleCurrencyChange('regionSpecific.india.gstEnabled', checked)}
+                      label="Enable GST"
+                      size="sm"
+                    />
+                    <Checkbox
+                      checked={business.currencyConfig.regionSpecific.india.showPaisa}
+                      onChange={(checked) => handleCurrencyChange('regionSpecific.india.showPaisa', checked)}
+                      label="Show Paisa (Decimal Places)"
+                      size="sm"
+                    />
+                    <Checkbox
+                      checked={business.currencyConfig.regionSpecific.india.useIndianNumbering}
+                      onChange={(checked) => handleCurrencyChange('regionSpecific.india.useIndianNumbering', checked)}
+                      label="Use Indian Numbering System (Lakhs/Crores)"
+                      size="sm"
+                    />
+                  </div>
                 )}
               </div>
             </div>
@@ -559,124 +433,30 @@ export function BusinessPanel() {
               <h4 className={`text-md font-semibold mb-3 ${theme === 'dark' ? 'text-green-400' : 'text-green-900'}`}>
                 Middle East Settings
               </h4>
-              <label className="flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={business.currencyConfig.regionSpecific.middleEast.enabled}
-                  onChange={(e) => handleCurrencyChange('regionSpecific.middleEast.enabled', e.target.checked)}
-                  className="w-5 h-5 rounded"
-                />
-                <span className={`ml-3 text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
-                  Enable Middle East-Specific Features
-                </span>
-              </label>
+              <Checkbox
+                checked={business.currencyConfig.regionSpecific.middleEast.enabled}
+                onChange={(checked) => handleCurrencyChange('regionSpecific.middleEast.enabled', checked)}
+                label="Enable Middle East-Specific Features"
+              />
             </div>
           )}
         </div>
-      </div>
+      </FormSection>
 
       {/* Timezone Configuration Section */}
-      <div className={`p-4 rounded-lg ${theme === 'dark' ? 'bg-gray-700/30' : 'bg-gray-50'}`}>
-        <h3 className={`text-lg font-semibold mb-4 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-          Timezone Configuration
-        </h3>
-        <p className={`text-sm mb-4 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-          Set the business timezone for accurate time tracking, reporting, and scheduling
-        </p>
-
+      <FormSection
+        title="Timezone Configuration"
+        description="Set the business timezone for accurate time tracking, reporting, and scheduling"
+      >
         <div className="space-y-4">
-          <div>
-            <label className={`block text-sm font-medium mb-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
-              Business Timezone
-            </label>
-            <select
-              value={business.timezone || 'UTC'}
-              onChange={(e) => updateBusinessSettings({ timezone: e.target.value })}
-              className={`w-full px-4 py-2 rounded-lg min-h-[44px] ${theme === 'dark' ? 'bg-gray-800 border border-gray-600 text-white focus:border-blue-500' : 'bg-white border border-gray-300 text-gray-900 focus:border-blue-500'} focus:outline-none focus:ring-2 focus:ring-blue-500/20`}
-            >
-              {/* UTC and Offset from UTC */}
-              <optgroup label="UTC and Coordinates">
-                <option value="UTC">UTC (Coordinated Universal Time)</option>
-              </optgroup>
-
-              {/* Africa */}
-              <optgroup label="Africa">
-                <option value="Africa/Cairo">Cairo (EET/EEST)</option>
-                <option value="Africa/Johannesburg">Johannesburg (SAST)</option>
-                <option value="Africa/Lagos">Lagos (WAT)</option>
-              </optgroup>
-
-              {/* Asia */}
-              <optgroup label="Asia">
-                <option value="Asia/Shanghai">Shanghai (CST)</option>
-                <option value="Asia/Dubai">Dubai (GST)</option>
-                <option value="Asia/Kolkata">India (IST)</option>
-                <option value="Asia/Bangkok">Bangkok (ICT)</option>
-                <option value="Asia/Singapore">Singapore (SGT)</option>
-                <option value="Asia/Hong_Kong">Hong Kong (HKT)</option>
-                <option value="Asia/Tokyo">Tokyo (JST)</option>
-                <option value="Asia/Seoul">Seoul (KST)</option>
-                <option value="Asia/Manila">Manila (PHT)</option>
-              </optgroup>
-
-              {/* Europe */}
-              <optgroup label="Europe">
-                <option value="Europe/London">London (GMT/BST)</option>
-                <option value="Europe/Paris">Paris (CET/CEST)</option>
-                <option value="Europe/Berlin">Berlin (CET/CEST)</option>
-                <option value="Europe/Amsterdam">Amsterdam (CET/CEST)</option>
-                <option value="Europe/Madrid">Madrid (CET/CEST)</option>
-                <option value="Europe/Rome">Rome (CET/CEST)</option>
-                <option value="Europe/Brussels">Brussels (CET/CEST)</option>
-                <option value="Europe/Vienna">Vienna (CET/CEST)</option>
-                <option value="Europe/Prague">Prague (CET/CEST)</option>
-                <option value="Europe/Warsaw">Warsaw (CET/CEST)</option>
-                <option value="Europe/Moscow">Moscow (MSK)</option>
-                <option value="Europe/Istanbul">Istanbul (EET/EEST)</option>
-              </optgroup>
-
-              {/* Middle East */}
-              <optgroup label="Middle East">
-                <option value="Asia/Riyadh">Saudi Arabia (AST)</option>
-                <option value="Asia/Kuwait">Kuwait (AST)</option>
-                <option value="Asia/Bahrain">Bahrain (AST)</option>
-                <option value="Asia/Qatar">Qatar (AST)</option>
-                <option value="Asia/Oman">Oman (GST)</option>
-                <option value="Asia/Jerusalem">Israel (IST/IDT)</option>
-              </optgroup>
-
-              {/* North America */}
-              <optgroup label="North America">
-                <option value="America/New_York">Eastern Time (EST/EDT)</option>
-                <option value="America/Chicago">Central Time (CST/CDT)</option>
-                <option value="America/Denver">Mountain Time (MST/MDT)</option>
-                <option value="America/Los_Angeles">Pacific Time (PST/PDT)</option>
-                <option value="America/Anchorage">Alaska (AKST/AKDT)</option>
-                <option value="Pacific/Honolulu">Hawaii (HST)</option>
-                <option value="America/Toronto">Toronto (EST/EDT)</option>
-                <option value="America/Mexico_City">Mexico City (CST/CDT)</option>
-              </optgroup>
-
-              {/* South America */}
-              <optgroup label="South America">
-                <option value="America/Sao_Paulo">São Paulo (BRT/BRST)</option>
-                <option value="America/Buenos_Aires">Buenos Aires (ART)</option>
-                <option value="America/Santiago">Santiago (CLT/CLST)</option>
-                <option value="America/Bogota">Bogota (COT)</option>
-                <option value="America/Lima">Lima (PET)</option>
-              </optgroup>
-
-              {/* Australia & Pacific */}
-              <optgroup label="Australia & Pacific">
-                <option value="Australia/Sydney">Sydney (AEDT/AEST)</option>
-                <option value="Australia/Melbourne">Melbourne (AEDT/AEST)</option>
-                <option value="Australia/Brisbane">Brisbane (AEST)</option>
-                <option value="Australia/Perth">Perth (AWST)</option>
-                <option value="Australia/Adelaide">Adelaide (ACDT/ACST)</option>
-                <option value="Pacific/Auckland">Auckland (NZDT/NZST)</option>
-              </optgroup>
-            </select>
-          </div>
+          <TouchSelect
+            label="Business Timezone"
+            value={business.timezone || 'UTC'}
+            options={timezones}
+            onChange={(value) => updateBusinessSettings({ timezone: value as string })}
+            searchable
+            helperText="This timezone affects transaction timestamps, report generation, business hours scheduling, and shift management"
+          />
 
           {/* Timezone Information */}
           <div className={`p-3 rounded-lg ${theme === 'dark' ? 'bg-gray-800 border border-gray-600' : 'bg-white border border-gray-200'}`}>
@@ -684,12 +464,9 @@ export function BusinessPanel() {
               <span className="font-medium">📍 Current Timezone: </span>
               {business.timezone || 'UTC'}
             </p>
-            <p className={`text-xs mt-2 ${theme === 'dark' ? 'text-gray-500' : 'text-gray-500'}`}>
-              This timezone affects transaction timestamps, report generation, business hours scheduling, and shift management throughout the system
-            </p>
           </div>
         </div>
-      </div>
+      </FormSection>
     </div>
   )
 }

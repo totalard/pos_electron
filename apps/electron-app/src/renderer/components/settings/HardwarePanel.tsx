@@ -1,6 +1,5 @@
 import { useAppStore, useSettingsStore } from '../../stores'
-import { Toggle, Input } from '../common'
-import { FormSection, Select } from '../forms'
+import { FormSection, TouchSelect, Toggle, TextInput } from '../forms'
 
 /**
  * Comprehensive Hardware Configuration Panel
@@ -44,10 +43,10 @@ export function HardwarePanel() {
 
           {hardware.receiptPrinterEnabled && (
             <>
-              <Select
+              <TouchSelect
                 label="Connection Type"
                 value={hardware.receiptPrinterConnection}
-                onChange={(e) => updateHardwareSettings({ receiptPrinterConnection: e.target.value as 'USB' | 'Network' | 'COM' })}
+                onChange={(value) => updateHardwareSettings({ receiptPrinterConnection: value as 'USB' | 'Network' | 'COM' })}
                 options={[
                   { value: 'USB', label: 'USB' },
                   { value: 'Network', label: 'Network (IP)' },
@@ -56,7 +55,7 @@ export function HardwarePanel() {
                 helperText="How the printer is connected to the system"
               />
 
-              <Input
+              <TextInput
                 type="text"
                 label="Port/Address"
                 value={hardware.receiptPrinterPort}
@@ -66,10 +65,10 @@ export function HardwarePanel() {
               />
 
               {hardware.receiptPrinterConnection === 'COM' && (
-                <Select
+                <TouchSelect
                   label="Baud Rate"
                   value={hardware.receiptPrinterBaudRate.toString()}
-                  onChange={(e) => updateHardwareSettings({ receiptPrinterBaudRate: parseInt(e.target.value) })}
+                  onChange={(value) => updateHardwareSettings({ receiptPrinterBaudRate: parseInt(value as string) })}
                   options={[
                     { value: '9600', label: '9600' },
                     { value: '19200', label: '19200' },
@@ -81,10 +80,10 @@ export function HardwarePanel() {
                 />
               )}
 
-              <Select
+              <TouchSelect
                 label="Paper Size"
                 value={hardware.receiptPrinterPaperSize}
-                onChange={(e) => updateHardwareSettings({ receiptPrinterPaperSize: e.target.value as '58mm' | '80mm' })}
+                onChange={(value) => updateHardwareSettings({ receiptPrinterPaperSize: value as '58mm' | '80mm' })}
                 options={[
                   { value: '58mm', label: '58mm (2.25 inches)' },
                   { value: '80mm', label: '80mm (3.15 inches)' }
@@ -111,10 +110,10 @@ export function HardwarePanel() {
 
           {hardware.kitchenPrinterEnabled && (
             <>
-              <Select
+              <TouchSelect
                 label="Connection Type"
                 value={hardware.kitchenPrinterConnection}
-                onChange={(e) => updateHardwareSettings({ kitchenPrinterConnection: e.target.value as 'USB' | 'Network' | 'COM' })}
+                onChange={(value) => updateHardwareSettings({ kitchenPrinterConnection: value as 'USB' | 'Network' | 'COM' })}
                 options={[
                   { value: 'USB', label: 'USB' },
                   { value: 'Network', label: 'Network (IP)' },
@@ -122,7 +121,7 @@ export function HardwarePanel() {
                 ]}
               />
 
-              <Input
+              <TextInput
                 type="text"
                 label="Port/Address"
                 value={hardware.kitchenPrinterPort}
@@ -131,10 +130,10 @@ export function HardwarePanel() {
               />
 
               {hardware.kitchenPrinterConnection === 'COM' && (
-                <Select
+                <TouchSelect
                   label="Baud Rate"
                   value={hardware.kitchenPrinterBaudRate.toString()}
-                  onChange={(e) => updateHardwareSettings({ kitchenPrinterBaudRate: parseInt(e.target.value) })}
+                  onChange={(value) => updateHardwareSettings({ kitchenPrinterBaudRate: parseInt(value as string) })}
                   options={[
                     { value: '9600', label: '9600' },
                     { value: '19200', label: '19200' },
@@ -164,10 +163,10 @@ export function HardwarePanel() {
 
           {hardware.labelPrinterEnabled && (
             <>
-              <Select
+              <TouchSelect
                 label="Connection Type"
                 value={hardware.labelPrinterConnection}
-                onChange={(e) => updateHardwareSettings({ labelPrinterConnection: e.target.value as 'USB' | 'Network' | 'COM' })}
+                onChange={(value) => updateHardwareSettings({ labelPrinterConnection: value as 'USB' | 'Network' | 'COM' })}
                 options={[
                   { value: 'USB', label: 'USB' },
                   { value: 'Network', label: 'Network (IP)' },
@@ -175,7 +174,7 @@ export function HardwarePanel() {
                 ]}
               />
 
-              <Input
+              <TextInput
                 type="text"
                 label="Port/Address"
                 value={hardware.labelPrinterPort}
@@ -184,10 +183,10 @@ export function HardwarePanel() {
               />
 
               {hardware.labelPrinterConnection === 'COM' && (
-                <Select
+                <TouchSelect
                   label="Baud Rate"
                   value={hardware.labelPrinterBaudRate.toString()}
-                  onChange={(e) => updateHardwareSettings({ labelPrinterBaudRate: parseInt(e.target.value) })}
+                  onChange={(value) => updateHardwareSettings({ labelPrinterBaudRate: parseInt(value as string) })}
                   options={[
                     { value: '9600', label: '9600' },
                     { value: '19200', label: '19200' },
@@ -217,10 +216,10 @@ export function HardwarePanel() {
 
           {hardware.cashDrawerEnabled && (
             <>
-              <Select
+              <TouchSelect
                 label="Connection Type"
                 value={hardware.cashDrawerConnection}
-                onChange={(e) => updateHardwareSettings({ cashDrawerConnection: e.target.value as 'Printer' | 'USB' | 'COM' })}
+                onChange={(value) => updateHardwareSettings({ cashDrawerConnection: value as 'Printer' | 'USB' | 'COM' })}
                 options={[
                   { value: 'Printer', label: 'Connected to Printer' },
                   { value: 'USB', label: 'USB' },
@@ -229,10 +228,10 @@ export function HardwarePanel() {
                 helperText="How the cash drawer is connected"
               />
 
-              <Select
+              <TouchSelect
                 label="Trigger Method"
                 value={hardware.cashDrawerTrigger}
-                onChange={(e) => updateHardwareSettings({ cashDrawerTrigger: e.target.value as 'Manual' | 'Auto' })}
+                onChange={(value) => updateHardwareSettings({ cashDrawerTrigger: value as 'Manual' | 'Auto' })}
                 options={[
                   { value: 'Manual', label: 'Manual (Button)' },
                   { value: 'Auto', label: 'Automatic' }
@@ -266,10 +265,10 @@ export function HardwarePanel() {
 
           {hardware.barcodeScannerEnabled && (
             <>
-              <Select
+              <TouchSelect
                 label="Connection Type"
                 value={hardware.barcodeScannerConnection}
-                onChange={(e) => updateHardwareSettings({ barcodeScannerConnection: e.target.value as 'USB' | 'Bluetooth' | 'COM' })}
+                onChange={(value) => updateHardwareSettings({ barcodeScannerConnection: value as 'USB' | 'Bluetooth' | 'COM' })}
                 options={[
                   { value: 'USB', label: 'USB (HID)' },
                   { value: 'Bluetooth', label: 'Bluetooth' },
@@ -277,10 +276,10 @@ export function HardwarePanel() {
                 ]}
               />
 
-              <Select
+              <TouchSelect
                 label="Scan Mode"
                 value={hardware.barcodeScannerMode}
-                onChange={(e) => updateHardwareSettings({ barcodeScannerMode: e.target.value as 'Continuous' | 'Trigger' })}
+                onChange={(value) => updateHardwareSettings({ barcodeScannerMode: value as 'Continuous' | 'Trigger' })}
                 options={[
                   { value: 'Continuous', label: 'Continuous Scan' },
                   { value: 'Trigger', label: 'Trigger/Button Scan' }
@@ -288,7 +287,7 @@ export function HardwarePanel() {
                 helperText="How the scanner operates"
               />
 
-              <Input
+              <TextInput
                 type="text"
                 label="Prefix Characters"
                 value={hardware.barcodeScannerPrefix}
@@ -297,7 +296,7 @@ export function HardwarePanel() {
                 helperText="Characters added before scanned barcode"
               />
 
-              <Input
+              <TextInput
                 type="text"
                 label="Suffix Characters"
                 value={hardware.barcodeScannerSuffix}
@@ -325,10 +324,10 @@ export function HardwarePanel() {
 
           {hardware.customerDisplayEnabled && (
             <>
-              <Select
+              <TouchSelect
                 label="Display Type"
                 value={hardware.customerDisplayType}
-                onChange={(e) => updateHardwareSettings({ customerDisplayType: e.target.value as 'Monitor' | 'Pole Display' | 'Tablet' })}
+                onChange={(value) => updateHardwareSettings({ customerDisplayType: value as 'Monitor' | 'Pole Display' | 'Tablet' })}
                 options={[
                   { value: 'Monitor', label: 'Secondary Monitor' },
                   { value: 'Pole Display', label: 'Pole Display (VFD/LCD)' },
@@ -337,10 +336,10 @@ export function HardwarePanel() {
                 helperText="Type of customer-facing display"
               />
 
-              <Select
+              <TouchSelect
                 label="Connection Type"
                 value={hardware.customerDisplayConnection}
-                onChange={(e) => updateHardwareSettings({ customerDisplayConnection: e.target.value as 'HDMI' | 'USB' | 'Network' })}
+                onChange={(value) => updateHardwareSettings({ customerDisplayConnection: value as 'HDMI' | 'USB' | 'Network' })}
                 options={[
                   { value: 'HDMI', label: 'HDMI/DisplayPort' },
                   { value: 'USB', label: 'USB' },
@@ -348,7 +347,7 @@ export function HardwarePanel() {
                 ]}
               />
 
-              <Input
+              <TextInput
                 type="text"
                 label="Port/Address"
                 value={hardware.customerDisplayPort}
@@ -385,10 +384,10 @@ export function HardwarePanel() {
                 </div>
               </div>
 
-              <Select
+              <TouchSelect
                 label="Font Size"
                 value={hardware.customerDisplayFontSize}
-                onChange={(e) => updateHardwareSettings({ customerDisplayFontSize: e.target.value as 'Small' | 'Medium' | 'Large' })}
+                onChange={(value) => updateHardwareSettings({ customerDisplayFontSize: value as 'Small' | 'Medium' | 'Large' })}
                 options={[
                   { value: 'Small', label: 'Small' },
                   { value: 'Medium', label: 'Medium' },
@@ -416,10 +415,10 @@ export function HardwarePanel() {
 
           {hardware.scaleEnabled && (
             <>
-              <Select
+              <TouchSelect
                 label="Connection Type"
                 value={hardware.scaleConnection}
-                onChange={(e) => updateHardwareSettings({ scaleConnection: e.target.value as 'USB' | 'COM' | 'Network' })}
+                onChange={(value) => updateHardwareSettings({ scaleConnection: value as 'USB' | 'COM' | 'Network' })}
                 options={[
                   { value: 'USB', label: 'USB' },
                   { value: 'COM', label: 'Serial Port (COM)' },
@@ -427,7 +426,7 @@ export function HardwarePanel() {
                 ]}
               />
 
-              <Input
+              <TextInput
                 type="text"
                 label="Port/Address"
                 value={hardware.scalePort}
@@ -436,10 +435,10 @@ export function HardwarePanel() {
               />
 
               {hardware.scaleConnection === 'COM' && (
-                <Select
+                <TouchSelect
                   label="Baud Rate"
                   value={hardware.scaleBaudRate.toString()}
-                  onChange={(e) => updateHardwareSettings({ scaleBaudRate: parseInt(e.target.value) })}
+                  onChange={(value) => updateHardwareSettings({ scaleBaudRate: parseInt(value as string) })}
                   options={[
                     { value: '9600', label: '9600' },
                     { value: '19200', label: '19200' },
@@ -450,10 +449,10 @@ export function HardwarePanel() {
                 />
               )}
 
-              <Select
+              <TouchSelect
                 label="Unit of Measurement"
                 value={hardware.scaleUnit}
-                onChange={(e) => updateHardwareSettings({ scaleUnit: e.target.value as 'kg' | 'lb' | 'g' })}
+                onChange={(value) => updateHardwareSettings({ scaleUnit: value as 'kg' | 'lb' | 'g' })}
                 options={[
                   { value: 'kg', label: 'Kilograms (kg)' },
                   { value: 'lb', label: 'Pounds (lb)' },
@@ -481,7 +480,7 @@ export function HardwarePanel() {
 
           {hardware.paymentTerminalEnabled && (
             <>
-              <Input
+              <TextInput
                 type="text"
                 label="Terminal Model/Type"
                 value={hardware.paymentTerminalType}
@@ -490,10 +489,10 @@ export function HardwarePanel() {
                 helperText="Model or type of payment terminal"
               />
 
-              <Select
+              <TouchSelect
                 label="Connection Type"
                 value={hardware.paymentTerminalConnection}
-                onChange={(e) => updateHardwareSettings({ paymentTerminalConnection: e.target.value as 'USB' | 'Network' | 'Bluetooth' })}
+                onChange={(value) => updateHardwareSettings({ paymentTerminalConnection: value as 'USB' | 'Network' | 'Bluetooth' })}
                 options={[
                   { value: 'USB', label: 'USB' },
                   { value: 'Network', label: 'Network (IP)' },
@@ -501,7 +500,7 @@ export function HardwarePanel() {
                 ]}
               />
 
-              <Input
+              <TextInput
                 type="text"
                 label="Port/Address"
                 value={hardware.paymentTerminalPort}

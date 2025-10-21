@@ -1,29 +1,6 @@
 import { useState } from 'react'
 import { useAppStore, useSettingsStore, PaymentMethod } from '../../stores'
-import { Input, Toggle } from '../common'
-
-interface FormSectionProps {
-  title: string
-  description: string
-  children: React.ReactNode
-}
-
-function FormSection({ title, description, children }: FormSectionProps) {
-  const { theme } = useAppStore()
-  return (
-    <div className={`p-6 rounded-lg ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
-      <div className="mb-4">
-        <h3 className={`text-lg font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-          {title}
-        </h3>
-        <p className={`text-sm mt-1 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-          {description}
-        </p>
-      </div>
-      {children}
-    </div>
-  )
-}
+import { FormSection, TextInput, Toggle, NumberInput } from '../forms'
 
 export function PaymentsPanel() {
   const { theme } = useAppStore()
@@ -87,7 +64,7 @@ export function PaymentsPanel() {
                   <span className="text-2xl">{method.icon}</span>
                   
                   {editingMethod === method.id ? (
-                    <Input
+                    <TextInput
                       type="text"
                       value={method.name}
                       onChange={(e) => handleMethodUpdate(method.id, { name: e.target.value })}
@@ -235,18 +212,18 @@ export function PaymentsPanel() {
               <div className="grid grid-cols-4 gap-2">
                 {payments.defaultTipPercentages.map((percentage, index) => (
                   <div key={index} className="relative">
-                    <Input
-                      type="number"
+                    <NumberInput
                       value={percentage}
-                      onChange={(e) => {
+                      onChange={(value) => {
                         const newPercentages = [...payments.defaultTipPercentages]
-                        newPercentages[index] = parseInt(e.target.value) || 0
+                        newPercentages[index] = value
                         updatePaymentSettings({ defaultTipPercentages: newPercentages })
                       }}
-                      min="0"
-                      max="100"
+                      min={0}
+                      max={100}
+                      showButtons
                     />
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">%</span>
+                    <span className={`absolute right-3 top-1/2 -translate-y-1/2 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>%</span>
                   </div>
                 ))}
               </div>
@@ -269,14 +246,14 @@ export function PaymentsPanel() {
           />
 
           {payments.cashRoundingEnabled && (
-            <Input
-              type="number"
+            <NumberInput
               label="Rounding Amount"
               value={payments.cashRoundingAmount}
-              onChange={(e) => updatePaymentSettings({ cashRoundingAmount: parseFloat(e.target.value) || 0.05 })}
-              helperText="Round to nearest (e.g., 0.05 for 5 cents)"
-              step="0.01"
-              min="0.01"
+              onChange={(value) => updatePaymentSettings({ cashRoundingAmount: value })}
+              step={0.01}
+              min={0}
+              helperText="Round to nearest (e.g., 0.05 for nickel rounding)"
+              showButtons
             />
           )}
         </div>

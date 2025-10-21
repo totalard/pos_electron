@@ -1,6 +1,5 @@
 import { useAppStore, useSettingsStore } from '../../stores'
-import { Toggle, Input } from '../common'
-import { FormSection, Select } from '../forms'
+import { FormSection, TouchSelect, Toggle, TextInput, NumberInput } from '../forms'
 
 /**
  * Comprehensive Inventory Settings Panel
@@ -87,19 +86,19 @@ export function InventoryPanel() {
           {inventory.enableLowStockAlerts && (
             <>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Input
-                  type="number"
+                <NumberInput
                   label="Low Stock Threshold"
-                  value={inventory.lowStockThreshold.toString()}
-                  onChange={(e) => updateInventorySettings({ lowStockThreshold: parseInt(e.target.value) || 0 })}
+                  value={inventory.lowStockThreshold}
+                  onChange={(value) => updateInventorySettings({ lowStockThreshold: value })}
                   helperText="Threshold value for low stock alerts"
-                  min="0"
+                  min={0}
+                  showButtons
                 />
 
-                <Select
+                <TouchSelect
                   label="Threshold Type"
                   value={inventory.lowStockThresholdType}
-                  onChange={(e) => updateInventorySettings({ lowStockThresholdType: e.target.value as 'absolute' | 'percentage' })}
+                  onChange={(value) => updateInventorySettings({ lowStockThresholdType: value as 'absolute' | 'percentage' })}
                   options={[
                     { value: 'absolute', label: 'Absolute Quantity' },
                     { value: 'percentage', label: 'Percentage (%)' }
@@ -124,10 +123,10 @@ export function InventoryPanel() {
         description="Configure how stock is deducted and valued"
       >
         <div className="space-y-4">
-          <Select
+          <TouchSelect
             label="Stock Deduction Mode"
             value={inventory.stockDeductionMode}
-            onChange={(e) => updateInventorySettings({ stockDeductionMode: e.target.value as 'automatic' | 'manual' })}
+            onChange={(value) => updateInventorySettings({ stockDeductionMode: value as 'automatic' | 'manual' })}
             options={[
               { value: 'automatic', label: 'Automatic Deduction' },
               { value: 'manual', label: 'Manual Adjustment' }
@@ -160,10 +159,10 @@ export function InventoryPanel() {
             description="Allow selling items even when stock is zero or negative"
           />
 
-          <Select
+          <TouchSelect
             label="Stock Valuation Method"
             value={inventory.valuationMethod}
-            onChange={(e) => updateInventorySettings({ valuationMethod: e.target.value as 'FIFO' | 'LIFO' | 'Weighted Average' })}
+            onChange={(value) => updateInventorySettings({ valuationMethod: value as 'FIFO' | 'LIFO' | 'Weighted Average' })}
             options={[
               { value: 'FIFO', label: 'FIFO (First In, First Out)' },
               { value: 'LIFO', label: 'LIFO (Last In, First Out)' },
@@ -197,22 +196,22 @@ export function InventoryPanel() {
           {inventory.enableAutoReorder && (
             <>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Input
-                  type="number"
+                <NumberInput
                   label="Reorder Threshold"
-                  value={inventory.autoReorderThreshold.toString()}
-                  onChange={(e) => updateInventorySettings({ autoReorderThreshold: parseInt(e.target.value) || 0 })}
+                  value={inventory.autoReorderThreshold}
+                  onChange={(value) => updateInventorySettings({ autoReorderThreshold: value })}
                   helperText="Trigger reorder when stock reaches this level"
-                  min="0"
+                  min={0}
+                  showButtons
                 />
 
-                <Input
-                  type="number"
+                <NumberInput
                   label="Default Reorder Quantity"
-                  value={inventory.autoReorderQuantity.toString()}
-                  onChange={(e) => updateInventorySettings({ autoReorderQuantity: parseInt(e.target.value) || 1 })}
+                  value={inventory.autoReorderQuantity}
+                  onChange={(value) => updateInventorySettings({ autoReorderQuantity: value })}
                   helperText="Default quantity to reorder"
-                  min="1"
+                  min={1}
+                  showButtons
                 />
               </div>
 
@@ -233,10 +232,10 @@ export function InventoryPanel() {
         description="Configure units for inventory tracking"
       >
         <div className="space-y-4">
-          <Select
+          <TouchSelect
             label="Default Unit of Measurement"
             value={inventory.defaultUOM}
-            onChange={(e) => updateInventorySettings({ defaultUOM: e.target.value })}
+            onChange={(value) => updateInventorySettings({ defaultUOM: value as string })}
             options={[
               { value: 'pieces', label: 'Pieces (pcs)' },
               { value: 'kg', label: 'Kilograms (kg)' },
@@ -283,10 +282,10 @@ export function InventoryPanel() {
 
           {inventory.enableBarcodeScanning && (
             <>
-              <Select
+              <TouchSelect
                 label="Barcode Format"
                 value={inventory.barcodeFormat}
-                onChange={(e) => updateInventorySettings({ barcodeFormat: e.target.value })}
+                onChange={(value) => updateInventorySettings({ barcodeFormat: value as string })}
                 options={[
                   { value: 'EAN13', label: 'EAN-13 (European)' },
                   { value: 'UPC', label: 'UPC (Universal Product Code)' },
@@ -303,7 +302,7 @@ export function InventoryPanel() {
               />
 
               {inventory.autoGenerateBarcode && (
-                <Input
+                <TextInput
                   type="text"
                   label="Barcode Prefix"
                   value={inventory.barcodePrefix}

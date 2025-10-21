@@ -1,8 +1,6 @@
 import { useState } from 'react'
 import { useAppStore, useSettingsStore } from '../../stores'
-import { Toggle, Input } from '../common'
-import { FormSection, Select } from '../forms'
-import { TextArea } from '../forms/TextArea'
+import { FormSection, TouchSelect, Toggle, TextInput, TextArea } from '../forms'
 import { ReceiptPreview } from './receipt/ReceiptPreview'
 import { TemplatePanel } from './receipt/TemplatePanel'
 import { PaperSizePanel } from './receipt/PaperSizePanel'
@@ -68,7 +66,7 @@ export function ReceiptsPanel() {
               />
 
               {receipts.showLogo && (
-                <Input
+                <TextInput
                   type="text"
                   label="Logo URL/Path"
                   value={receipts.logoUrl}
@@ -78,7 +76,7 @@ export function ReceiptsPanel() {
                 />
               )}
 
-              <Input
+              <TextInput
                 type="text"
                 label="Business Name"
                 value={receipts.businessName}
@@ -87,7 +85,7 @@ export function ReceiptsPanel() {
                 helperText="Displayed prominently on receipt"
               />
 
-              <Input
+              <TextInput
                 type="text"
                 label="Business Address"
                 value={receipts.businessAddress}
@@ -96,7 +94,7 @@ export function ReceiptsPanel() {
                 helperText="Full business address"
               />
 
-              <Input
+              <TextInput
                 type="text"
                 label="Business Phone"
                 value={receipts.businessPhone}
@@ -105,7 +103,7 @@ export function ReceiptsPanel() {
                 helperText="Contact phone number"
               />
 
-              <Input
+              <TextInput
                 type="text"
                 label="Business Email"
                 value={receipts.businessEmail}
@@ -114,7 +112,7 @@ export function ReceiptsPanel() {
                 helperText="Contact email address"
               />
 
-              <Input
+              <TextInput
                 type="text"
                 label="Tax ID / GST Number"
                 value={receipts.taxId}
@@ -182,10 +180,10 @@ export function ReceiptsPanel() {
                 </div>
               </div>
 
-              <Select
+              <TouchSelect
                 label="Column Alignment"
                 value={receipts.itemColumnAlignment}
-                onChange={(e) => updateReceiptSettings({ itemColumnAlignment: e.target.value as 'left' | 'center' | 'right' })}
+                onChange={(value) => updateReceiptSettings({ itemColumnAlignment: value as 'left' | 'center' | 'right' })}
                 options={[
                   { value: 'left', label: 'Left Aligned' },
                   { value: 'center', label: 'Center Aligned' },
@@ -194,10 +192,10 @@ export function ReceiptsPanel() {
                 helperText="Text alignment for item columns"
               />
 
-              <Select
+              <TouchSelect
                 label="Item Spacing"
                 value={receipts.itemSpacing}
-                onChange={(e) => updateReceiptSettings({ itemSpacing: e.target.value as 'compact' | 'normal' | 'spacious' })}
+                onChange={(value) => updateReceiptSettings({ itemSpacing: value as 'compact' | 'normal' | 'spacious' })}
                 options={[
                   { value: 'compact', label: 'Compact (Save Paper)' },
                   { value: 'normal', label: 'Normal' },
@@ -292,10 +290,10 @@ export function ReceiptsPanel() {
               />
 
               {receipts.showQRCode && (
-                <Select
+                <TouchSelect
                   label="QR Code Content"
                   value={receipts.qrCodeContent}
-                  onChange={(e) => updateReceiptSettings({ qrCodeContent: e.target.value as 'receipt_id' | 'receipt_url' | 'custom' })}
+                  onChange={(value) => updateReceiptSettings({ qrCodeContent: value as 'receipt_id' | 'receipt_url' | 'custom' })}
                   options={[
                     { value: 'receipt_id', label: 'Receipt ID' },
                     { value: 'receipt_url', label: 'Receipt URL (Online Lookup)' },
@@ -313,10 +311,10 @@ export function ReceiptsPanel() {
             description="Configure margins and section spacing"
           >
             <div className="space-y-4">
-              <Select
+              <TouchSelect
                 label="Line Spacing"
                 value={receipts.lineSpacing}
-                onChange={(e) => updateReceiptSettings({ lineSpacing: e.target.value as 'compact' | 'normal' | 'relaxed' })}
+                onChange={(value) => updateReceiptSettings({ lineSpacing: value as 'compact' | 'normal' | 'relaxed' })}
                 options={[
                   { value: 'compact', label: 'Compact' },
                   { value: 'normal', label: 'Normal' },
@@ -325,7 +323,7 @@ export function ReceiptsPanel() {
                 helperText="Space between lines"
               />
 
-              <Input
+              <TextInput
                 type="number"
                 label="Section Spacing (px)"
                 value={receipts.sectionSpacing.toString()}
@@ -337,7 +335,7 @@ export function ReceiptsPanel() {
               />
 
               <div className="grid grid-cols-2 gap-4">
-                <Input
+                <TextInput
                   type="number"
                   label="Top Margin (mm)"
                   value={receipts.marginTop.toString()}
@@ -347,7 +345,7 @@ export function ReceiptsPanel() {
                   max={20}
                 />
 
-                <Input
+                <TextInput
                   type="number"
                   label="Bottom Margin (mm)"
                   value={receipts.marginBottom.toString()}
@@ -357,7 +355,7 @@ export function ReceiptsPanel() {
                   max={20}
                 />
 
-                <Input
+                <TextInput
                   type="number"
                   label="Left Margin (mm)"
                   value={receipts.marginLeft.toString()}
@@ -367,7 +365,7 @@ export function ReceiptsPanel() {
                   max={20}
                 />
 
-                <Input
+                <TextInput
                   type="number"
                   label="Right Margin (mm)"
                   value={receipts.marginRight.toString()}
@@ -393,7 +391,7 @@ export function ReceiptsPanel() {
                 description="Automatically print receipt when sale is completed"
               />
 
-              <Input
+              <TextInput
                 type="number"
                 label="Number of Copies"
                 value={receipts.numberOfCopies.toString()}

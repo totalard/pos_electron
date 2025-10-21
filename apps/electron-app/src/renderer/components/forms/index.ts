@@ -36,3 +36,9 @@ export type { DatePickerProps } from './DatePicker'
 
 export { DateRangePicker } from './DateRangePicker'
 export type { DateRangePickerProps } from './DateRangePicker'
+
+export { TextInput } from './TextInput'
+export type { TextInputProps } from './TextInput'
+
+export { Toggle } from './Toggle'
+export type { ToggleProps } from './Toggle'
