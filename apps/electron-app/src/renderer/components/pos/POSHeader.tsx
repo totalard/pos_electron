@@ -2,7 +2,7 @@ import { ReactNode } from 'react'
 import { useAppStore, useSessionStore } from '../../stores'
 import { usePinStore } from '../../stores'
 import { TabBar, Tab } from './TabBar'
-import { Avatar, Button, InternetStatusIndicator } from '../common'
+import { Avatar, Button, ThemeToggle } from '../common'
 
 /**
  * POSHeader component props
@@ -129,10 +129,10 @@ export function POSHeader({
           )}
         </div>
 
-        {/* Right: Connection Status & Actions */}
+        {/* Right: Theme Toggle & Actions */}
         <div className="flex items-center gap-4">
-          {/* Internet Connection Status */}
-          <InternetStatusIndicator showLabel={true} size="sm" />
+          {/* Theme Toggle */}
+          <ThemeToggle size="sm" />
 
           {/* Close Session Button */}
           {activeSession && onCloseSession && (

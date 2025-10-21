@@ -110,9 +110,10 @@ export function BusinessPanel() {
   ]
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Panel Header */}
-      <div className="mb-6">
+    <div className="h-full overflow-y-auto">
+      <div className="p-6 space-y-6">
+        {/* Panel Header */}
+        <div className="mb-6">
         <h2 className={`
           text-2xl font-bold mb-2
           ${theme === 'dark' ? 'text-white' : 'text-gray-900'}
@@ -472,6 +473,7 @@ export function BusinessPanel() {
           </div>
         </div>
       </FormSection>
+      </div>
     </div>
   )
 }

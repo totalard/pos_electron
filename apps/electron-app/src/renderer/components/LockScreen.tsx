@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useAppStore, usePinStore } from '../stores'
 import { useElapsedTime } from '../hooks'
 import { authAPI } from '../services/api'
+import { NumericKeypad } from './NumericKeypad'
 
 interface LockScreenProps {
   onUnlock: () => void
@@ -62,9 +63,9 @@ export function LockScreen({ onUnlock }: LockScreenProps) {
     }
   }
 
-  const handleNumberClick = (num: string) => {
+  const handleDigitPress = (digit: string) => {
     if (pin.length < 6) {
-      handlePinChange(pin + num)
+      handlePinChange(pin + digit)
     }
   }
 
@@ -75,6 +76,12 @@ export function LockScreen({ onUnlock }: LockScreenProps) {
   const handleClear = () => {
     setPin('')
     setError('')
+  }
+
+  const handleKeypadSubmit = () => {
+    if (pin.length === 6) {
+      handleSubmit({ preventDefault: () => {} } as React.FormEvent)
+    }
   }
 
   return (
@@ -146,112 +153,31 @@ export function LockScreen({ onUnlock }: LockScreenProps) {
             )}
           </div>
 
-          {/* Number Pad */}
-          <div className="grid grid-cols-3 gap-3">
-            {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
-              <button
-                key={num}
-                type="button"
-                onClick={() => handleNumberClick(num.toString())}
-                disabled={isLoading}
-                className={`
-                  h-16 rounded-xl text-xl font-semibold
-                  transition-all duration-150
-                  ${theme === 'dark'
-                    ? 'bg-gray-800 hover:bg-gray-700 active:bg-gray-600 text-white border border-gray-700'
-                    : 'bg-white hover:bg-gray-50 active:bg-gray-100 text-gray-900 border border-gray-200'
-                  }
-                  disabled:opacity-50 disabled:cursor-not-allowed
-                  transform active:scale-95
-                `}
-              >
-                {num}
-              </button>
-            ))}
-            
-            {/* Clear Button */}
-            <button
-              type="button"
-              onClick={handleClear}
-              disabled={isLoading || !pin}
-              className={`
-                h-16 rounded-xl text-sm font-semibold
-                transition-all duration-150
-                ${theme === 'dark'
-                  ? 'bg-red-900/30 hover:bg-red-900/50 active:bg-red-900/70 text-red-400 border border-red-800'
-                  : 'bg-red-50 hover:bg-red-100 active:bg-red-200 text-red-600 border border-red-200'
-                }
-                disabled:opacity-50 disabled:cursor-not-allowed
-                transform active:scale-95
-              `}
-            >
-              Clear
-            </button>
-            
-            {/* Zero Button */}
-            <button
-              type="button"
-              onClick={() => handleNumberClick('0')}
-              disabled={isLoading}
-              className={`
-                h-16 rounded-xl text-xl font-semibold
-                transition-all duration-150
-                ${theme === 'dark'
-                  ? 'bg-gray-800 hover:bg-gray-700 active:bg-gray-600 text-white border border-gray-700'
-                  : 'bg-white hover:bg-gray-50 active:bg-gray-100 text-gray-900 border border-gray-200'
-                }
-                disabled:opacity-50 disabled:cursor-not-allowed
-                transform active:scale-95
-              `}
-            >
-              0
-            </button>
-            
-            {/* Backspace Button */}
-            <button
-              type="button"
-              onClick={handleBackspace}
-              disabled={isLoading || !pin}
-              className={`
-                h-16 rounded-xl text-sm font-semibold
-                transition-all duration-150
-                ${theme === 'dark'
-                  ? 'bg-gray-800 hover:bg-gray-700 active:bg-gray-600 text-gray-300 border border-gray-700'
-                  : 'bg-white hover:bg-gray-50 active:bg-gray-100 text-gray-600 border border-gray-200'
-                }
-                disabled:opacity-50 disabled:cursor-not-allowed
-                transform active:scale-95
-              `}
-            >
-              <svg className="w-6 h-6 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M3 12l6.414 6.414a2 2 0 001.414.586H19a2 2 0 002-2V7a2 2 0 00-2-2h-8.172a2 2 0 00-1.414.586L3 12z" />
-              </svg>
-            </button>
-          </div>
+          {/* Number Pad using NumericKeypad component */}
+          <NumericKeypad
+            onDigitPress={handleDigitPress}
+            onBackspace={handleBackspace}
+            onClear={handleClear}
+            onSubmit={handleKeypadSubmit}
+            disabled={isLoading}
+          />
 
-          {/* Unlock Button */}
+          {/* Submit Button */}
           <button
             type="submit"
-            disabled={isLoading || pin.length === 0}
+            disabled={isLoading || pin.length !== 6}
             className={`
-              w-full h-14 rounded-xl font-semibold text-lg
+              w-full py-4 rounded-xl font-semibold text-lg
               transition-all duration-150
               ${theme === 'dark'
-                ? 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white'
-                : 'bg-blue-500 hover:bg-blue-600 active:bg-blue-700 text-white'
+                ? 'bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white'
+                : 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white'
               }
               disabled:opacity-50 disabled:cursor-not-allowed
               transform active:scale-95
             `}
           >
-            {isLoading ? (
-              <div className="flex items-center justify-center gap-2">
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                <span>Verifying...</span>
-              </div>
-            ) : (
-              'Unlock'
-            )}
+            {isLoading ? 'Unlocking...' : 'Unlock'}
           </button>
         </form>
       </div>
