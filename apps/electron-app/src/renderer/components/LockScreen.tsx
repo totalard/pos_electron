@@ -161,24 +161,6 @@ export function LockScreen({ onUnlock }: LockScreenProps) {
             onSubmit={handleKeypadSubmit}
             disabled={isLoading}
           />
-
-          {/* Submit Button */}
-          <button
-            type="submit"
-            disabled={isLoading || pin.length !== 6}
-            className={`
-              w-full py-4 rounded-xl font-semibold text-lg
-              transition-all duration-150
-              ${theme === 'dark'
-                ? 'bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white'
-                : 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white'
-              }
-              disabled:opacity-50 disabled:cursor-not-allowed
-              transform active:scale-95
-            `}
-          >
-            {isLoading ? 'Unlocking...' : 'Unlock'}
-          </button>
         </form>
       </div>
     </div>

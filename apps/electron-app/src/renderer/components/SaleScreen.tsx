@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAppStore, usePOSStore, useProductStore, useSettingsStore, useSessionStore, usePinStore } from '../stores'
-import { POSHeader, POSFooter, POSProductGrid, POSProductList, POSCategorySidebar, POSCart, POSSearchBar, POSActionButton, CheckoutModal, DiscountDialog, ItemDiscountDialog, CashManagementDialog, EmailReceiptDialog, SessionCreationDialog, SessionClosureDialog, CustomerSelector, POSStatusFooter } from './pos'
+import { POSHeader, POSFooter, POSProductGrid, POSProductList, POSCategorySidebar, POSCart, POSSearchBar, POSActionButton, CheckoutModal, DiscountDialog, ItemDiscountDialog, CashManagementDialog, EmailReceiptDialog, SessionCreationDialog, SessionClosureDialog, CustomerSelector, POSStatusFooter, TransactionNotesDialog, PriceOverrideDialog, QuantityAdjustDialog, ParkedTransactionsDialog, SessionInfoSidebar, PinConfirmDialog } from './pos'
 import { TableSelector, OrderTypeSelector, ProductCustomizationDialog, GuestCountSelector, AdditionalChargesSelector, AddressBookManager } from './restaurant'
 import { ConfirmDialog, ResizablePanel } from './common'
 import { useBarcodeScanner } from '../hooks'
@@ -58,7 +58,11 @@ export function SaleScreen({ onBack }: SaleScreenProps) {
   const [showNotesDialog, setShowNotesDialog] = useState(false)
   const [showPriceOverrideDialog, setShowPriceOverrideDialog] = useState(false)
   const [showQuantityDialog, setShowQuantityDialog] = useState(false)
+  const [showRecallDialog, setShowRecallDialog] = useState(false)
   const [giftReceiptMode, setGiftReceiptMode] = useState(false)
+  const [transactionNotes, setTransactionNotes] = useState('')
+  const [selectedItemForPriceOverride, setSelectedItemForPriceOverride] = useState<any>(null)
+  const [selectedItemForQuantity, setSelectedItemForQuantity] = useState<any>(null)
   
   // Restaurant dialog states
   const [showOrderTypeSelector, setShowOrderTypeSelector] = useState(false)
@@ -74,6 +78,8 @@ export function SaleScreen({ onBack }: SaleScreenProps) {
   const [showSessionCreation, setShowSessionCreation] = useState(false)
   const [showSessionClosure, setShowSessionClosure] = useState(false)
   const [isCheckingSession, setIsCheckingSession] = useState(true)
+  const [showSessionSidebar, setShowSessionSidebar] = useState(false)
+  const [showPinConfirm, setShowPinConfirm] = useState(false)
 
   // Check for active session on mount
   useEffect(() => {
@@ -301,24 +307,57 @@ export function SaleScreen({ onBack }: SaleScreenProps) {
     setShowNotesDialog(true)
   }
 
+  const handleNotesSave = (notes: string) => {
+    setTransactionNotes(notes)
+    console.log('Transaction notes saved:', notes)
+    // Future: Save notes to transaction in store
+  }
+
   const handleHold = () => {
     if (itemCount === 0) return
-    setShowHoldDialog(true)
+    // Hold is same as Park for now
+    handlePark()
   }
 
   const handleRecall = () => {
-    // Future: Implement parked transactions recall dialog
-    alert('Recall parked transactions - Coming soon')
+    setShowRecallDialog(true)
+  }
+
+  const handleRecallTransaction = (transactionId: string) => {
+    setActiveTransaction(transactionId)
+    console.log('Recalled transaction:', transactionId)
   }
 
   const handlePriceOverride = () => {
     if (itemCount === 0) return
-    setShowPriceOverrideDialog(true)
+    const activeTransaction = transactions.find(t => t.id === activeTransactionId)
+    if (activeTransaction && activeTransaction.items.length > 0) {
+      // Select first item for demo - in real app, user would select item
+      setSelectedItemForPriceOverride(activeTransaction.items[0])
+      setShowPriceOverrideDialog(true)
+    }
+  }
+
+  const handlePriceOverrideSubmit = (newPrice: number, reason: string) => {
+    console.log('Price override:', { newPrice, reason })
+    // Future: Update item price in cart
+    alert(`Price overridden to $${newPrice.toFixed(2)} - ${reason}`)
   }
 
   const handleQuantity = () => {
     if (itemCount === 0) return
-    setShowQuantityDialog(true)
+    const activeTransaction = transactions.find(t => t.id === activeTransactionId)
+    if (activeTransaction && activeTransaction.items.length > 0) {
+      // Select first item for demo - in real app, user would select item
+      setSelectedItemForQuantity(activeTransaction.items[0])
+      setShowQuantityDialog(true)
+    }
+  }
+
+  const handleQuantityAdjust = (newQuantity: number) => {
+    console.log('Quantity adjusted:', newQuantity)
+    // Future: Update item quantity in cart
+    alert(`Quantity adjusted to ${newQuantity}`)
   }
 
   // Restaurant-specific handlers
@@ -367,7 +406,7 @@ export function SaleScreen({ onBack }: SaleScreenProps) {
             onAddTab={handleAddNewTab}
             closeable
             minTabs={1}
-            onCloseSession={() => setShowSessionClosure(true)}
+            onSessionInfoClick={() => setShowSessionSidebar(true)}
             actions={
               <button
                 onClick={onBack}
@@ -717,6 +756,49 @@ export function SaleScreen({ onBack }: SaleScreenProps) {
         variant="warning"
       />
 
+      {/* Transaction Notes Dialog */}
+      <TransactionNotesDialog
+        isOpen={showNotesDialog}
+        onClose={() => setShowNotesDialog(false)}
+        initialNotes={transactionNotes}
+        onSave={handleNotesSave}
+      />
+
+      {/* Price Override Dialog */}
+      {selectedItemForPriceOverride && (
+        <PriceOverrideDialog
+          isOpen={showPriceOverrideDialog}
+          onClose={() => {
+            setShowPriceOverrideDialog(false)
+            setSelectedItemForPriceOverride(null)
+          }}
+          currentPrice={selectedItemForPriceOverride.unitPrice}
+          productName={selectedItemForPriceOverride.product.name}
+          onOverride={handlePriceOverrideSubmit}
+        />
+      )}
+
+      {/* Quantity Adjust Dialog */}
+      {selectedItemForQuantity && (
+        <QuantityAdjustDialog
+          isOpen={showQuantityDialog}
+          onClose={() => {
+            setShowQuantityDialog(false)
+            setSelectedItemForQuantity(null)
+          }}
+          currentQuantity={selectedItemForQuantity.quantity}
+          productName={selectedItemForQuantity.product.name}
+          onAdjust={handleQuantityAdjust}
+        />
+      )}
+
+      {/* Parked Transactions Dialog */}
+      <ParkedTransactionsDialog
+        isOpen={showRecallDialog}
+        onClose={() => setShowRecallDialog(false)}
+        onRecall={handleRecallTransaction}
+      />
+
       {/* Restaurant Dialogs */}
       {business.mode === 'restaurant' && (
         <>
@@ -791,6 +873,22 @@ export function SaleScreen({ onBack }: SaleScreenProps) {
       <CustomerSelector
         isOpen={showCustomerSelector}
         onClose={() => setShowCustomerSelector(false)}
+      />
+
+      {/* Session Info Sidebar */}
+      <SessionInfoSidebar
+        isOpen={showSessionSidebar}
+        onClose={() => setShowSessionSidebar(false)}
+        onCloseSession={() => setShowPinConfirm(true)}
+      />
+
+      {/* PIN Confirmation Dialog */}
+      <PinConfirmDialog
+        isOpen={showPinConfirm}
+        onClose={() => setShowPinConfirm(false)}
+        onConfirm={() => setShowSessionClosure(true)}
+        title="Close Session"
+        message="Please enter your PIN to close the current session"
       />
     </div>
   )

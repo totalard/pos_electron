@@ -24,8 +24,8 @@ export interface POSHeaderProps {
   minTabs?: number
   /** Additional actions to display in header */
   actions?: ReactNode
-  /** Close session handler */
-  onCloseSession?: () => void
+  /** Session info click handler - opens sidebar */
+  onSessionInfoClick?: () => void
 }
 
 /**
@@ -52,7 +52,7 @@ export function POSHeader({
   closeable = false,
   minTabs = 1,
   actions,
-  onCloseSession
+  onSessionInfoClick
 }: POSHeaderProps) {
   const { theme } = useAppStore()
   const { currentUser } = usePinStore()
@@ -74,46 +74,52 @@ export function POSHeader({
         : 'bg-white border-gray-200'
       }
     `}>
-      {/* Top Bar - User Info, Date/Time, Status */}
+      {/* Top Bar - User Info, Session Info, Actions */}
       <div className={`
         flex items-center justify-between px-4 py-2 border-b
         ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'}
       `}>
         {/* Left: User Info */}
-        <div className="flex items-center gap-3">
-          {currentUser && (
-            <>
-              <Avatar
-                name={currentUser.full_name}
-                color={getAvatarColor()}
-                size="sm"
-              />
-              <div className="flex flex-col">
-                <span className={`
-                  text-sm font-semibold
-                  ${theme === 'dark' ? 'text-white' : 'text-gray-900'}
-                `}>
-                  {currentUser.full_name}
-                </span>
-                <span className={`
-                  text-xs
-                  ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}
-                `}>
-                  {currentUser.role === 'admin' ? 'Administrator' : 'User'}
-                </span>
-              </div>
-            </>
-          )}
-        </div>
+        {currentUser && (
+          <>
+            <Avatar
+              name={currentUser.full_name}
+              color={getAvatarColor()}
+              size="sm"
+            />
+            <div className="flex flex-col">
+              <span className={`
+                text-sm font-semibold
+                ${theme === 'dark' ? 'text-white' : 'text-gray-900'}
+              `}>
+                {currentUser.full_name}
+              </span>
+              <span className={`
+                text-xs
+                ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}
+              `}>
+                {currentUser.role === 'admin' ? 'Administrator' : 'User'}
+              </span>
+            </div>
+          </>
+        )}
 
-        {/* Center: Session Info */}
-        <div className="flex items-center gap-6">
-          {/* Session Info */}
+        {/* Right: Session Info, Theme Toggle */}
+        <div className="flex items-center gap-4 ml-auto">
+          {/* Session Info - Clickable */}
           {activeSession && (
-            <div className={`
-              flex items-center gap-2 px-3 py-1.5 rounded-lg
-              ${theme === 'dark' ? 'bg-primary-900/30 border border-primary-700' : 'bg-primary-50 border border-primary-200'}
-            `}>
+            <button
+              onClick={onSessionInfoClick}
+              className={`
+                flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all
+                ${theme === 'dark' 
+                  ? 'bg-primary-900/30 border border-primary-700 hover:bg-primary-900/50 hover:border-primary-600' 
+                  : 'bg-primary-50 border border-primary-200 hover:bg-primary-100 hover:border-primary-300'
+                }
+                cursor-pointer active:scale-95
+              `}
+              aria-label="View session information"
+            >
               <svg className="w-4 h-4 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
@@ -125,31 +131,16 @@ export function POSHeader({
                   Opening: ${activeSession.opening_cash.toFixed(2)}
                 </span>
               </div>
-            </div>
+              <svg className="w-3 h-3 text-primary-500 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
           )}
-        </div>
 
-        {/* Right: Theme Toggle & Actions */}
-        <div className="flex items-center gap-4">
           {/* Theme Toggle */}
           <ThemeToggle size="sm" />
 
-          {/* Close Session Button */}
-          {activeSession && onCloseSession && (
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={onCloseSession}
-              className="text-xs"
-            >
-              <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-              </svg>
-              Close Session
-            </Button>
-          )}
-
-          {/* Additional Actions */}
+          {/* Close POS Button (X) */}
           {actions}
         </div>
       </div>
