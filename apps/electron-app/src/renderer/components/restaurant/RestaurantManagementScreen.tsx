@@ -2,7 +2,11 @@ import { useState } from 'react'
 import { useAppStore, useSettingsStore } from '../../stores'
 import { PageHeader } from '../layout'
 import { ThemeToggle } from '../common'
-import { FloorTableEditor, AdditionalChargesManager, WaiterManager, ReservationManager, AddressBookManager } from '../restaurant'
+import { FloorTableEditor } from './FloorTableEditor'
+import { AdditionalChargesManager } from './AdditionalChargesManager'
+import { WaiterManager } from './WaiterManager'
+import { ReservationManager } from './ReservationManager'
+import { AddressBookManager } from './AddressBookManager'
 
 interface RestaurantManagementScreenProps {
   onBack: () => void

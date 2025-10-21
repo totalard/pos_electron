@@ -68,3 +68,5 @@ export type { StatCardProps } from './StatCard'
 
 export { SalesChart } from './SalesChart'
 export type { ChartDataPoint } from './SalesChart'
+
+export { UserCard } from './UserCard'

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useAppStore, usePinStore, useSettingsStore } from '../stores'
 import { MenuCard } from './pos'
 import { Grid, PageHeader } from './layout'
-import { ThemeToggle } from './common'
+import { ThemeToggle, UserCard } from './common'
 import { DashboardAnalytics } from './DashboardAnalytics'
 
 interface DashboardProps {
@@ -62,7 +62,7 @@ export function Dashboard({ onNavigate, onLock, onLogout }: DashboardProps) {
     },
     {
       id: 'customers',
-      title: 'Customer Management',
+      title: 'Customers',
       description: 'Manage customers and loyalty',
       icon: (
         <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -74,8 +74,8 @@ export function Dashboard({ onNavigate, onLock, onLogout }: DashboardProps) {
     },
     {
       id: 'transactions',
-      title: 'Transaction Management',
-      description: 'View all transactions and reports',
+      title: 'Transactions',
+      description: 'View transactions and reports',
       icon: (
         <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
@@ -86,7 +86,7 @@ export function Dashboard({ onNavigate, onLock, onLogout }: DashboardProps) {
     },
     {
       id: 'restaurant',
-      title: 'Restaurant Management',
+      title: 'Restaurant',
       description: 'Manage restaurant operations',
       icon: (
         <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -149,22 +149,9 @@ export function Dashboard({ onNavigate, onLock, onLogout }: DashboardProps) {
               </div>
             </div>
 
-            {/* User Info, Time, Settings, and Theme Toggle */}
-            <div className="flex items-center gap-6">
-              <div className="text-right">
-                <p className={`
-                  text-sm font-medium
-                  ${theme === 'dark' ? 'text-white' : 'text-gray-900'}
-                `}>
-                  {currentUser?.full_name || 'User'}
-                </p>
-                <p className={`
-                  text-xs
-                  ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}
-                `}>
-                  {currentUser?.role === 'admin' ? 'Administrator' : 'User'}
-                </p>
-              </div>
+            {/* User Card, Time, Settings, Lock, and Theme Toggle */}
+            <div className="flex items-center gap-4">
+              {/* Current Time */}
               <div className={`
                 px-4 py-2 rounded-lg
                 ${theme === 'dark'
@@ -179,6 +166,8 @@ export function Dashboard({ onNavigate, onLock, onLogout }: DashboardProps) {
                   {currentTime.toLocaleDateString()}
                 </p>
               </div>
+
+              {/* Lock Button */}
               {onLock && (
                 <button
                   onClick={onLock}
@@ -197,24 +186,8 @@ export function Dashboard({ onNavigate, onLock, onLogout }: DashboardProps) {
                   </svg>
                 </button>
               )}
-              {onLogout && (
-                <button
-                  onClick={onLogout}
-                  className={`
-                    p-3 rounded-xl transition-all duration-200
-                    transform hover:scale-110 active:scale-95
-                    ${theme === 'dark'
-                      ? 'bg-gray-700 hover:bg-gray-600 text-gray-300'
-                      : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
-                    }
-                  `}
-                  title="Logout"
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                  </svg>
-                </button>
-              )}
+
+              {/* Settings Button */}
               {currentUser?.role === 'admin' && (
                 <button
                   onClick={() => onNavigate('settings')}
@@ -234,7 +207,12 @@ export function Dashboard({ onNavigate, onLock, onLogout }: DashboardProps) {
                   </svg>
                 </button>
               )}
+
+              {/* Theme Toggle */}
               <ThemeToggle size="md" />
+
+              {/* User Card with Logout */}
+              <UserCard onLogout={onLogout} />
             </div>
           </div>
         </div>
