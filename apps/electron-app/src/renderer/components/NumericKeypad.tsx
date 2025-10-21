@@ -171,22 +171,31 @@ export function NumericKeypad({
         </svg>
       </button>
 
-      {/* Row 5: Submit button spanning all columns - full width */}
+      {/* Row 5: Submit button spanning all columns - full width & highlighted */}
       <button
         onClick={onSubmit}
         disabled={disabled}
         className={`
-          ${actionButtonClass}
-          col-span-3 min-h-[52px] h-14 sm:h-16 md:h-[72px] lg:h-20
-          text-base sm:text-lg md:text-xl font-semibold
-          flex items-center justify-center gap-2
+          col-span-3 w-full min-h-[52px] h-14 sm:h-16 md:h-[72px] lg:h-20
+          rounded-lg sm:rounded-xl font-bold text-base sm:text-lg md:text-xl
+          transition-all duration-150 ease-in-out
+          transform active:scale-[0.98] hover:scale-[1.02]
+          focus:outline-none focus:ring-2 focus:ring-offset-1
+          disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:hover:scale-100
+          shadow-xl hover:shadow-2xl
+          flex items-center justify-center gap-2 sm:gap-3
+          backdrop-blur-sm border-2
+          ${theme === 'dark'
+            ? 'bg-gradient-to-r from-green-600 via-green-500 to-green-600 text-white hover:from-green-500 hover:via-green-400 hover:to-green-500 focus:ring-green-400/50 border-green-500/50 active:from-green-700 active:via-green-600 active:to-green-700 shadow-green-900/30 hover:shadow-green-900/50'
+            : 'bg-gradient-to-r from-green-600 via-green-500 to-green-600 text-white hover:from-green-700 hover:via-green-600 hover:to-green-700 focus:ring-green-500/50 border-green-600/50 active:from-green-800 active:via-green-700 active:to-green-800 shadow-green-600/30 hover:shadow-green-600/50'
+          }
         `}
         aria-label="Submit PIN"
       >
-        <svg className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        <svg className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
-        Enter
+        <span className="tracking-wide">ENTER</span>
       </button>
     </div>
   )
