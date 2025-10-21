@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { useAppStore, usePOSStore } from '../../stores'
+import { useAppStore, usePOSStore, useSettingsStore } from '../../stores'
 import { IconButton, CurrencyDisplay } from '../common'
 import { SwipeableCartItem } from './SwipeableCartItem'
+import { RestaurantInfoBar } from '../restaurant'
 
 /**
  * POSCart component props
@@ -15,6 +16,16 @@ export interface POSCartProps {
   onCheckout?: () => void
   /** Disable checkout button */
   checkoutDisabled?: boolean
+  /** Handler for changing order type */
+  onChangeOrderType?: () => void
+  /** Handler for changing table */
+  onChangeTable?: () => void
+  /** Handler for changing guest count */
+  onChangeGuestCount?: () => void
+  /** Handler for managing additional charges */
+  onManageCharges?: () => void
+  /** Handler for delivery address */
+  onManageDeliveryAddress?: () => void
 }
 
 /**
@@ -40,9 +51,15 @@ export function POSCart({
   showCustomer = true,
   onCustomerSelect,
   onCheckout,
-  checkoutDisabled = false
+  checkoutDisabled = false,
+  onChangeOrderType,
+  onChangeTable,
+  onChangeGuestCount,
+  onManageCharges,
+  onManageDeliveryAddress
 }: POSCartProps) {
   const { theme } = useAppStore()
+  const { business } = useSettingsStore()
   const {
     getCartItems,
     getActiveTransaction,
@@ -82,6 +99,18 @@ export function POSCart({
             {cartItems.length} {cartItems.length === 1 ? 'item' : 'items'}
           </div>
         </div>
+
+        {/* Restaurant Info Bar - Order Type, Table, Guest Count */}
+        {business.mode === 'restaurant' && transaction?.restaurantMetadata && (
+          <div className="mb-3">
+            <RestaurantInfoBar
+              onChangeOrderType={onChangeOrderType}
+              onChangeTable={onChangeTable}
+              onChangeGuestCount={onChangeGuestCount}
+              onManageDeliveryAddress={onManageDeliveryAddress}
+            />
+          </div>
+        )}
         
         {/* Customer Section */}
         {showCustomer && transaction?.customerId ? (
@@ -199,6 +228,49 @@ export function POSCart({
                   prefix="-"
                 />
               </div>
+            )}
+
+            {/* Additional Charges (Restaurant Mode) */}
+            {business.mode === 'restaurant' && transaction.restaurantMetadata?.additionalCharges && transaction.restaurantMetadata.additionalCharges.length > 0 && (
+              <div className="space-y-1">
+                {transaction.restaurantMetadata.additionalCharges.map((charge) => (
+                  <div key={charge.chargeId} className="flex items-center justify-between">
+                    <span className={`
+                      text-sm font-mono
+                      ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}
+                    `}>
+                      {charge.name}
+                    </span>
+                    <CurrencyDisplay
+                      amount={charge.amount}
+                      className={`
+                        text-sm font-mono font-semibold
+                        ${theme === 'dark' ? 'text-gray-200' : 'text-gray-800'}
+                      `}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Manage Charges Button (Restaurant Mode) */}
+            {business.mode === 'restaurant' && onManageCharges && (
+              <button
+                onClick={onManageCharges}
+                className={`
+                  w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium
+                  transition-colors
+                  ${theme === 'dark'
+                    ? 'bg-gray-700/50 hover:bg-gray-700 text-gray-300'
+                    : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                  }
+                `}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                Manage Charges
+              </button>
             )}
 
             {/* Tax */}

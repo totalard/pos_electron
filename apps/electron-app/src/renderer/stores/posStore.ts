@@ -136,6 +136,7 @@ export interface POSState {
   clearTable: () => void
   setDeliveryAddress: (address: { street: string; city: string; state: string; zipCode: string; phone: string; instructions?: string }) => void
   clearDeliveryAddress: () => void
+  setGuestCount: (guestCount: number) => void
   updateCartItemCustomization: (itemId: string, customization: ProductCustomization) => void
   setShowOrderTypeSelector: (show: boolean) => void
   setShowTableSelector: (show: boolean) => void
@@ -719,6 +720,31 @@ export const usePOSStore = create<POSState>()(
             restaurantMetadata: {
               ...transaction.restaurantMetadata,
               deliveryAddress: undefined
+            },
+            updatedAt: new Date()
+          }
+          
+          return {
+            transactions: state.transactions.map(t =>
+              t.id === state.activeTransactionId ? updatedTransaction : t
+            )
+          }
+        })
+      },
+      
+      setGuestCount: (guestCount: number) => {
+        set(state => {
+          const transaction = state.transactions.find(t => t.id === state.activeTransactionId)
+          if (!transaction) return state
+          
+          const updatedTransaction = {
+            ...transaction,
+            restaurantMetadata: {
+              ...transaction.restaurantMetadata,
+              orderType: transaction.restaurantMetadata?.orderType || 'dine-in' as OrderType,
+              orderStatus: transaction.restaurantMetadata?.orderStatus || 'pending' as OrderStatus,
+              guestCount,
+              additionalCharges: transaction.restaurantMetadata?.additionalCharges || []
             },
             updatedAt: new Date()
           }

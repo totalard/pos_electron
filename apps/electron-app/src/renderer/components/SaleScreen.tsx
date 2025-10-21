@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useAppStore, usePOSStore, useProductStore, useSettingsStore, useSessionStore, usePinStore } from '../stores'
 import { POSHeader, POSFooter, POSProductGrid, POSProductList, POSCategorySidebar, POSCart, POSSearchBar, POSActionButton, CheckoutModal, DiscountDialog, ItemDiscountDialog, CashManagementDialog, EmailReceiptDialog, SessionCreationDialog, SessionClosureDialog, CustomerSelector, POSStatusFooter } from './pos'
-import { TableSelector, OrderTypeSelector, ProductCustomizationDialog } from './restaurant'
+import { TableSelector, OrderTypeSelector, ProductCustomizationDialog, GuestCountSelector, AdditionalChargesSelector, AddressBookManager } from './restaurant'
 import { ConfirmDialog, ResizablePanel } from './common'
 import { useBarcodeScanner } from '../hooks'
 import { posSessionAPI } from '../services/api'
@@ -63,6 +63,9 @@ export function SaleScreen({ onBack }: SaleScreenProps) {
   // Restaurant dialog states
   const [showOrderTypeSelector, setShowOrderTypeSelector] = useState(false)
   const [showTableSelector, setShowTableSelector] = useState(false)
+  const [showGuestCountSelector, setShowGuestCountSelector] = useState(false)
+  const [showAdditionalChargesSelector, setShowAdditionalChargesSelector] = useState(false)
+  const [showAddressBookManager, setShowAddressBookManager] = useState(false)
   const [showProductCustomization, setShowProductCustomization] = useState(false)
   const [selectedProductForCustomization, setSelectedProductForCustomization] = useState<EnhancedProduct | null>(null)
   const [selectedCartItemForCustomization, setSelectedCartItemForCustomization] = useState<string | null>(null)
@@ -628,6 +631,11 @@ export function SaleScreen({ onBack }: SaleScreenProps) {
         onCustomerSelect={handleCustomer}
         onCheckout={handleCheckout}
         checkoutDisabled={itemCount === 0}
+        onChangeOrderType={() => setShowOrderTypeSelector(true)}
+        onChangeTable={() => setShowTableSelector(true)}
+        onChangeGuestCount={() => setShowGuestCountSelector(true)}
+        onManageCharges={() => setShowAdditionalChargesSelector(true)}
+        onManageDeliveryAddress={() => setShowAddressBookManager(true)}
       />
     </div>
   )
@@ -721,6 +729,21 @@ export function SaleScreen({ onBack }: SaleScreenProps) {
             isOpen={showTableSelector}
             onClose={() => setShowTableSelector(false)}
             onSelectTable={handleTableSelect}
+          />
+
+          <GuestCountSelector
+            isOpen={showGuestCountSelector}
+            onClose={() => setShowGuestCountSelector(false)}
+          />
+
+          <AdditionalChargesSelector
+            isOpen={showAdditionalChargesSelector}
+            onClose={() => setShowAdditionalChargesSelector(false)}
+          />
+
+          <AddressBookManager
+            isOpen={showAddressBookManager}
+            onClose={() => setShowAddressBookManager(false)}
           />
 
           {selectedProductForCustomization && (
