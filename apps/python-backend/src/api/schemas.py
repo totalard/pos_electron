@@ -124,11 +124,108 @@ class CustomerResponse(BaseModel):
     email: Optional[str]
     address: Optional[str]
     loyalty_points: int
+    credit_limit: float
+    credit_balance: float
+    credit_status: str
     created_at: datetime
     updated_at: datetime
 
     class Config:
         from_attributes = True
+
+
+class CustomerCreditOperation(BaseModel):
+    """Schema for customer credit operations (add credit/payment)"""
+    amount: float = Field(..., gt=0, description="Amount to add or pay")
+    reference_number: Optional[str] = Field(None, max_length=100)
+    notes: Optional[str] = None
+
+
+class CustomerLoyaltyOperation(BaseModel):
+    """Schema for loyalty point operations"""
+    points: int = Field(..., description="Points to add (positive) or redeem (negative)")
+    notes: Optional[str] = None
+
+
+class CustomerTransactionResponse(BaseModel):
+    """Schema for customer transaction response"""
+    id: int
+    customer_id: int
+    transaction_type: str
+    amount: float
+    loyalty_points: int
+    balance_before: float
+    balance_after: float
+    loyalty_points_before: int
+    loyalty_points_after: int
+    reference_number: Optional[str]
+    notes: Optional[str]
+    created_at: datetime
+    created_by_id: Optional[int]
+
+    class Config:
+        from_attributes = True
+
+
+class CustomerStatementRequest(BaseModel):
+    """Schema for customer statement request"""
+    start_date: Optional[datetime] = None
+    end_date: Optional[datetime] = None
+
+
+class CustomerStatementResponse(BaseModel):
+    """Schema for customer statement response"""
+    customer: CustomerResponse
+    transactions: List['CustomerTransactionResponse']
+    opening_balance: float
+    closing_balance: float
+    total_credits: float
+    total_payments: float
+    statement_period: Dict[str, Optional[datetime]]
+
+
+# ============================================================================
+# User Activity Schemas
+# ============================================================================
+
+class UserActivityLogCreate(BaseModel):
+    """Schema for creating a user activity log"""
+    activity_type: str = Field(..., max_length=50)
+    description: Optional[str] = None
+    session_id: Optional[str] = Field(None, max_length=100)
+    ip_address: Optional[str] = Field(None, max_length=45)
+    duration_ms: Optional[int] = None
+    metadata: Optional[Dict[str, Any]] = None
+
+
+class UserActivityLogResponse(BaseModel):
+    """Schema for user activity log response"""
+    id: int
+    user_id: int
+    activity_type: str
+    description: Optional[str]
+    session_id: Optional[str]
+    ip_address: Optional[str]
+    duration_ms: Optional[int]
+    metadata: Optional[Dict[str, Any]]
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class UserPerformanceMetrics(BaseModel):
+    """Schema for user performance metrics"""
+    user_id: int
+    user_name: str
+    total_sales: int
+    total_transactions: int
+    total_revenue: float
+    average_transaction_value: float
+    login_count: int
+    last_login: Optional[datetime]
+    period_start: datetime
+    period_end: datetime
 
 
 # ============================================================================

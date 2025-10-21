@@ -24,3 +24,6 @@ export type {
 export { useProductStore } from './productStore'
 export type { ProductState } from './productStore'
 
+export { useCustomerStore } from './customerStore'
+export type { CustomerState } from './customerStore'
+

@@ -3,7 +3,9 @@ Database models package
 """
 from .base import BaseModel
 from .user import User, UserRole
-from .customer import Customer
+from .user_activity import UserActivityLog, ActivityType
+from .customer import Customer, CreditStatus
+from .customer_transaction import CustomerTransaction, TransactionType as CustomerTransactionType
 from .product import (
     Product,
     ProductCategory,
@@ -32,7 +34,12 @@ __all__ = [
     "BaseModel",
     "User",
     "UserRole",
+    "UserActivityLog",
+    "ActivityType",
     "Customer",
+    "CreditStatus",
+    "CustomerTransaction",
+    "CustomerTransactionType",
     "Product",
     "ProductCategory",
     "ProductVariation",

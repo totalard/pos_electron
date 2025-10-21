@@ -42,6 +42,123 @@ export interface LoginResponse {
   token?: string
 }
 
+// ============================================================================
+// Customer Types
+// ============================================================================
+
+export interface Customer {
+  id: number
+  name: string
+  phone?: string
+  email?: string
+  address?: string
+  loyalty_points: number
+  credit_limit: number
+  credit_balance: number
+  credit_status: 'good' | 'warning' | 'exceeded' | 'blocked'
+  created_at: string
+  updated_at: string
+}
+
+export interface CustomerCreate {
+  name: string
+  phone?: string
+  email?: string
+  address?: string
+  loyalty_points?: number
+}
+
+export interface CustomerUpdate {
+  name?: string
+  phone?: string
+  email?: string
+  address?: string
+  loyalty_points?: number
+}
+
+export interface CustomerCreditOperation {
+  amount: number
+  reference_number?: string
+  notes?: string
+}
+
+export interface CustomerLoyaltyOperation {
+  points: number
+  notes?: string
+}
+
+export interface CustomerTransaction {
+  id: number
+  customer_id: number
+  transaction_type: string
+  amount: number
+  loyalty_points: number
+  balance_before: number
+  balance_after: number
+  loyalty_points_before: number
+  loyalty_points_after: number
+  reference_number?: string
+  notes?: string
+  created_at: string
+  created_by_id?: number
+}
+
+export interface CustomerStatementRequest {
+  start_date?: string
+  end_date?: string
+}
+
+export interface CustomerStatementResponse {
+  customer: Customer
+  transactions: CustomerTransaction[]
+  opening_balance: number
+  closing_balance: number
+  total_credits: number
+  total_payments: number
+  statement_period: {
+    start_date?: string
+    end_date?: string
+  }
+}
+
+// ============================================================================
+// User Activity Types
+// ============================================================================
+
+export interface UserActivityLog {
+  id: number
+  user_id: number
+  activity_type: string
+  description?: string
+  session_id?: string
+  ip_address?: string
+  duration_ms?: number
+  metadata?: Record<string, any>
+  created_at: string
+}
+
+export interface UserActivityLogCreate {
+  activity_type: string
+  description?: string
+  session_id?: string
+  ip_address?: string
+  duration_ms?: number
+  metadata?: Record<string, any>
+}
+
+export interface UserPerformanceMetrics {
+  user_id: number
+  user_name: string
+  total_sales: number
+  total_transactions: number
+  total_revenue: number
+  average_transaction_value: number
+  login_count: number
+  last_login?: string
+  period_start: string
+  period_end: string
+}
+
 export interface Product {
   id: number
   name: string
@@ -1075,6 +1192,265 @@ export const productManagementAPI = {
     if (!response.ok) {
       throw new APIError('Failed to remove bundle component', response.status)
     }
+  }
+}
+
+// ============================================================================
+// Customer API
+// ============================================================================
+
+export const customerAPI = {
+  /**
+   * Get all customers with optional filters
+   */
+  async getAllCustomers(params?: {
+    skip?: number
+    limit?: number
+    search?: string
+  }): Promise<Customer[]> {
+    const queryParams = new URLSearchParams()
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined) {
+          queryParams.append(key, String(value))
+        }
+      })
+    }
+
+    const url = `${API_BASE_URL}/customers?${queryParams.toString()}`
+    const response = await fetch(url)
+    return handleResponse<Customer[]>(response)
+  },
+
+  /**
+   * Get a specific customer
+   */
+  async getCustomer(customerId: number): Promise<Customer> {
+    const response = await fetch(`${API_BASE_URL}/customers/${customerId}`)
+    return handleResponse<Customer>(response)
+  },
+
+  /**
+   * Create a new customer
+   */
+  async createCustomer(data: CustomerCreate, createdById: number = 1): Promise<Customer> {
+    const response = await fetch(`${API_BASE_URL}/customers?created_by_id=${createdById}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(data)
+    })
+    return handleResponse<Customer>(response)
+  },
+
+  /**
+   * Update a customer
+   */
+  async updateCustomer(customerId: number, data: CustomerUpdate): Promise<Customer> {
+    const response = await fetch(`${API_BASE_URL}/customers/${customerId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(data)
+    })
+    return handleResponse<Customer>(response)
+  },
+
+  /**
+   * Delete a customer
+   */
+  async deleteCustomer(customerId: number): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/customers/${customerId}`, {
+      method: 'DELETE'
+    })
+    if (!response.ok) {
+      throw new APIError('Failed to delete customer', response.status)
+    }
+  },
+
+  /**
+   * Add credit to a customer
+   */
+  async addCredit(customerId: number, operation: CustomerCreditOperation, createdById: number = 1): Promise<Customer> {
+    const response = await fetch(`${API_BASE_URL}/customers/${customerId}/credit/add?created_by_id=${createdById}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(operation)
+    })
+    return handleResponse<Customer>(response)
+  },
+
+  /**
+   * Record a payment from a customer
+   */
+  async recordPayment(customerId: number, operation: CustomerCreditOperation, createdById: number = 1): Promise<Customer> {
+    const response = await fetch(`${API_BASE_URL}/customers/${customerId}/credit/payment?created_by_id=${createdById}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(operation)
+    })
+    return handleResponse<Customer>(response)
+  },
+
+  /**
+   * Update customer's credit limit
+   */
+  async updateCreditLimit(customerId: number, limit: number): Promise<Customer> {
+    const response = await fetch(`${API_BASE_URL}/customers/${customerId}/credit/limit?limit=${limit}`, {
+      method: 'PUT'
+    })
+    return handleResponse<Customer>(response)
+  },
+
+  /**
+   * Adjust loyalty points
+   */
+  async adjustLoyaltyPoints(customerId: number, operation: CustomerLoyaltyOperation, createdById: number = 1): Promise<Customer> {
+    const response = await fetch(`${API_BASE_URL}/customers/${customerId}/loyalty/adjust?created_by_id=${createdById}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(operation)
+    })
+    return handleResponse<Customer>(response)
+  },
+
+  /**
+   * Get customer transactions
+   */
+  async getCustomerTransactions(customerId: number, params?: {
+    skip?: number
+    limit?: number
+    transaction_type?: string
+  }): Promise<CustomerTransaction[]> {
+    const queryParams = new URLSearchParams()
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined) {
+          queryParams.append(key, String(value))
+        }
+      })
+    }
+
+    const url = `${API_BASE_URL}/customers/${customerId}/transactions?${queryParams.toString()}`
+    const response = await fetch(url)
+    return handleResponse<CustomerTransaction[]>(response)
+  },
+
+  /**
+   * Generate customer statement
+   */
+  async generateStatement(customerId: number, request: CustomerStatementRequest): Promise<CustomerStatementResponse> {
+    const response = await fetch(`${API_BASE_URL}/customers/${customerId}/statement`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(request)
+    })
+    return handleResponse<CustomerStatementResponse>(response)
+  }
+}
+
+// ============================================================================
+// User Activity API
+// ============================================================================
+
+export const userActivityAPI = {
+  /**
+   * Create an activity log entry
+   */
+  async createActivityLog(userId: number, data: UserActivityLogCreate): Promise<UserActivityLog> {
+    const response = await fetch(`${API_BASE_URL}/user-activity/?user_id=${userId}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(data)
+    })
+    return handleResponse<UserActivityLog>(response)
+  },
+
+  /**
+   * Get activity logs for a user
+   */
+  async getUserActivityLogs(userId: number, params?: {
+    skip?: number
+    limit?: number
+    activity_type?: string
+    session_id?: string
+    start_date?: string
+    end_date?: string
+  }): Promise<UserActivityLog[]> {
+    const queryParams = new URLSearchParams()
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined) {
+          queryParams.append(key, String(value))
+        }
+      })
+    }
+
+    const url = `${API_BASE_URL}/user-activity/user/${userId}?${queryParams.toString()}`
+    const response = await fetch(url)
+    return handleResponse<UserActivityLog[]>(response)
+  },
+
+  /**
+   * Get activity logs for a session
+   */
+  async getSessionActivityLogs(sessionId: string): Promise<UserActivityLog[]> {
+    const response = await fetch(`${API_BASE_URL}/user-activity/session/${sessionId}`)
+    return handleResponse<UserActivityLog[]>(response)
+  },
+
+  /**
+   * Get performance metrics for a user
+   */
+  async getUserPerformanceMetrics(userId: number, params?: {
+    start_date?: string
+    end_date?: string
+  }): Promise<UserPerformanceMetrics> {
+    const queryParams = new URLSearchParams()
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined) {
+          queryParams.append(key, String(value))
+        }
+      })
+    }
+
+    const url = `${API_BASE_URL}/user-activity/user/${userId}/performance?${queryParams.toString()}`
+    const response = await fetch(url)
+    return handleResponse<UserPerformanceMetrics>(response)
+  },
+
+  /**
+   * Get performance metrics for all users
+   */
+  async getAllUsersPerformanceMetrics(params?: {
+    start_date?: string
+    end_date?: string
+  }): Promise<UserPerformanceMetrics[]> {
+    const queryParams = new URLSearchParams()
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined) {
+          queryParams.append(key, String(value))
+        }
+      })
+    }
+
+    const url = `${API_BASE_URL}/user-activity/performance/all?${queryParams.toString()}`
+    const response = await fetch(url)
+    return handleResponse<UserPerformanceMetrics[]>(response)
   }
 }
 
