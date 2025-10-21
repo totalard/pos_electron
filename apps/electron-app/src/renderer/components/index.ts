@@ -32,4 +32,5 @@ export { WelcomeScreen } from './WelcomeScreen'
 export { FeatureCarousel } from './FeatureCarousel'
 export { NumericKeypad } from './NumericKeypad'
 export { PINInput } from './PINInput'
+export { PinEntryPanel } from './PinEntryPanel'
 

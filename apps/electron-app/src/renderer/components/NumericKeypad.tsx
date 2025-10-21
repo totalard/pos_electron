@@ -57,10 +57,11 @@ export function NumericKeypad({
     }
   }, [disabled, onDigitPress, onBackspace, onClear, onSubmit])
 
-  // Touch-safe button sizing: minimum 44x44px for touch targets
-  // All buttons have exact same size: 64x64px (exceeds 44x44px minimum)
+  // Touch-safe button sizing: responsive across screen sizes
+  // Small screens: 56x56px, Medium: 64x64px, Large: 72x72px
   const buttonBaseClass = `
-    w-16 h-16 rounded-xl font-bold text-xl
+    w-14 h-14 sm:w-16 sm:h-16 md:w-[72px] md:h-[72px] lg:w-20 lg:h-20
+    rounded-lg sm:rounded-xl font-bold text-lg sm:text-xl md:text-2xl
     transition-all duration-150 ease-in-out
     transform active:scale-95 hover:scale-105
     focus:outline-none focus:ring-2 focus:ring-offset-1
@@ -96,7 +97,7 @@ export function NumericKeypad({
 
   return (
     <div
-      className={`grid grid-cols-3 gap-3 max-w-[248px] mx-auto ${className}`}
+      className={`grid grid-cols-3 gap-2 sm:gap-3 md:gap-4 w-full max-w-[224px] sm:max-w-[248px] md:max-w-[280px] lg:max-w-[320px] mx-auto ${className}`}
       tabIndex={0}
     >
       {/* Row 1: 1, 2, 3 */}
@@ -145,7 +146,7 @@ export function NumericKeypad({
         className={clearButtonClass}
         aria-label="Clear all"
       >
-        <svg className="w-6 h-6 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
         </svg>
       </button>
@@ -165,7 +166,7 @@ export function NumericKeypad({
         className={actionButtonClass}
         aria-label="Backspace"
       >
-        <svg className="w-6 h-6 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M3 12l6.414 6.414a2 2 0 001.414.586H19a2 2 0 002-2V7a2 2 0 00-2-2h-8.172a2 2 0 00-1.414.586L3 12z" />
         </svg>
       </button>
@@ -176,12 +177,13 @@ export function NumericKeypad({
         disabled={disabled}
         className={`
           ${actionButtonClass}
-          col-span-3 min-h-[56px] h-14 text-lg font-semibold
+          col-span-3 min-h-[52px] h-14 sm:h-16 md:h-[72px] lg:h-20
+          text-base sm:text-lg md:text-xl font-semibold
           flex items-center justify-center gap-2
         `}
         aria-label="Submit PIN"
       >
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
         Enter

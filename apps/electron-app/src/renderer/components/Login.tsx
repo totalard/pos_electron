@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { FeatureCarousel } from './FeatureCarousel'
-import { NumericKeypad } from './NumericKeypad'
+import { PinEntryPanel } from './PinEntryPanel'
 import { usePinStore } from '../stores'
 import { useAppStore } from '../stores'
 import { authAPI, type User } from '../services/api'
@@ -32,12 +32,10 @@ export function Login({ onAuthenticated }: LoginProps) {
     error,
     attempts,
     maxAttempts,
-    showPin,
     addDigit,
     removeDigit,
     clearPin,
-    submitPin,
-    toggleShowPin
+    submitPin
   } = usePinStore()
 
   // Load users on mount
@@ -344,117 +342,22 @@ export function Login({ onAuthenticated }: LoginProps) {
                 </p>
               </div>
 
-              {/* PIN Display with Enhanced Style */}
-              <div className="mb-10">
-                <div className={`
-                  flex justify-center items-center gap-3 mb-6 p-8 rounded-2xl
-                  backdrop-blur-xl border
-                  ${theme === 'dark'
-                    ? 'bg-gray-800/30 border-gray-700/40'
-                    : 'bg-white/60 border-white/80'
-                  }
-                `}>
-                  {Array.from({ length: 6 }).map((_, index) => (
-                    <div
-                      key={index}
-                      className={`
-                        w-4 h-4 rounded-full transition-all duration-200
-                        ${index < pin.length
-                          ? `${theme === 'dark' ? 'bg-blue-500 shadow-lg shadow-blue-500/30' : 'bg-blue-600 shadow-lg shadow-blue-500/20'} scale-125`
-                          : `border-2 ${theme === 'dark' ? 'border-gray-600 bg-gray-700/50' : 'border-gray-300 bg-white/50'}`
-                        }
-                      `}
-                    />
-                  ))}
-                </div>
-
-                {/* Show/Hide PIN Toggle - Touch-safe with minimum 44x44px */}
-                <div className="flex justify-center">
-                  <button
-                    onClick={toggleShowPin}
-                    disabled={isLoading}
-                    className={`
-                      text-sm px-5 py-3 min-h-[44px] rounded-lg font-medium transition-all
-                      flex items-center gap-2
-                      ${theme === 'dark'
-                        ? 'text-gray-400 hover:text-gray-300 hover:bg-gray-700/50 active:bg-gray-600'
-                        : 'text-gray-600 hover:text-gray-700 hover:bg-gray-100/80 active:bg-gray-200'
-                      }
-                      disabled:opacity-50 disabled:cursor-not-allowed
-                    `}
-                    aria-label={showPin ? 'Hide PIN' : 'Show PIN'}
-                  >
-                    {showPin ? (
-                      <>
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                        </svg>
-                        Hide PIN
-                      </>
-                    ) : (
-                      <>
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-4.803m5.596-3.856a3.375 3.375 0 11-4.753 4.753m4.753-4.753L3.596 3.039m10.318 10.318L21 21" />
-                        </svg>
-                        Show PIN
-                      </>
-                    )}
-                  </button>
-                </div>
-
-                {/* PIN Value Display (when show is enabled) */}
-                {showPin && pin && (
-                  <div className={`
-                    text-center mt-4 text-3xl font-mono tracking-[0.3em] font-bold
-                    ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}
-                  `}>
-                    {pin}
-                  </div>
-                )}
-              </div>
-
-              {/* Error Message with Enhanced Style */}
-              {error && (
-                <div className={`
-                  mb-6 p-4 rounded-xl backdrop-blur-xl border
-                  ${theme === 'dark'
-                    ? 'bg-red-500/10 border-red-500/30 text-red-300'
-                    : 'bg-red-50/80 border-red-200 text-red-700'
-                  }
-                `}>
-                  <div className="flex items-start gap-3">
-                    <svg className="w-5 h-5 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                    </svg>
-                    <span className="text-sm font-medium">{error}</span>
-                  </div>
-                </div>
-              )}
-
-              {/* Attempts Remaining with Enhanced Style */}
-              {attempts > 0 && remainingAttempts > 0 && (
-                <div className={`
-                  mb-6 p-3 rounded-lg text-sm font-medium text-center
-                  ${remainingAttempts <= 2
-                    ? theme === 'dark'
-                      ? 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/30'
-                      : 'bg-yellow-100/80 text-yellow-700 border border-yellow-300'
-                    : theme === 'dark'
-                      ? 'text-gray-400'
-                      : 'text-gray-600'
-                  }
-                `}>
-                  {remainingAttempts} attempt{remainingAttempts === 1 ? '' : 's'} remaining
-                </div>
-              )}
-
-              {/* Loading State */}
-              {isLoading && (
-                <div className="mb-8">
-                  <LoadingSpinner size="md" centered />
-                </div>
-              )}
+              {/* PIN Entry Panel */}
+              <PinEntryPanel
+                pin={pin}
+                onDigitAdd={addDigit}
+                onBackspace={removeDigit}
+                onClear={clearPin}
+                onSubmit={submitPin}
+                disabled={showSuccess}
+                isLoading={isLoading}
+                error={error || undefined}
+                attempts={attempts}
+                maxAttempts={maxAttempts}
+                title=""
+                subtitle=""
+                showKeypad={true}
+              />
 
               {/* Success Overlay */}
               {showSuccess && (
@@ -484,24 +387,6 @@ export function Login({ onAuthenticated }: LoginProps) {
                   </div>
                 </div>
               )}
-
-              {/* Numeric Keypad - Enhanced */}
-              <div className={`
-                p-6 rounded-2xl backdrop-blur-xl border
-                ${theme === 'dark'
-                  ? 'bg-gray-800/30 border-gray-700/40'
-                  : 'bg-white/60 border-white/80'
-                }
-              `}>
-                <NumericKeypad
-                  onDigitPress={addDigit}
-                  onBackspace={removeDigit}
-                  onClear={clearPin}
-                  onSubmit={submitPin}
-                  disabled={isLoading || attempts >= maxAttempts || showSuccess}
-                  className="justify-center"
-                />
-              </div>
             </div>
           )}
         </div>

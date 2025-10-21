@@ -1,7 +1,8 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { useAppStore, useSettingsStore, usePinStore } from '../../stores'
 import { Toast, Button, Card, ConfirmDialog, RightPanel, Badge } from '../common'
 import { FormSection } from '../forms'
+import { PinEntryPanel } from '../PinEntryPanel'
 
 /**
  * Redesigned Backup & Restore Panel
@@ -58,20 +59,9 @@ export function BackupPanel() {
     filename: ''
   })
 
-  // Ref for PIN input field to maintain focus
-  const pinInputRef = useRef<HTMLInputElement>(null)
-
   useEffect(() => {
     loadBackupHistory()
   }, [loadBackupHistory])
-
-  // Maintain focus on PIN input when restore panel opens
-  useEffect(() => {
-    if (showRestorePanel && !restorePinVerified && pinInputRef.current) {
-      // Focus immediately since RightPanel won't steal focus
-      pinInputRef.current.focus()
-    }
-  }, [showRestorePanel, restorePinVerified])
 
   const handleBackupNow = async () => {
     try {
@@ -805,48 +795,16 @@ export function BackupPanel() {
                 Enter your 6-digit PIN to access restore options
               </p>
               
-              {/* PIN Input */}
-              <div className="space-y-3">
-                <input
-                  ref={pinInputRef}
-                  type="password"
-                  inputMode="numeric"
-                  maxLength={6}
-                  placeholder="000000"
-                  value={restorePinInput}
-                  onChange={(e) => {
-                    const value = e.target.value.replace(/\D/g, '').slice(0, 6)
-                    setRestorePinInput(value)
-                  }}
-                  className={`
-                    w-full px-4 py-3 rounded-lg border text-center text-2xl tracking-widest
-                    transition-colors duration-200 font-mono
-                    ${theme === 'dark'
-                      ? 'bg-gray-700 border-gray-600 text-white focus:border-blue-500'
-                      : 'bg-white border-gray-300 text-gray-900 focus:border-blue-500'
-                    }
-                    focus:outline-none focus:ring-2 focus:ring-blue-500/20
-                  `}
-                  autoFocus
-                />
-                
-                {pinError && (
-                  <p className={`text-sm font-medium ${
-                    theme === 'dark' ? 'text-red-400' : 'text-red-600'
-                  }`}>
-                    ⚠️ {pinError}
-                  </p>
-                )}
-                
-                <Button
-                  variant="primary"
-                  fullWidth
-                  onClick={handleVerifyPin}
-                  disabled={restorePinInput.length < 6}
-                >
-                  Verify PIN
-                </Button>
-              </div>
+              {/* PIN Entry Panel */}
+              <PinEntryPanel
+                pin={restorePinInput}
+                onPinChange={setRestorePinInput}
+                onSubmit={handleVerifyPin}
+                error={pinError || undefined}
+                title=""
+                subtitle=""
+                showKeypad={true}
+              />
             </div>
           )}
 

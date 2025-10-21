@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { useAppStore, usePinStore, isPinComplete } from '../stores'
-import { NumericKeypad } from './NumericKeypad'
+import { PinEntryPanel } from './PinEntryPanel'
 
 interface PINInputProps {
   onAuthenticated?: () => void
@@ -16,12 +16,10 @@ export function PINInput({ onAuthenticated, className = '' }: PINInputProps) {
     error,
     attempts,
     maxAttempts,
-    showPin,
     addDigit,
     removeDigit,
     clearPin,
-    submitPin,
-    toggleShowPin
+    submitPin
   } = usePinStore()
 
   // Auto-submit when PIN reaches minimum length
@@ -41,9 +39,6 @@ export function PINInput({ onAuthenticated, className = '' }: PINInputProps) {
       onAuthenticated()
     }
   }, [isAuthenticated, onAuthenticated])
-
-  // const pinDisplay = getPinDisplay(pin, showPin) // Unused for now
-  const remainingAttempts = maxAttempts - attempts
 
   return (
     <div className={`
@@ -112,110 +107,20 @@ export function PINInput({ onAuthenticated, className = '' }: PINInputProps) {
           </p>
         </div>
 
-        {/* PIN Display */}
-        <div className="mb-8">
-          <div className={`
-            flex justify-center items-center gap-4 mb-4
-            p-6 rounded-2xl
-            ${theme === 'dark' 
-              ? 'bg-gray-800/50 border border-gray-700' 
-              : 'bg-white/80 border border-gray-200'
-            }
-            backdrop-blur-sm shadow-lg
-          `}>
-            {Array.from({ length: 6 }).map((_, index) => (
-              <div
-                key={index}
-                className={`
-                  w-4 h-4 rounded-full transition-all duration-300
-                  ${index < pin.length
-                    ? theme === 'dark' 
-                      ? 'bg-primary-400 scale-110' 
-                      : 'bg-primary-600 scale-110'
-                    : theme === 'dark'
-                      ? 'bg-gray-600 border-2 border-gray-500'
-                      : 'bg-gray-200 border-2 border-gray-300'
-                  }
-                `}
-              />
-            ))}
-          </div>
-
-          {/* Show/Hide PIN Toggle */}
-          <div className="flex justify-center">
-            <button
-              onClick={toggleShowPin}
-              disabled={isLoading}
-              className={`
-                text-sm px-4 py-2 rounded-lg transition-colors duration-200
-                ${theme === 'dark'
-                  ? 'text-gray-400 hover:text-gray-300 hover:bg-gray-800'
-                  : 'text-gray-600 hover:text-gray-700 hover:bg-gray-100'
-                }
-                disabled:opacity-50
-              `}
-            >
-              {showPin ? 'Hide PIN' : 'Show PIN'}
-            </button>
-          </div>
-
-          {/* PIN Value Display (when show is enabled) */}
-          {showPin && pin && (
-            <div className={`
-              text-center mt-2 text-2xl font-mono tracking-widest
-              ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}
-            `}>
-              {pin}
-            </div>
-          )}
-        </div>
-
-        {/* Error Message */}
-        {error && (
-          <div className={`
-            mb-6 p-4 rounded-lg text-center
-            ${theme === 'dark'
-              ? 'bg-red-900/50 border border-red-800 text-red-300'
-              : 'bg-red-50 border border-red-200 text-red-700'
-            }
-          `}>
-            <div className="flex items-center justify-center gap-2">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              {error}
-            </div>
-          </div>
-        )}
-
-        {/* Attempts Remaining */}
-        {attempts > 0 && remainingAttempts > 0 && (
-          <div className={`
-            mb-6 text-center text-sm
-            ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}
-          `}>
-            {remainingAttempts} attempt{remainingAttempts === 1 ? '' : 's'} remaining
-          </div>
-        )}
-
-        {/* Loading State */}
-        {isLoading && (
-          <div className="mb-6 flex justify-center">
-            <div className={`
-              animate-spin rounded-full h-8 w-8 border-b-2
-              ${theme === 'dark' ? 'border-primary-400' : 'border-primary-600'}
-            `} />
-          </div>
-        )}
-
-        {/* Numeric Keypad */}
-        <NumericKeypad
-          onDigitPress={addDigit}
+        {/* PIN Entry Panel */}
+        <PinEntryPanel
+          pin={pin}
+          onDigitAdd={addDigit}
           onBackspace={removeDigit}
           onClear={clearPin}
           onSubmit={submitPin}
-          disabled={isLoading || attempts >= maxAttempts}
-          className="justify-center"
+          isLoading={isLoading}
+          error={error || undefined}
+          attempts={attempts}
+          maxAttempts={maxAttempts}
+          title=""
+          subtitle=""
+          showKeypad={true}
         />
 
         {/* Footer */}
