@@ -13,6 +13,8 @@ export type {
   GeneralSettings,
   BusinessSettings,
   TaxSettings,
+  PaymentMethod,
+  PaymentSettings,
   HardwareSettings,
   ReceiptSettings,
   InventorySettings,

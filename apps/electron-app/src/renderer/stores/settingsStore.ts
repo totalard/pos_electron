@@ -10,6 +10,7 @@ export type SettingsSection =
   | 'general'
   | 'business'
   | 'taxes'
+  | 'payments'
   | 'hardware'
   | 'receipts'
   | 'inventory'
@@ -78,6 +79,25 @@ export interface TaxSettings {
   taxInclusive: boolean
   taxLabel: string
   enableMultipleTaxRates: boolean
+}
+
+export interface PaymentMethod {
+  id: string
+  name: string
+  enabled: boolean
+  icon: string
+  requiresTerminal: boolean
+  allowPartialPayment: boolean
+  order: number
+}
+
+export interface PaymentSettings {
+  methods: PaymentMethod[]
+  enableSplitPayment: boolean
+  enableTipping: boolean
+  defaultTipPercentages: number[]
+  cashRoundingEnabled: boolean
+  cashRoundingAmount: number
 }
 
 export interface HardwareSettings {
@@ -360,6 +380,7 @@ export interface SettingsState {
   general: GeneralSettings
   business: BusinessSettings
   taxes: TaxSettings
+  payments: PaymentSettings
   hardware: HardwareSettings
   receipts: ReceiptSettings
   inventory: InventorySettings
@@ -380,6 +401,7 @@ export interface SettingsState {
   updateGeneralSettings: (settings: Partial<GeneralSettings>) => Promise<void>
   updateBusinessSettings: (settings: Partial<BusinessSettings>) => Promise<void>
   updateTaxSettings: (settings: Partial<TaxSettings>) => Promise<void>
+  updatePaymentSettings: (settings: Partial<PaymentSettings>) => Promise<void>
   updateHardwareSettings: (settings: Partial<HardwareSettings>) => Promise<void>
   updateReceiptSettings: (settings: Partial<ReceiptSettings>) => Promise<void>
   updateInventorySettings: (settings: Partial<InventorySettings>) => Promise<void>
@@ -482,6 +504,22 @@ const initialState = {
     taxInclusive: false,
     taxLabel: 'Tax',
     enableMultipleTaxRates: false
+  },
+
+  payments: {
+    methods: [
+      { id: 'cash', name: 'Cash', enabled: true, icon: '💵', requiresTerminal: false, allowPartialPayment: true, order: 1 },
+      { id: 'card', name: 'Card', enabled: true, icon: '💳', requiresTerminal: true, allowPartialPayment: true, order: 2 },
+      { id: 'upi', name: 'UPI', enabled: true, icon: '📱', requiresTerminal: false, allowPartialPayment: false, order: 3 },
+      { id: 'wallet', name: 'Wallet', enabled: true, icon: '👛', requiresTerminal: false, allowPartialPayment: false, order: 4 },
+      { id: 'credit', name: 'Store Credit', enabled: false, icon: '🎫', requiresTerminal: false, allowPartialPayment: true, order: 5 },
+      { id: 'check', name: 'Check', enabled: false, icon: '📝', requiresTerminal: false, allowPartialPayment: false, order: 6 }
+    ],
+    enableSplitPayment: true,
+    enableTipping: false,
+    defaultTipPercentages: [10, 15, 20, 25],
+    cashRoundingEnabled: false,
+    cashRoundingAmount: 0.05
   },
 
   hardware: {
@@ -783,6 +821,19 @@ export const useSettingsStore = create<SettingsState>()(
         } catch (error) {
           console.error('Failed to update tax settings:', error)
           set({ taxes: currentState.taxes })
+        }
+      },
+
+      updatePaymentSettings: async (settings: Partial<PaymentSettings>) => {
+        const currentState = get()
+        const updatedPayments = { ...currentState.payments, ...settings }
+        set({ payments: updatedPayments })
+
+        try {
+          await settingsAPI.updateSettings({ payments: updatedPayments })
+        } catch (error) {
+          console.error('Failed to update payment settings:', error)
+          set({ payments: currentState.payments })
         }
       },
 

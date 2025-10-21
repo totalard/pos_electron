@@ -4,6 +4,7 @@ import { SettingsNavigation } from './settings/SettingsNavigation'
 import { GeneralPanel } from './settings/GeneralPanel'
 import { BusinessPanel } from './settings/BusinessPanel'
 import { TaxesPanel } from './settings/TaxesPanel'
+import { PaymentsPanel } from './settings/PaymentsPanel'
 import { HardwarePanel } from './settings/HardwarePanel'
 import { ReceiptsPanel } from './settings/ReceiptsPanel'
 import { InventoryPanel } from './settings/InventoryPanel'
@@ -40,6 +41,8 @@ export function Settings({ onBack }: SettingsProps) {
         return <BusinessPanel />
       case 'taxes':
         return <TaxesPanel />
+      case 'payments':
+        return <PaymentsPanel />
       case 'hardware':
         return <HardwarePanel />
       case 'receipts':

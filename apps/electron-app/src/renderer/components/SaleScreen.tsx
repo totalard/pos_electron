@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAppStore, usePOSStore, useProductStore, useSettingsStore } from '../stores'
-import { POSHeader, POSFooter, POSProductGrid, POSProductList, POSCategorySidebar, POSCart, POSSearchBar, POSActionButton, CheckoutModal, DiscountDialog, CashManagementDialog, EmailReceiptDialog } from './pos'
+import { POSHeader, POSFooter, POSProductGrid, POSProductList, POSCategorySidebar, POSCart, POSSearchBar, POSActionButton, CheckoutModal, DiscountDialog, ItemDiscountDialog, CashManagementDialog, EmailReceiptDialog } from './pos'
 import { ConfirmDialog } from './common/ConfirmDialog'
 import { useBarcodeScanner } from '../hooks'
 import type { EnhancedProduct } from '../services/api'
@@ -44,6 +44,10 @@ export function SaleScreen({ onBack }: SaleScreenProps) {
   const [showEmailDialog, setShowEmailDialog] = useState(false)
   const [showVoidConfirm, setShowVoidConfirm] = useState(false)
   const [showParkConfirm, setShowParkConfirm] = useState(false)
+  const [showHoldDialog, setShowHoldDialog] = useState(false)
+  const [showNotesDialog, setShowNotesDialog] = useState(false)
+  const [showPriceOverrideDialog, setShowPriceOverrideDialog] = useState(false)
+  const [showQuantityDialog, setShowQuantityDialog] = useState(false)
   const [giftReceiptMode, setGiftReceiptMode] = useState(false)
 
   // Initialize first transaction if none exists
@@ -234,6 +238,35 @@ export function SaleScreen({ onBack }: SaleScreenProps) {
     console.log('Email receipt to:', email)
     // TODO: Send to backend
     alert(`Receipt will be sent to ${email}`)
+  }
+
+  const handleCustomer = () => {
+    const { setShowCustomerSelector } = usePOSStore.getState()
+    setShowCustomerSelector(true)
+  }
+
+  const handleNotes = () => {
+    setShowNotesDialog(true)
+  }
+
+  const handleHold = () => {
+    if (itemCount === 0) return
+    setShowHoldDialog(true)
+  }
+
+  const handleRecall = () => {
+    // TODO: Show parked transactions dialog
+    alert('Recall parked transactions - Coming soon')
+  }
+
+  const handlePriceOverride = () => {
+    if (itemCount === 0) return
+    setShowPriceOverrideDialog(true)
+  }
+
+  const handleQuantity = () => {
+    if (itemCount === 0) return
+    setShowQuantityDialog(true)
   }
 
   // Barcode scanner integration
@@ -450,6 +483,72 @@ export function SaleScreen({ onBack }: SaleScreenProps) {
                 </svg>
               }
             />
+            <POSActionButton
+              label="Customer"
+              variant="neutral"
+              size="md"
+              onClick={handleCustomer}
+              icon={
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+              }
+            />
+            <POSActionButton
+              label="Notes"
+              variant="neutral"
+              size="md"
+              onClick={handleNotes}
+              icon={
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+              }
+            />
+            <POSActionButton
+              label="Hold"
+              variant="warning"
+              size="md"
+              onClick={handleHold}
+              icon={
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              }
+            />
+            <POSActionButton
+              label="Recall"
+              variant="success"
+              size="md"
+              onClick={handleRecall}
+              icon={
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+              }
+            />
+            <POSActionButton
+              label="Price"
+              variant="neutral"
+              size="md"
+              onClick={handlePriceOverride}
+              icon={
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              }
+            />
+            <POSActionButton
+              label="Quantity"
+              variant="neutral"
+              size="md"
+              onClick={handleQuantity}
+              icon={
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" />
+                </svg>
+              }
+            />
           </>
         }
         primaryAction={{
@@ -469,6 +568,11 @@ export function SaleScreen({ onBack }: SaleScreenProps) {
       <DiscountDialog
         isOpen={showDiscountDialog}
         onClose={() => setShowDiscountDialog(false)}
+      />
+
+      <ItemDiscountDialog
+        isOpen={usePOSStore.getState().showDiscountDialog}
+        onClose={() => usePOSStore.getState().setShowDiscountDialog(false)}
       />
 
       <CashManagementDialog

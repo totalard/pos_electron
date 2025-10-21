@@ -1,5 +1,7 @@
+import { useState } from 'react'
 import { useAppStore, useSettingsStore, usePOSStore } from '../../stores'
 import { IconButton } from '../common'
+import { SwipeableCartItem } from './SwipeableCartItem'
 
 /**
  * POSCart component props
@@ -41,11 +43,18 @@ export function POSCart({
     getActiveTransaction,
     updateCartItemQuantity,
     removeFromCart,
-    clearCustomer
+    clearCustomer,
+    setSelectedCartItem,
+    setShowDiscountDialog
   } = usePOSStore()
 
   const cartItems = getCartItems()
   const transaction = getActiveTransaction()
+
+  const handleItemDiscountClick = (itemId: string) => {
+    setSelectedCartItem(itemId)
+    setShowDiscountDialog(true)
+  }
 
   const formatCurrency = (amount: number): string => {
     const { currencyConfig } = business
@@ -138,150 +147,15 @@ export function POSCart({
             <p className="text-xs">Add products to start a sale</p>
           </div>
         ) : (
-          <div className="divide-y divide-gray-700">
+          <div>
             {cartItems.map((item) => (
-              <div
+              <SwipeableCartItem
                 key={item.id}
-                className={`
-                  p-4 transition-all duration-200 ease-out
-                  ${theme === 'dark' ? 'hover:bg-gray-750' : 'hover:bg-gray-50'}
-                  hover:shadow-md
-                `}
-              >
-                {/* Item Header */}
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex-1 min-w-0 pr-2">
-                    <h3 className={`
-                      text-sm font-semibold truncate
-                      ${theme === 'dark' ? 'text-white' : 'text-gray-900'}
-                    `}>
-                      {item.product.name}
-                    </h3>
-                    {item.variationName && (
-                      <p className={`
-                        text-xs
-                        ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}
-                      `}>
-                        {item.variationName}
-                      </p>
-                    )}
-                    {item.note && (
-                      <p className={`
-                        text-xs italic mt-1
-                        ${theme === 'dark' ? 'text-gray-500' : 'text-gray-500'}
-                      `}>
-                        Note: {item.note}
-                      </p>
-                    )}
-                  </div>
-                  <IconButton
-                    icon={
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                    }
-                    label="Remove item"
-                    onClick={() => removeFromCart(item.id)}
-                    variant="ghost"
-                    size="sm"
-                  />
-                </div>
-
-                {/* Modifiers */}
-                {item.modifiers && item.modifiers.length > 0 && (
-                  <div className={`
-                    mb-3 pl-3 border-l-2
-                    ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'}
-                  `}>
-                    {item.modifiers.map((modifier) => (
-                      <div key={modifier.id} className="flex items-center justify-between py-1">
-                        <span className={`
-                          text-xs
-                          ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}
-                        `}>
-                          + {modifier.name}
-                        </span>
-                        <span className={`
-                          text-xs font-medium
-                          ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}
-                        `}>
-                          {formatCurrency(modifier.price)}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* Quantity Controls & Price */}
-                <div className="flex items-center justify-between">
-                  {/* Quantity Controls */}
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => updateCartItemQuantity(item.id, item.quantity - 1)}
-                      disabled={item.quantity <= 1}
-                      className={`
-                        w-10 h-10 rounded-lg flex items-center justify-center
-                        transition-all duration-200 ease-out
-                        transform active:scale-90
-                        ${item.quantity <= 1
-                          ? theme === 'dark'
-                            ? 'bg-gray-800 text-gray-600 cursor-not-allowed'
-                            : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                          : theme === 'dark'
-                            ? 'bg-gray-700 hover:bg-gray-600 text-white active:bg-gray-600 hover:scale-105'
-                            : 'bg-gray-200 hover:bg-gray-300 text-gray-900 active:bg-gray-400 hover:scale-105'
-                        }
-                      `}
-                    >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
-                      </svg>
-                    </button>
-
-                    <div className={`
-                      min-w-[48px] text-center text-lg font-bold
-                      ${theme === 'dark' ? 'text-white' : 'text-gray-900'}
-                    `}>
-                      {item.quantity}
-                    </div>
-
-                    <button
-                      onClick={() => updateCartItemQuantity(item.id, item.quantity + 1)}
-                      className={`
-                        w-10 h-10 rounded-lg flex items-center justify-center
-                        transition-all duration-200 ease-out
-                        transform hover:scale-105 active:scale-90
-                        ${theme === 'dark'
-                          ? 'bg-primary-600 hover:bg-primary-700 text-white active:bg-primary-700'
-                          : 'bg-primary-500 hover:bg-primary-600 text-white active:bg-primary-600'
-                        }
-                      `}
-                    >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                      </svg>
-                    </button>
-                  </div>
-
-                  {/* Item Total */}
-                  <div className="text-right">
-                    <div className={`
-                      text-base font-bold
-                      ${theme === 'dark' ? 'text-primary-400' : 'text-primary-600'}
-                    `}>
-                      {formatCurrency(item.total)}
-                    </div>
-                    {item.discount > 0 && (
-                      <div className={`
-                        text-xs line-through
-                        ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}
-                      `}>
-                        {formatCurrency(item.unitPrice * item.quantity)}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
+                item={item}
+                onRemove={removeFromCart}
+                onQuantityChange={updateCartItemQuantity}
+                onDiscountClick={handleItemDiscountClick}
+              />
             ))}
           </div>
         )}

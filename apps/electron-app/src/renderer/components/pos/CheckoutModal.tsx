@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { useAppStore, usePOSStore } from '../../stores'
+import { useState, useEffect } from 'react'
+import { useAppStore, usePOSStore, useSettingsStore } from '../../stores'
 import { Modal } from '../common/Modal'
 
 interface CheckoutModalProps {
@@ -8,26 +8,35 @@ interface CheckoutModalProps {
   onComplete: (paymentMethod: string, amountPaid: number) => void
 }
 
-type PaymentMethod = 'cash' | 'card' | 'upi' | 'wallet' | 'split'
-
 export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProps) {
   const { theme } = useAppStore()
   const { getCartTotal } = usePOSStore()
+  const { payments } = useSettingsStore()
   const total = getCartTotal()
   
-  const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>('cash')
+  const [selectedMethod, setSelectedMethod] = useState<string>('')
   const [amountPaid, setAmountPaid] = useState<string>(total.toFixed(2))
   const [isProcessing, setIsProcessing] = useState(false)
 
-  const change = parseFloat(amountPaid) - total
+  // Get enabled payment methods, sorted by order
+  const enabledPaymentMethods = payments.methods
+    .filter(m => m.enabled)
+    .sort((a, b) => a.order - b.order)
 
-  const paymentMethods = [
-    { id: 'cash' as const, label: 'Cash', icon: '💵' },
-    { id: 'card' as const, label: 'Card', icon: '💳' },
-    { id: 'upi' as const, label: 'UPI', icon: '📱' },
-    { id: 'wallet' as const, label: 'Wallet', icon: '👛' },
-    { id: 'split' as const, label: 'Split', icon: '✂️' }
-  ]
+  // Set default payment method to first enabled method
+  useEffect(() => {
+    if (enabledPaymentMethods.length > 0 && !selectedMethod) {
+      setSelectedMethod(enabledPaymentMethods[0].id)
+    }
+  }, [enabledPaymentMethods, selectedMethod])
+
+  // Update amount paid when total changes
+  useEffect(() => {
+    setAmountPaid(total.toFixed(2))
+  }, [total])
+
+  const change = parseFloat(amountPaid) - total
+  const selectedPaymentMethod = enabledPaymentMethods.find(m => m.id === selectedMethod)
 
   const handleComplete = async () => {
     if (parseFloat(amountPaid) < total) {
@@ -69,8 +78,8 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
         {/* Payment Methods */}
         <div>
           <label className="block text-sm font-medium mb-3">Payment Method</label>
-          <div className="grid grid-cols-5 gap-3">
-            {paymentMethods.map(method => (
+          <div className={`grid gap-3 ${enabledPaymentMethods.length <= 3 ? 'grid-cols-3' : enabledPaymentMethods.length <= 4 ? 'grid-cols-4' : 'grid-cols-5'}`}>
+            {enabledPaymentMethods.map(method => (
               <button
                 key={method.id}
                 onClick={() => setSelectedMethod(method.id)}
@@ -88,7 +97,7 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
                 `}
               >
                 <span className="text-2xl">{method.icon}</span>
-                <span className="text-xs font-medium">{method.label}</span>
+                <span className="text-xs font-medium">{method.name}</span>
               </button>
             ))}
           </div>

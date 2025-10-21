@@ -95,18 +95,18 @@ export function POSActionButton({
     onClick?.(e)
   }
 
-  // Square size classes - touch-safe (min 80x80px for md)
+  // Consistent height, variable width - touch-safe (min 44px height)
   const sizeClasses = {
-    sm: 'w-16 h-16 text-xs',
-    md: 'w-20 h-20 text-sm',
-    lg: 'w-24 h-24 text-base'
+    sm: 'h-10 px-3 text-xs',
+    md: 'h-11 px-4 text-sm',
+    lg: 'h-12 px-5 text-base'
   }
 
   // Icon size classes
   const iconSizeClasses = {
-    sm: 'w-6 h-6',
-    md: 'w-8 h-8',
-    lg: 'w-10 h-10'
+    sm: 'w-4 h-4',
+    md: 'w-5 h-5',
+    lg: 'w-6 h-6'
   }
 
   // Unified professional variant classes with subtle theme support
@@ -143,8 +143,8 @@ export function POSActionButton({
     hover:shadow-lg active:shadow-sm
     focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-opacity-50
     disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:translate-y-0
-    flex flex-col items-center justify-center gap-1.5
-    border relative overflow-hidden
+    flex items-center justify-center gap-2
+    border relative overflow-hidden whitespace-nowrap
     ${fullWidth ? 'w-full' : ''}
     ${sizeClasses[size]}
     ${variantClasses[variant]}
@@ -177,16 +177,16 @@ export function POSActionButton({
       {isLoading ? (
         <>
           <div className={`animate-spin rounded-full border-2 border-current border-t-transparent ${iconSizeClasses[size]}`} />
-          <span className="text-xs font-semibold">Loading...</span>
+          <span className="font-semibold">Loading...</span>
         </>
       ) : (
         <>
-          {/* Icon on top */}
+          {/* Icon on left */}
           <span className={`flex-shrink-0 ${iconSizeClasses[size]} transition-transform duration-300 group-hover:scale-110`}>
             {icon}
           </span>
           
-          {/* Label on bottom */}
+          {/* Label on right */}
           <span className="font-semibold leading-tight text-center px-1">
             {label}
           </span>
