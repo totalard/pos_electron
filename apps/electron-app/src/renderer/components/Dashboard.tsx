@@ -3,6 +3,7 @@ import { useAppStore, usePinStore, useSettingsStore } from '../stores'
 import { MenuCard } from './pos'
 import { Grid, PageHeader } from './layout'
 import { ThemeToggle } from './common'
+import { DashboardAnalytics } from './DashboardAnalytics'
 
 interface DashboardProps {
   onNavigate: (screen: 'sales' | 'products' | 'inventory' | 'users' | 'settings' | 'customers' | 'transactions' | 'restaurant') => void
@@ -259,70 +260,9 @@ export function Dashboard({ onNavigate, onLock, onLogout }: DashboardProps) {
           ))}
         </Grid>
 
-        {/* Quick Stats (Optional - can be implemented later) */}
-        <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className={`
-            rounded-xl p-6
-            ${theme === 'dark' 
-              ? 'bg-gray-800/50 border border-gray-700' 
-              : 'bg-white border border-gray-200'
-            }
-          `}>
-            <p className={`
-              text-sm font-medium mb-1
-              ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}
-            `}>
-              Today's Sales
-            </p>
-            <p className={`
-              text-3xl font-bold
-              ${theme === 'dark' ? 'text-white' : 'text-gray-900'}
-            `}>
-              $0.00
-            </p>
-          </div>
-
-          <div className={`
-            rounded-xl p-6
-            ${theme === 'dark' 
-              ? 'bg-gray-800/50 border border-gray-700' 
-              : 'bg-white border border-gray-200'
-            }
-          `}>
-            <p className={`
-              text-sm font-medium mb-1
-              ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}
-            `}>
-              Total Products
-            </p>
-            <p className={`
-              text-3xl font-bold
-              ${theme === 'dark' ? 'text-white' : 'text-gray-900'}
-            `}>
-              0
-            </p>
-          </div>
-
-          <div className={`
-            rounded-xl p-6
-            ${theme === 'dark' 
-              ? 'bg-gray-800/50 border border-gray-700' 
-              : 'bg-white border border-gray-200'
-            }
-          `}>
-            <p className={`
-              text-sm font-medium mb-1
-              ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}
-            `}>
-              Low Stock Items
-            </p>
-            <p className={`
-              text-3xl font-bold
-              ${theme === 'dark' ? 'text-white' : 'text-gray-900'}
-            `}>
-              0
-            </p>
-          </div>
+        {/* Comprehensive Analytics Dashboard */}
+        <div className="mt-12">
+          <DashboardAnalytics />
         </div>
       </main>
     </div>

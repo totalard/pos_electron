@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useAppStore, usePinStore } from './stores'
+import { useAppStore, usePinStore, useSettingsStore } from './stores'
 import { SplashScreen } from './components/SplashScreen'
 import { Login } from './components/Login'
 import { Dashboard } from './components/Dashboard'
@@ -24,6 +24,7 @@ function App() {
   const [isLocked, setIsLocked] = useState(false)
   const { theme } = useAppStore()
   const { reset: resetPin, initializeSystem, currentUser } = usePinStore()
+  const { loadSettings } = useSettingsStore()
 
   // Handle splash screen completion - check walkthrough status
   const handleSplashComplete = async () => {
@@ -109,7 +110,9 @@ function App() {
     resetPin()
     // Initialize the system (create primary user if needed)
     initializeSystem().catch(console.error)
-  }, [resetPin, initializeSystem])
+    // Load settings from backend to ensure business mode is synced
+    loadSettings().catch(console.error)
+  }, [resetPin, initializeSystem, loadSettings])
 
   return (
     <div className="h-screen w-screen overflow-hidden">

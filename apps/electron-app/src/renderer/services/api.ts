@@ -1652,3 +1652,135 @@ export const posSessionAPI = {
     return handleResponse<POSSession[]>(response)
   }
 }
+
+// ============================================================================
+// Dashboard API
+// ============================================================================
+
+export interface DashboardStats {
+  date_range: {
+    start_date: string | null
+    end_date: string | null
+  }
+  sales_metrics: {
+    total_sales: number
+    total_transactions: number
+    average_transaction_value: number
+    total_tax: number
+    total_discount: number
+    cash_sales: number
+    card_sales: number
+    other_sales: number
+  }
+  session_metrics: {
+    active_sessions: number
+    total_sessions: number
+    total_session_sales: number
+    average_session_value: number
+  }
+  product_metrics: {
+    total_products: number
+    active_products: number
+    low_stock_count: number
+    out_of_stock_count: number
+    total_stock_value: number
+  }
+  customer_metrics: {
+    total_customers: number
+    new_customers_today: number
+    customers_with_credit: number
+    total_credit_balance: number
+    total_loyalty_points: number
+  }
+  payment_breakdown: Array<{
+    method: string
+    count: number
+    total: number
+    percentage: number
+  }>
+  top_products: Array<{
+    product_id: number
+    product_name: string
+    quantity_sold: number
+    revenue: number
+  }>
+  top_customers: Array<{
+    customer_id: number
+    customer_name: string
+    total_spent: number
+    transaction_count: number
+  }>
+  sales_trend: Array<{
+    timestamp: string
+    value: number
+    count: number
+    label: string
+  }>
+  hourly_sales: Array<{
+    timestamp: string
+    value: number
+    count: number
+    label: string
+  }>
+}
+
+export interface SessionTimelineData {
+  session_id: number
+  session_number: string
+  opened_at: string
+  closed_at: string | null
+  is_active: boolean
+  sales_data: Array<{
+    timestamp: string
+    value: number
+    count: number
+    label: string
+  }>
+  total_sales: number
+  transaction_count: number
+}
+
+export const dashboardAPI = {
+  /**
+   * Get comprehensive dashboard statistics
+   */
+  async getStats(params?: {
+    days?: number
+    start_date?: string
+    end_date?: string
+  }): Promise<DashboardStats> {
+    const queryParams = new URLSearchParams()
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined) {
+          queryParams.append(key, String(value))
+        }
+      })
+    }
+
+    const url = `${API_BASE_URL}/dashboard/stats?${queryParams.toString()}`
+    const response = await fetch(url)
+    return handleResponse<DashboardStats>(response)
+  },
+
+  /**
+   * Get sales data by session timeline
+   */
+  async getSessionTimeline(params?: {
+    days?: number
+    include_closed?: boolean
+  }): Promise<SessionTimelineData[]> {
+    const queryParams = new URLSearchParams()
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined) {
+          queryParams.append(key, String(value))
+        }
+      })
+    }
+
+    const url = `${API_BASE_URL}/dashboard/session-timeline?${queryParams.toString()}`
+    const response = await fetch(url)
+    return handleResponse<SessionTimelineData[]>(response)
+  }
+}

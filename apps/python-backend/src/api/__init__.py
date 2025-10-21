@@ -13,6 +13,7 @@ from .demo import router as demo_router
 from .transactions import router as transactions_router
 from .discounts import router as discounts_router
 from .pos_sessions import router as pos_sessions_router
+from .dashboard import router as dashboard_router
 
 # Create main API router
 router = APIRouter()
@@ -28,4 +29,5 @@ router.include_router(tax_rules_router)
 router.include_router(transactions_router, prefix="/transactions", tags=["transactions"])
 router.include_router(discounts_router, prefix="/discounts", tags=["discounts"])
 router.include_router(pos_sessions_router, tags=["pos-sessions"])
+router.include_router(dashboard_router, tags=["dashboard"])
 router.include_router(demo_router, prefix="/demo", tags=["demo"])
