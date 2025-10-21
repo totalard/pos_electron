@@ -1,6 +1,5 @@
-import { ReactNode } from 'react'
+import { ReactNode, useRef, useState, useEffect } from 'react'
 import { useAppStore, useSettingsStore } from '../../stores'
-import { Button } from '../common'
 
 /**
  * POSFooter component props
@@ -16,12 +15,6 @@ export interface POSFooterProps {
   itemCount?: number
   /** Quick action buttons */
   actions?: ReactNode
-  /** Primary action button (e.g., Checkout) */
-  primaryAction?: {
-    label: string
-    onClick: () => void
-    disabled?: boolean
-  }
 }
 
 /**
@@ -34,10 +27,7 @@ export interface POSFooterProps {
  *   tax={8.00}
  *   total={108.00}
  *   itemCount={5}
- *   primaryAction={{
- *     label: 'Checkout',
- *     onClick: handleCheckout
- *   }}
+ *   actions={<>...action buttons...</>}
  * />
  * ```
  */
@@ -46,11 +36,46 @@ export function POSFooter({
   tax = 0,
   total = 0,
   itemCount = 0,
-  actions,
-  primaryAction
+  actions
 }: POSFooterProps) {
   const { theme } = useAppStore()
   const { business } = useSettingsStore()
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
+  const [showLeftScroll, setShowLeftScroll] = useState(false)
+  const [showRightScroll, setShowRightScroll] = useState(false)
+
+  // Check scroll position to show/hide indicators
+  const checkScroll = () => {
+    const container = scrollContainerRef.current
+    if (!container) return
+
+    const { scrollLeft, scrollWidth, clientWidth } = container
+    setShowLeftScroll(scrollLeft > 0)
+    setShowRightScroll(scrollLeft < scrollWidth - clientWidth - 1)
+  }
+
+  useEffect(() => {
+    checkScroll()
+    const container = scrollContainerRef.current
+    if (container) {
+      container.addEventListener('scroll', checkScroll)
+      window.addEventListener('resize', checkScroll)
+      return () => {
+        container.removeEventListener('scroll', checkScroll)
+        window.removeEventListener('resize', checkScroll)
+      }
+    }
+  }, [actions])
+
+  const scroll = (direction: 'left' | 'right') => {
+    const container = scrollContainerRef.current
+    if (!container) return
+    const scrollAmount = 300
+    container.scrollBy({
+      left: direction === 'left' ? -scrollAmount : scrollAmount,
+      behavior: 'smooth'
+    })
+  }
 
   // Format currency based on settings
   const formatCurrency = (amount: number): string => {
@@ -153,40 +178,55 @@ export function POSFooter({
         </div>
       </div>
 
-      {/* Quick Actions */}
-      <div className="px-6 py-3 flex items-center gap-4">
-        {/* Left: Quick Action Buttons - Scrollable with hidden scrollbar */}
-        <div className="flex-1 overflow-x-auto scrollbar-hide">
-          <div className="flex items-center gap-2">
+      {/* Quick Actions - Single Line Scrollable */}
+      <div className="px-6 py-3 relative">
+        {/* Left Scroll Indicator */}
+        {showLeftScroll && (
+          <button
+            onClick={() => scroll('left')}
+            className={`
+              absolute left-0 top-1/2 -translate-y-1/2 z-10
+              w-10 h-full flex items-center justify-center
+              ${theme === 'dark'
+                ? 'bg-gradient-to-r from-gray-800 to-transparent'
+                : 'bg-gradient-to-r from-white to-transparent'
+              }
+            `}
+          >
+            <svg className={`w-6 h-6 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+        )}
+
+        {/* Scrollable Action Buttons Container */}
+        <div
+          ref={scrollContainerRef}
+          className="overflow-x-auto scrollbar-hide"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+        >
+          <div className="flex items-center gap-2 min-w-max">
             {actions}
           </div>
         </div>
 
-        {/* Right: Primary Action - Fixed Position */}
-        {primaryAction && (
-          <Button
-            onClick={primaryAction.onClick}
-            disabled={primaryAction.disabled}
-            variant="primary"
-            size="lg"
+        {/* Right Scroll Indicator */}
+        {showRightScroll && (
+          <button
+            onClick={() => scroll('right')}
             className={`
-              min-w-[240px] min-h-[64px] text-xl font-bold flex-shrink-0
-              shadow-xl hover:shadow-2xl
-              ${theme === 'dark' 
-                ? 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600' 
-                : 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600'
+              absolute right-0 top-1/2 -translate-y-1/2 z-10
+              w-10 h-full flex items-center justify-center
+              ${theme === 'dark'
+                ? 'bg-gradient-to-l from-gray-800 to-transparent'
+                : 'bg-gradient-to-l from-white to-transparent'
               }
-              transform hover:scale-105 transition-all duration-200
-              ring-2 ring-blue-400/50
             `}
           >
-            <div className="flex items-center gap-2">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-              </svg>
-              <span>{primaryAction.label}</span>
-            </div>
-          </Button>
+            <svg className={`w-6 h-6 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
         )}
       </div>
     </div>

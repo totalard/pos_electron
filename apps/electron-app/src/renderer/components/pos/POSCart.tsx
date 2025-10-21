@@ -11,6 +11,10 @@ export interface POSCartProps {
   showCustomer?: boolean
   /** Customer selection handler */
   onCustomerSelect?: () => void
+  /** Checkout handler */
+  onCheckout?: () => void
+  /** Disable checkout button */
+  checkoutDisabled?: boolean
 }
 
 /**
@@ -34,7 +38,9 @@ export interface POSCartProps {
  */
 export function POSCart({
   showCustomer = true,
-  onCustomerSelect
+  onCustomerSelect,
+  onCheckout,
+  checkoutDisabled = false
 }: POSCartProps) {
   const { theme } = useAppStore()
   const { business } = useSettingsStore()
@@ -74,11 +80,27 @@ export function POSCart({
 
   return (
     <div className="flex flex-col h-full">
-      {/* Header with Customer Info */}
+      {/* Enhanced Header */}
       <div className={`
-        px-4 py-3 border-b
-        ${theme === 'dark' ? 'border-gray-700 bg-gray-800/50' : 'border-gray-200 bg-gray-50'}
+        px-4 py-4 border-b
+        ${theme === 'dark' ? 'border-gray-700 bg-gradient-to-r from-gray-800 to-gray-800/80' : 'border-gray-200 bg-gradient-to-r from-gray-50 to-white'}
       `}>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className={`
+            text-lg font-bold tracking-tight
+            ${theme === 'dark' ? 'text-white' : 'text-gray-900'}
+          `}>
+            Shopping Cart
+          </h2>
+          <div className={`
+            px-3 py-1 rounded-full text-xs font-semibold
+            ${theme === 'dark' ? 'bg-blue-600/20 text-blue-400' : 'bg-blue-100 text-blue-700'}
+          `}>
+            {cartItems.length} {cartItems.length === 1 ? 'item' : 'items'}
+          </div>
+        </div>
+        
+        {/* Customer Section */}
         {showCustomer && transaction?.customerId ? (
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 flex-1 min-w-0">
@@ -110,11 +132,11 @@ export function POSCart({
           <button
             onClick={onCustomerSelect}
             className={`
-              w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg
-              min-h-[44px] transition-colors
+              w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg
+              min-h-[44px] transition-all duration-200
               ${theme === 'dark'
-                ? 'bg-gray-700 hover:bg-gray-600 text-gray-300'
-                : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                ? 'bg-gray-700 hover:bg-gray-600 text-gray-300 border border-gray-600'
+                : 'bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 shadow-sm'
               }
             `}
           >
@@ -123,14 +145,7 @@ export function POSCart({
             </svg>
             <span className="text-sm font-medium">Add Customer</span>
           </button>
-        ) : (
-          <h2 className={`
-            text-sm font-semibold uppercase tracking-wider
-            ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}
-          `}>
-            Cart Items
-          </h2>
-        )}
+        ) : null}
       </div>
 
       {/* Cart Items List */}
@@ -161,77 +176,109 @@ export function POSCart({
         )}
       </div>
 
-      {/* Cart Summary */}
+      {/* Cart Summary & Checkout */}
       {cartItems.length > 0 && transaction && (
         <div className={`
-          px-4 py-4 border-t space-y-2
+          border-t
           ${theme === 'dark' ? 'border-gray-700 bg-gray-800/50' : 'border-gray-200 bg-gray-50'}
         `}>
-          {/* Subtotal */}
-          <div className="flex items-center justify-between">
-            <span className={`
-              text-sm font-mono
-              ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}
-            `}>
-              Subtotal
-            </span>
-            <span className={`
-              text-sm font-mono font-semibold
-              ${theme === 'dark' ? 'text-gray-200' : 'text-gray-800'}
-            `}>
-              {formatCurrency(transaction.subtotal)}
-            </span>
-          </div>
-
-          {/* Discount */}
-          {transaction.discount > 0 && (
+          {/* Summary Section */}
+          <div className="px-4 py-4 space-y-2">
+            {/* Subtotal */}
             <div className="flex items-center justify-between">
               <span className={`
                 text-sm font-mono
                 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}
               `}>
-                Discount
+                Subtotal
               </span>
-              <span className="text-sm font-mono font-semibold text-red-500">
-                -{formatCurrency(transaction.discount)}
+              <span className={`
+                text-sm font-mono font-semibold
+                ${theme === 'dark' ? 'text-gray-200' : 'text-gray-800'}
+              `}>
+                {formatCurrency(transaction.subtotal)}
               </span>
             </div>
+
+            {/* Discount */}
+            {transaction.discount > 0 && (
+              <div className="flex items-center justify-between">
+                <span className={`
+                  text-sm font-mono
+                  ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}
+                `}>
+                  Discount
+                </span>
+                <span className="text-sm font-mono font-semibold text-red-500">
+                  -{formatCurrency(transaction.discount)}
+                </span>
+              </div>
+            )}
+
+            {/* Tax */}
+            <div className="flex items-center justify-between">
+              <span className={`
+                text-sm font-mono
+                ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}
+              `}>
+                Tax
+              </span>
+              <span className={`
+                text-sm font-mono font-semibold
+                ${theme === 'dark' ? 'text-gray-200' : 'text-gray-800'}
+              `}>
+                {formatCurrency(transaction.tax)}
+              </span>
+            </div>
+
+            {/* Total */}
+            <div className={`
+              flex items-center justify-between pt-3 border-t
+              ${theme === 'dark' ? 'border-gray-700' : 'border-gray-300'}
+            `}>
+              <span className={`
+                text-base font-mono font-bold
+                ${theme === 'dark' ? 'text-white' : 'text-gray-900'}
+              `}>
+                Total
+              </span>
+              <span className={`
+                text-xl font-mono font-bold
+                ${theme === 'dark' ? 'text-primary-400' : 'text-primary-600'}
+              `}>
+                {formatCurrency(transaction.total)}
+              </span>
+            </div>
+          </div>
+
+          {/* Checkout Button */}
+          {onCheckout && (
+            <div className="px-4 pb-4">
+              <button
+                onClick={onCheckout}
+                disabled={checkoutDisabled}
+                className={`
+                  w-full py-4 px-6 rounded-xl font-bold text-lg
+                  transition-all duration-200 transform
+                  flex items-center justify-center gap-3
+                  shadow-lg hover:shadow-xl
+                  ${checkoutDisabled
+                    ? theme === 'dark'
+                      ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
+                      : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                    : theme === 'dark'
+                      ? 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white hover:scale-[1.02] active:scale-[0.98]'
+                      : 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white hover:scale-[1.02] active:scale-[0.98]'
+                  }
+                `}
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+                <span>Checkout</span>
+              </button>
+            </div>
           )}
-
-          {/* Tax */}
-          <div className="flex items-center justify-between">
-            <span className={`
-              text-sm font-mono
-              ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}
-            `}>
-              Tax
-            </span>
-            <span className={`
-              text-sm font-mono font-semibold
-              ${theme === 'dark' ? 'text-gray-200' : 'text-gray-800'}
-            `}>
-              {formatCurrency(transaction.tax)}
-            </span>
-          </div>
-
-          {/* Total */}
-          <div className={`
-            flex items-center justify-between pt-2 border-t
-            ${theme === 'dark' ? 'border-gray-700' : 'border-gray-300'}
-          `}>
-            <span className={`
-              text-base font-mono font-bold
-              ${theme === 'dark' ? 'text-white' : 'text-gray-900'}
-            `}>
-              Total
-            </span>
-            <span className={`
-              text-xl font-mono font-bold
-              ${theme === 'dark' ? 'text-primary-400' : 'text-primary-600'}
-            `}>
-              {formatCurrency(transaction.total)}
-            </span>
-          </div>
         </div>
       )}
     </div>
