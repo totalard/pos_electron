@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     APP_NAME: str = "POS Backend"
     VERSION: str = "1.0.0"
     DEBUG: bool = True
+    ENVIRONMENT: str = "development"  # development, staging, production
 
     # CORS settings
     ALLOWED_ORIGINS: List[str] = [

@@ -70,4 +70,5 @@ app/dist/
 *.db-shm
 *.db-wal
 apps/python-backend/data/
+apps/python-backend/backups/
 
