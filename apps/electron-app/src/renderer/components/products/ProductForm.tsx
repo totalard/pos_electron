@@ -104,7 +104,7 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
   
   return (
     <form onSubmit={handleSubmit} className="h-full flex flex-col">
-      {/* Form Content */}
+      {/* Form Content - Scrollable */}
       <div className="flex-1 overflow-y-auto p-6 space-y-6">
         {error && <ErrorMessage message={error} />}
         
@@ -122,21 +122,19 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
             placeholder="Product Name *"
           />
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Input
-              type="text"
-              value={formData.sku || ''}
-              onChange={(e) => handleChange('sku', e.target.value)}
-              placeholder="SKU (Stock Keeping Unit)"
-            />
-            
-            <Input
-              type="text"
-              value={formData.barcode || ''}
-              onChange={(e) => handleChange('barcode', e.target.value)}
-              placeholder="Barcode"
-            />
-          </div>
+          <Input
+            type="text"
+            value={formData.sku || ''}
+            onChange={(e) => handleChange('sku', e.target.value)}
+            placeholder="SKU (Stock Keeping Unit)"
+          />
+          
+          <Input
+            type="text"
+            value={formData.barcode || ''}
+            onChange={(e) => handleChange('barcode', e.target.value)}
+            placeholder="Barcode"
+          />
           
           <TextArea
             value={formData.description || ''}
@@ -152,27 +150,25 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
             theme === 'dark' ? 'text-white' : 'text-gray-900'
           }`}>Classification</h3>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <TouchSelect<string>
-              value={formData.product_type || 'simple'}
-              options={[
-                { value: 'simple', label: 'Simple Product', description: 'Single product with direct pricing' },
-                { value: 'variation', label: 'Product with Variations', description: 'Product with variants (size, color, etc.)' },
-                { value: 'bundle', label: 'Bundle Product', description: 'Bundle of multiple products' },
-                { value: 'service', label: 'Service', description: 'Service without inventory' }
-              ]}
-              onChange={(value) => handleChange('product_type', value)}
-              placeholder="Product Type *"
-              required
-            />
+          <TouchSelect<string>
+            value={formData.product_type || 'simple'}
+            options={[
+              { value: 'simple', label: 'Simple Product', description: 'Single product with direct pricing' },
+              { value: 'variation', label: 'Product with Variations', description: 'Product with variants (size, color, etc.)' },
+              { value: 'bundle', label: 'Bundle Product', description: 'Bundle of multiple products' },
+              { value: 'service', label: 'Service', description: 'Service without inventory' }
+            ]}
+            onChange={(value) => handleChange('product_type', value)}
+            placeholder="Product Type *"
+            required
+          />
 
-            <CategorySelector
-              value={formData.category_id || null}
-              categories={categories}
-              onChange={(id) => handleChange('category_id', id || undefined)}
-              clearable
-            />
-          </div>
+          <CategorySelector
+            value={formData.category_id || null}
+            categories={categories}
+            onChange={(id) => handleChange('category_id', id || undefined)}
+            clearable
+          />
 
           {/* Product Type Hints */}
           {showVariationHint && (
@@ -230,30 +226,28 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
             theme === 'dark' ? 'text-white' : 'text-gray-900'
           }`}>Pricing</h3>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <NumberInput
-              value={formData.base_price}
-              onChange={(value) => handleChange('base_price', value)}
-              min={0}
-              step={0.01}
-              allowDecimal
-              decimalPlaces={2}
-              showButtons
-              placeholder="Selling Price *"
-            />
-            
-            <NumberInput
-              value={formData.cost_price || 0}
-              onChange={(value) => handleChange('cost_price', value || undefined)}
-              min={0}
-              step={0.01}
-              allowDecimal
-              decimalPlaces={2}
-              showButtons
-              placeholder="Cost Price (optional)"
-              helperText="For profit margin calculation"
-            />
-          </div>
+          <NumberInput
+            value={formData.base_price}
+            onChange={(value) => handleChange('base_price', value)}
+            min={0}
+            step={0.01}
+            allowDecimal
+            decimalPlaces={2}
+            showButtons
+            placeholder="Selling Price *"
+          />
+          
+          <NumberInput
+            value={formData.cost_price || 0}
+            onChange={(value) => handleChange('cost_price', value || undefined)}
+            min={0}
+            step={0.01}
+            allowDecimal
+            decimalPlaces={2}
+            showButtons
+            placeholder="Cost Price (optional)"
+            helperText="For profit margin calculation"
+          />
         </div>
         
         {/* Inventory */}
@@ -272,24 +266,22 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
 
             {formData.track_inventory && (
               <>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <NumberInput
-                    value={formData.stock_quantity || 0}
-                    onChange={(value) => handleChange('stock_quantity', value)}
-                    min={0}
-                    showButtons
-                    placeholder="Stock Quantity *"
-                  />
+                <NumberInput
+                  value={formData.stock_quantity || 0}
+                  onChange={(value) => handleChange('stock_quantity', value)}
+                  min={0}
+                  showButtons
+                  placeholder="Stock Quantity *"
+                />
 
-                  <NumberInput
-                    value={formData.low_stock_threshold || 10}
-                    onChange={(value) => handleChange('low_stock_threshold', value)}
-                    min={0}
-                    showButtons
-                    placeholder="Low Stock Threshold"
-                    helperText="Alert when stock falls below this level"
-                  />
-                </div>
+                <NumberInput
+                  value={formData.low_stock_threshold || 10}
+                  onChange={(value) => handleChange('low_stock_threshold', value)}
+                  min={0}
+                  showButtons
+                  placeholder="Low Stock Threshold"
+                  helperText="Alert when stock falls below this level"
+                />
 
                 <div className={`
                   p-3 rounded-lg text-xs
@@ -344,10 +336,10 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
         </div>
       </div>
       
-      {/* Form Actions */}
+      {/* Form Actions - Sticky at bottom */}
       <div className={`
-        p-6 border-t
-        ${theme === 'dark' ? 'border-gray-700 bg-gray-800/50' : 'border-gray-200 bg-gray-50'}
+        flex-shrink-0 p-4 border-t sticky bottom-0
+        ${theme === 'dark' ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-white'}
       `}>
         <div className="flex items-center justify-end gap-3">
           <Button

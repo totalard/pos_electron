@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useAppStore, useProductStore } from '../../stores'
-import { PageHeader, PageContainer, SplitLayout } from '../layout'
+import { PageHeader, PageContainer } from '../layout'
 import { Button, LoadingSpinner, ErrorMessage, RightPanel, IconButton, ThemeToggle, Input } from '../common'
 import { TouchSelect } from '../forms'
 import { categoriesToOptions } from '../../utils/categoryTree'
@@ -33,8 +33,9 @@ export function ProductsScreen({ onBack }: ProductsScreenProps) {
     setViewMode: setProductViewMode
   } = useProductStore()
 
-  // UI state
-  const [screenMode, setScreenMode] = useState<'list' | 'detail' | 'form'>('list')
+  // UI state for sidebar panels
+  const [showProductForm, setShowProductForm] = useState(false)
+  const [showProductDetail, setShowProductDetail] = useState(false)
   const [showCategoryManagement, setShowCategoryManagement] = useState(false)
   const [editingProduct, setEditingProduct] = useState<EnhancedProduct | null>(null)
   
@@ -52,31 +53,37 @@ export function ProductsScreen({ onBack }: ProductsScreenProps) {
   const handleAddProduct = () => {
     setEditingProduct(null)
     setSelectedProduct(null)
-    setScreenMode('form')
+    setShowProductDetail(false)
+    setShowProductForm(true)
   }
 
   const handleSelectProduct = (product: EnhancedProduct) => {
     setSelectedProduct(product)
     setEditingProduct(null)
-    setScreenMode('detail')
+    setShowProductForm(false)
+    setShowProductDetail(true)
   }
 
   const handleEditProduct = (product: EnhancedProduct) => {
     setEditingProduct(product)
     setSelectedProduct(product)
-    setScreenMode('form')
+    setShowProductDetail(false)
+    setShowProductForm(true)
   }
 
-  const handleCloseDetail = () => {
-    setScreenMode('list')
+  const handleCloseProductForm = () => {
+    setShowProductForm(false)
     setEditingProduct(null)
+  }
+
+  const handleCloseProductDetail = () => {
+    setShowProductDetail(false)
     setSelectedProduct(null)
   }
 
   const handleProductSaved = () => {
-    setScreenMode('list')
+    setShowProductForm(false)
     setEditingProduct(null)
-    setSelectedProduct(null)
     fetchProducts()
   }
 
@@ -107,138 +114,6 @@ export function ProductsScreen({ onBack }: ProductsScreenProps) {
 
   // Filter active products
   const activeProducts = products.filter(p => p.is_active)
-  
-  // Left Panel: Product List
-  const leftPanel = (
-    <div className="h-full flex flex-col">
-      {/* Search and Filters */}
-      <div className={`
-        p-4 border-b space-y-3
-        ${theme === 'dark' ? 'border-gray-700 bg-gray-800/30' : 'border-gray-200 bg-gray-50/50'}
-      `}>
-        {/* Search */}
-        <Input
-          type="text"
-          placeholder="Search products..."
-          value={filters.search}
-          onChange={(e) => handleSearchChange(e.target.value)}
-          icon={
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-          }
-        />
-
-        {/* Category Filter */}
-        <TouchSelect<number | null>
-          label="Category"
-          value={filters.categoryId}
-          options={[
-            { value: null, label: 'All Categories' },
-            ...categoriesToOptions(categories)
-          ]}
-          onChange={handleCategoryFilter}
-          searchable
-          clearable
-          placeholder="All Categories"
-        />
-
-        {/* Product Type Filter */}
-        <TouchSelect<string | null>
-          label="Product Type"
-          value={filters.productType}
-          options={[
-            { value: null, label: 'All Types' },
-            { value: 'simple', label: 'Simple', description: 'Single product with direct pricing' },
-            { value: 'variation', label: 'Variation', description: 'Product with variants (size, color, etc.)' },
-            { value: 'bundle', label: 'Bundle', description: 'Bundle of multiple products' },
-            { value: 'service', label: 'Service', description: 'Service without inventory' }
-          ]}
-          onChange={handleProductTypeFilter}
-          searchable
-          clearable
-          placeholder="All Types"
-        />
-
-        {/* Clear Filters */}
-        {(filters.search || filters.categoryId || filters.productType) && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleClearFilters}
-            fullWidth
-            icon={
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            }
-          >
-            Clear Filters
-          </Button>
-        )}
-      </div>
-
-      {/* Product List/Grid */}
-      <div className="flex-1 overflow-y-auto p-4">
-        {isLoading && (
-          <div className="flex items-center justify-center py-20">
-            <LoadingSpinner size="md" />
-          </div>
-        )}
-
-        {!isLoading && productViewMode === 'tile' && (
-          <ProductTileView
-            products={activeProducts}
-            onProductClick={handleSelectProduct}
-          />
-        )}
-
-        {!isLoading && productViewMode === 'grid' && (
-          <ProductGridView
-            products={activeProducts}
-            selectedProductId={selectedProduct?.id}
-            onProductClick={handleSelectProduct}
-          />
-        )}
-      </div>
-    </div>
-  )
-
-  // Right Panel: Product Detail or Form
-  const rightPanel = (
-    <div className="h-full">
-      {screenMode === 'list' && (
-        <div className={`
-          h-full flex items-center justify-center
-          ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}
-        `}>
-          <div className="text-center">
-            <svg className="w-24 h-24 mx-auto mb-4 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-            </svg>
-            <p className="text-lg font-medium mb-2">Select a product</p>
-            <p className="text-sm mb-6">Choose a product from the list to view details</p>
-          </div>
-        </div>
-      )}
-
-      {screenMode === 'detail' && selectedProduct && (
-        <ProductDetailView
-          product={selectedProduct}
-          onEdit={() => handleEditProduct(selectedProduct)}
-          onClose={handleCloseDetail}
-        />
-      )}
-
-      {screenMode === 'form' && (
-        <ProductForm
-          product={editingProduct}
-          onSave={handleProductSaved}
-          onCancel={handleCloseDetail}
-        />
-      )}
-    </div>
-  )
 
   return (
     <div className={`
@@ -326,14 +201,160 @@ export function ProductsScreen({ onBack }: ProductsScreenProps) {
           <ErrorMessage message={error} className="mb-4" />
         )}
 
-        {/* Split Layout */}
-        <SplitLayout
-          left={leftPanel}
-          right={rightPanel}
-          leftWidth={4}
-          gap="md"
-        />
+        {/* Single Pane Layout */}
+        <div className="h-full flex flex-col">
+          {/* Search and Filters */}
+          <div className={`
+            p-4 border-b space-y-3
+            ${theme === 'dark' ? 'border-gray-700 bg-gray-800/30' : 'border-gray-200 bg-gray-50/50'}
+          `}>
+            {/* Search */}
+            <Input
+              type="text"
+              placeholder="Search products..."
+              value={filters.search}
+              onChange={(e) => handleSearchChange(e.target.value)}
+              icon={
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              }
+            />
+
+            {/* Filters Row */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {/* Category Filter */}
+              <TouchSelect<number | null>
+                label="Category"
+                value={filters.categoryId}
+                options={[
+                  { value: null, label: 'All Categories' },
+                  ...categoriesToOptions(categories)
+                ]}
+                onChange={handleCategoryFilter}
+                searchable
+                clearable
+                placeholder="All Categories"
+              />
+
+              {/* Product Type Filter */}
+              <TouchSelect<string | null>
+                label="Product Type"
+                value={filters.productType}
+                options={[
+                  { value: null, label: 'All Types' },
+                  { value: 'simple', label: 'Simple', description: 'Single product with direct pricing' },
+                  { value: 'variation', label: 'Variation', description: 'Product with variants (size, color, etc.)' },
+                  { value: 'bundle', label: 'Bundle', description: 'Bundle of multiple products' },
+                  { value: 'service', label: 'Service', description: 'Service without inventory' }
+                ]}
+                onChange={handleProductTypeFilter}
+                searchable
+                clearable
+                placeholder="All Types"
+              />
+            </div>
+
+            {/* Clear Filters */}
+            {(filters.search || filters.categoryId || filters.productType) && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleClearFilters}
+                fullWidth
+                icon={
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                }
+              >
+                Clear Filters
+              </Button>
+            )}
+          </div>
+
+          {/* Product List/Grid - Full Width */}
+          <div className="flex-1 overflow-y-auto p-4">
+            {isLoading && (
+              <div className="flex items-center justify-center py-20">
+                <LoadingSpinner size="md" />
+              </div>
+            )}
+
+            {!isLoading && activeProducts.length === 0 && (
+              <div className={`
+                flex items-center justify-center py-20
+                ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}
+              `}>
+                <div className="text-center">
+                  <svg className="w-24 h-24 mx-auto mb-4 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                  </svg>
+                  <p className="text-lg font-medium mb-2">No products found</p>
+                  <p className="text-sm mb-6">Start by adding your first product</p>
+                  <Button
+                    variant="primary"
+                    size="md"
+                    onClick={handleAddProduct}
+                    icon={
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                      </svg>
+                    }
+                  >
+                    Add Product
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {!isLoading && activeProducts.length > 0 && productViewMode === 'tile' && (
+              <ProductTileView
+                products={activeProducts}
+                onProductClick={handleSelectProduct}
+              />
+            )}
+
+            {!isLoading && activeProducts.length > 0 && productViewMode === 'grid' && (
+              <ProductGridView
+                products={activeProducts}
+                selectedProductId={selectedProduct?.id}
+                onProductClick={handleSelectProduct}
+              />
+            )}
+          </div>
+        </div>
       </PageContainer>
+
+      {/* Product Form Sidebar */}
+      <RightPanel
+        isOpen={showProductForm}
+        onClose={handleCloseProductForm}
+        title={editingProduct ? 'Edit Product' : 'Add Product'}
+        width="lg"
+      >
+        <ProductForm
+          product={editingProduct}
+          onSave={handleProductSaved}
+          onCancel={handleCloseProductForm}
+        />
+      </RightPanel>
+
+      {/* Product Detail Sidebar */}
+      <RightPanel
+        isOpen={showProductDetail}
+        onClose={handleCloseProductDetail}
+        title="Product Details"
+        width="md"
+      >
+        {selectedProduct && (
+          <ProductDetailView
+            product={selectedProduct}
+            onEdit={() => handleEditProduct(selectedProduct)}
+            onClose={handleCloseProductDetail}
+          />
+        )}
+      </RightPanel>
 
       {/* Category Management Panel */}
       <RightPanel

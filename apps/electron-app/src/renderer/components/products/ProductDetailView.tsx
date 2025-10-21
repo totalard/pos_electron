@@ -46,50 +46,8 @@ export function ProductDetailView({ product, onEdit, onClose }: ProductDetailVie
 
   return (
     <div className="h-full flex flex-col">
-      {/* Header */}
-      <div className={`
-        p-4 border-b flex items-center justify-between
-        ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'}
-      `}>
-        <h2 className={`
-          text-lg font-semibold
-          ${theme === 'dark' ? 'text-white' : 'text-gray-900'}
-        `}>
-          Product Details
-        </h2>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={onEdit}
-            icon={
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-              </svg>
-            }
-          >
-            Edit
-          </Button>
-          <button
-            onClick={onClose}
-            className={`
-              p-2 rounded-lg transition-colors
-              ${theme === 'dark'
-                ? 'hover:bg-gray-700 text-gray-400'
-                : 'hover:bg-gray-100 text-gray-600'
-              }
-            `}
-            aria-label="Close"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-      </div>
-      
-      {/* Content */}
-      <div className="flex-1 overflow-y-auto p-6">
+      {/* Content - Scrollable */}
+      <div className="flex-1 overflow-y-auto p-6 space-y-6">
         {/* Product Image */}
         <div className={`
           relative w-full h-64 rounded-xl overflow-hidden mb-6
@@ -295,7 +253,26 @@ export function ProductDetailView({ product, onEdit, onClose }: ProductDetailVie
           </div>
         )}
       </div>
+
+      {/* Action Buttons - Sticky at bottom */}
+      <div className={`
+        flex-shrink-0 p-4 border-t sticky bottom-0
+        ${theme === 'dark' ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-white'}
+      `}>
+        <Button
+          variant="primary"
+          size="md"
+          onClick={onEdit}
+          fullWidth
+          icon={
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            </svg>
+          }
+        >
+          Edit Product
+        </Button>
+      </div>
     </div>
   )
 }
-

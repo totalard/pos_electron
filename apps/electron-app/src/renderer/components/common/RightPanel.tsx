@@ -234,7 +234,7 @@ export function RightPanel({
         )}
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex-1 overflow-hidden">
           {children}
         </div>
       </div>
