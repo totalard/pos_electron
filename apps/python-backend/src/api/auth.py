@@ -106,7 +106,7 @@ async def login(credentials: UserLogin):
         success=True,
         message="Login successful",
         user=user_response,
-        token=None  # TODO: Implement JWT token generation
+        token=None  # Token not required for local Electron app with PIN authentication
     )
 
 

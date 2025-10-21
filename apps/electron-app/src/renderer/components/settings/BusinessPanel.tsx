@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import { useAppStore, useSettingsStore, BusinessMode } from '../../stores'
+import { useCurrency } from '../../hooks/useCurrency'
 
 export function BusinessPanel() {
   const { theme } = useAppStore()
   const { business, setBusinessMode, updateBusinessSettings } = useSettingsStore()
+  const { formatCurrency } = useCurrency()
   const [previewAmount] = useState(1234.56)
 
   const handleModeChange = (mode: BusinessMode) => {
@@ -39,13 +41,6 @@ export function BusinessPanel() {
     }
   }
 
-  const formatPreview = () => {
-    const { symbol, symbolPosition, decimalPlaces, thousandSeparator, decimalSeparator } = business.currencyConfig
-    const parts = previewAmount.toFixed(decimalPlaces).split('.')
-    const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, thousandSeparator)
-    const formatted = parts[1] ? `${integerPart}${decimalSeparator}${parts[1]}` : integerPart
-    return symbolPosition === 'before' ? `${symbol}${formatted}` : `${formatted}${symbol}`
-  }
 
   const currencies = [
     { code: 'USD', symbol: '$', name: 'US Dollar', decimals: 2 },
@@ -494,8 +489,7 @@ export function BusinessPanel() {
                 Preview:
               </span>
               <span className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                {formatPreview()}
-                {business.currencyConfig.showCurrencyCode && ` ${business.currencyConfig.code}`}
+                {formatCurrency(previewAmount)}
               </span>
             </div>
           </div>

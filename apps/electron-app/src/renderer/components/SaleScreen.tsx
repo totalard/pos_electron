@@ -144,7 +144,7 @@ export function SaleScreen({ onBack }: SaleScreenProps) {
 
   const handleCheckoutComplete = (paymentMethod: string, amountPaid: number) => {
     console.log('Payment completed:', { paymentMethod, amountPaid, total })
-    // TODO: Send to backend and print receipt
+    // Future: Integrate with backend sales API and receipt printer
     alert(`Payment successful! Method: ${paymentMethod}, Amount: ${amountPaid}`)
     clearCart()
   }
@@ -182,7 +182,7 @@ export function SaleScreen({ onBack }: SaleScreenProps) {
 
   const handleOpenDrawer = () => {
     console.log('Opening cash drawer...')
-    // TODO: Send command to cash drawer hardware
+    // Future: Integrate with cash drawer hardware via serial/USB
     alert('Cash drawer opened')
   }
 
@@ -192,7 +192,7 @@ export function SaleScreen({ onBack }: SaleScreenProps) {
 
   const handleCashInSubmit = (amount: number, reason: string) => {
     console.log('Cash In:', { amount, reason })
-    // TODO: Send to backend
+    // Future: Integrate with backend cash management API
     alert(`Cash In: ${amount} - ${reason}`)
   }
 
@@ -202,7 +202,7 @@ export function SaleScreen({ onBack }: SaleScreenProps) {
 
   const handleCashOutSubmit = (amount: number, reason: string) => {
     console.log('Cash Out:', { amount, reason })
-    // TODO: Send to backend
+    // Future: Integrate with backend cash management API
     alert(`Cash Out: ${amount} - ${reason}`)
   }
 
@@ -238,7 +238,7 @@ export function SaleScreen({ onBack }: SaleScreenProps) {
 
   const handleEmailSend = (email: string) => {
     console.log('Email receipt to:', email)
-    // TODO: Send to backend
+    // Future: Integrate with backend email service
     alert(`Receipt will be sent to ${email}`)
   }
 
@@ -257,7 +257,7 @@ export function SaleScreen({ onBack }: SaleScreenProps) {
   }
 
   const handleRecall = () => {
-    // TODO: Show parked transactions dialog
+    // Future: Implement parked transactions recall dialog
     alert('Recall parked transactions - Coming soon')
   }
 

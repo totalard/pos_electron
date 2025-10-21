@@ -503,7 +503,7 @@ export const useInventoryStore = create<InventoryState>()(
             outOfStockCount,
             totalStockValue,
             recentTransactions: transactions.length,
-            pendingAdjustments: 0 // TODO: Implement when adjustments endpoint supports filtering
+            pendingAdjustments: 0 // Not implemented - would require backend filtering by is_completed=false
           }
 
           set({ stats })

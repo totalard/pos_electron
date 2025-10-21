@@ -178,9 +178,10 @@ export function CustomerCard({ customer, viewMode, onView, onEdit, onDelete }: C
 
         {/* Status Badge */}
         <Badge
-          text={getCreditStatusText(customer.credit_status)}
           variant={customer.credit_status === 'good' ? 'success' : customer.credit_status === 'warning' ? 'warning' : 'danger'}
-        />
+        >
+          {getCreditStatusText(customer.credit_status)}
+        </Badge>
       </div>
 
       {/* Customer Info */}
