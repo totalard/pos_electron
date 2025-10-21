@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAppStore, usePOSStore } from '../../stores'
-import { Modal } from '../common/Modal'
+import { Modal, CurrencyDisplay } from '../common'
 
 interface ItemDiscountDialogProps {
   isOpen: boolean
@@ -95,7 +95,7 @@ export function ItemDiscountDialog({ isOpen, onClose }: ItemDiscountDialogProps)
           </div>
           <div className="flex justify-between items-center mt-2 pt-2 border-t border-gray-300">
             <span className="text-sm text-gray-500">Item Total</span>
-            <span className="text-lg font-semibold">₹{baseTotal.toFixed(2)}</span>
+            <CurrencyDisplay amount={baseTotal} className="text-lg font-semibold" />
           </div>
         </div>
 
@@ -193,15 +193,18 @@ export function ItemDiscountDialog({ isOpen, onClose }: ItemDiscountDialogProps)
           `}>
             <div className="flex justify-between items-center text-sm">
               <span className="text-gray-500">Discount</span>
-              <span className="font-semibold text-green-600">
-                -₹{calculatedDiscount.toFixed(2)}
-              </span>
+              <CurrencyDisplay 
+                amount={calculatedDiscount} 
+                prefix="-"
+                className="font-semibold text-green-600" 
+              />
             </div>
             <div className="flex justify-between items-center pt-2 border-t border-gray-300">
               <span className="font-medium">Final Amount</span>
-              <span className="text-xl font-bold text-blue-600">
-                ₹{finalAmount.toFixed(2)}
-              </span>
+              <CurrencyDisplay 
+                amount={finalAmount} 
+                className="text-xl font-bold text-blue-600" 
+              />
             </div>
           </div>
         )}

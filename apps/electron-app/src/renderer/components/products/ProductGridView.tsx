@@ -1,5 +1,6 @@
+import { useState } from 'react'
 import { useAppStore } from '../../stores'
-import { Badge } from '../common'
+import { Button, Badge, CurrencyDisplay } from '../common'
 import type { EnhancedProduct } from '../../services/api'
 
 /**
@@ -204,12 +205,13 @@ export function ProductGridView({
 
                 {/* Price */}
                 <td className="px-4 py-3">
-                  <span className={`
-                    text-sm font-semibold
-                    ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}
-                  `}>
-                    ${product.base_price.toFixed(2)}
-                  </span>
+                  <CurrencyDisplay
+                    amount={product.base_price}
+                    className={`
+                      text-sm font-semibold
+                      ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}
+                    `}
+                  />
                 </td>
 
                 {/* Stock */}

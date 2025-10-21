@@ -1,4 +1,5 @@
-import { useAppStore, useSettingsStore } from '../../stores'
+import { useAppStore } from '../../stores'
+import { CurrencyDisplay } from '../common'
 import type { EnhancedProduct } from '../../services/api'
 
 /**
@@ -37,23 +38,6 @@ export function POSProductGrid({
   isLoading = false
 }: POSProductGridProps) {
   const { theme } = useAppStore()
-  const { business } = useSettingsStore()
-
-  const formatCurrency = (amount: number): string => {
-    const { currencyConfig } = business
-    const formatted = amount.toFixed(currencyConfig.decimalPlaces)
-    const parts = formatted.split('.')
-    
-    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, currencyConfig.thousandSeparator)
-    
-    const value = parts.join(currencyConfig.decimalSeparator)
-    
-    if (currencyConfig.symbolPosition === 'before') {
-      return `${currencyConfig.symbol}${value}`
-    } else {
-      return `${value}${currencyConfig.symbol}`
-    }
-  }
 
   const getStockStatus = (product: EnhancedProduct) => {
     if (product.product_type === 'service' || !product.track_inventory) {
@@ -178,12 +162,13 @@ export function POSProductGrid({
 
               {/* Price */}
               <div className="mt-auto">
-                <span className={`
-                  text-lg font-bold
-                  ${theme === 'dark' ? 'text-primary-400' : 'text-primary-600'}
-                `}>
-                  {formatCurrency(product.base_price)}
-                </span>
+                <CurrencyDisplay
+                  amount={product.base_price}
+                  className={`
+                    text-lg font-bold
+                    ${theme === 'dark' ? 'text-white' : 'text-gray-900'}
+                  `}
+                />
               </div>
             </div>
 

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAppStore, usePOSStore, useSettingsStore } from '../../stores'
-import { Modal } from '../common/Modal'
+import { Modal, CurrencyDisplay, CurrencyInput } from '../common'
 
 interface CheckoutModalProps {
   isOpen: boolean
@@ -15,7 +15,7 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
   const total = getCartTotal()
   
   const [selectedMethod, setSelectedMethod] = useState<string>('')
-  const [amountPaid, setAmountPaid] = useState<string>(total.toFixed(2))
+  const [amountPaid, setAmountPaid] = useState<number>(total)
   const [isProcessing, setIsProcessing] = useState(false)
 
   // Get enabled payment methods, sorted by order
@@ -32,14 +32,14 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
 
   // Update amount paid when total changes
   useEffect(() => {
-    setAmountPaid(total.toFixed(2))
+    setAmountPaid(total)
   }, [total])
 
-  const change = parseFloat(amountPaid) - total
+  const change = amountPaid - total
   const selectedPaymentMethod = enabledPaymentMethods.find(m => m.id === selectedMethod)
 
   const handleComplete = async () => {
-    if (parseFloat(amountPaid) < total) {
+    if (amountPaid < total) {
       alert('Amount paid is less than total')
       return
     }
@@ -49,7 +49,7 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
     // Simulate payment processing
     await new Promise(resolve => setTimeout(resolve, 1000))
     
-    onComplete(selectedMethod, parseFloat(amountPaid))
+    onComplete(selectedMethod, amountPaid)
     setIsProcessing(false)
     onClose()
   }
@@ -72,7 +72,7 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
           ${theme === 'dark' ? 'bg-gray-800' : 'bg-gray-50'}
         `}>
           <p className="text-sm text-gray-500 mb-1">Total Amount</p>
-          <p className="text-4xl font-bold text-blue-600">₹{total.toFixed(2)}</p>
+          <CurrencyDisplay amount={total} className="text-4xl font-bold text-blue-600" />
         </div>
 
         {/* Payment Methods */}
@@ -106,21 +106,13 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
         {/* Amount Paid (for cash) */}
         {selectedMethod === 'cash' && (
           <div>
-            <label className="block text-sm font-medium mb-3">Amount Paid</label>
-            <input
-              type="number"
+            <CurrencyInput
+              label="Amount Paid"
               value={amountPaid}
-              onChange={(e) => setAmountPaid(e.target.value)}
-              className={`
-                w-full px-4 py-3 rounded-lg text-lg font-semibold text-center
-                border-2 focus:outline-none focus:ring-2 focus:ring-blue-500
-                ${theme === 'dark'
-                  ? 'bg-gray-800 border-gray-700 text-white'
-                  : 'bg-white border-gray-200 text-gray-900'
-                }
-              `}
-              step="0.01"
+              onChange={setAmountPaid}
               min={total}
+              size="lg"
+              className="text-center"
             />
             
             {/* Quick Amount Buttons */}
@@ -128,7 +120,7 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
               {quickAmounts.map(quick => (
                 <button
                   key={quick.label}
-                  onClick={() => setAmountPaid(quick.value.toFixed(2))}
+                  onClick={() => setAmountPaid(quick.value)}
                   className={`
                     px-3 py-2 rounded-lg text-sm font-medium transition-colors
                     ${theme === 'dark'
@@ -149,7 +141,7 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
                 ${theme === 'dark' ? 'bg-green-900/20' : 'bg-green-50'}
               `}>
                 <p className="text-sm text-gray-500 mb-1">Change</p>
-                <p className="text-2xl font-bold text-green-600">₹{change.toFixed(2)}</p>
+                <CurrencyDisplay amount={change} className="text-2xl font-bold text-green-600" />
               </div>
             )}
           </div>
@@ -173,7 +165,7 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
           </button>
           <button
             onClick={handleComplete}
-            disabled={isProcessing || (selectedMethod === 'cash' && parseFloat(amountPaid) < total)}
+            disabled={isProcessing || (selectedMethod === 'cash' && amountPaid < total)}
             className={`
               flex-1 px-6 py-3 rounded-lg font-semibold transition-colors
               bg-blue-600 hover:bg-blue-700 text-white

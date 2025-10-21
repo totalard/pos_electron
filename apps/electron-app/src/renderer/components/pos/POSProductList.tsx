@@ -1,4 +1,5 @@
-import { useAppStore, useSettingsStore } from '../../stores'
+import { useAppStore } from '../../stores'
+import { CurrencyDisplay } from '../common'
 import type { EnhancedProduct } from '../../services/api'
 
 /**
@@ -37,23 +38,6 @@ export function POSProductList({
   isLoading = false
 }: POSProductListProps) {
   const { theme } = useAppStore()
-  const { business } = useSettingsStore()
-
-  const formatCurrency = (amount: number): string => {
-    const { currencyConfig } = business
-    const formatted = amount.toFixed(currencyConfig.decimalPlaces)
-    const parts = formatted.split('.')
-    
-    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, currencyConfig.thousandSeparator)
-    
-    const value = parts.join(currencyConfig.decimalSeparator)
-    
-    if (currencyConfig.symbolPosition === 'before') {
-      return `${currencyConfig.symbol}${value}`
-    } else {
-      return `${value}${currencyConfig.symbol}`
-    }
-  }
 
   const getStockStatusColor = (product: EnhancedProduct) => {
     if (product.product_type === 'service' || !product.track_inventory) {
@@ -218,12 +202,13 @@ export function POSProductList({
 
               {/* Price */}
               <div className="col-span-2 flex items-center justify-end">
-                <span className={`
-                  text-base font-bold
-                  ${theme === 'dark' ? 'text-primary-400' : 'text-primary-600'}
-                `}>
-                  {formatCurrency(product.base_price)}
-                </span>
+                <CurrencyDisplay
+                  amount={product.base_price}
+                  className={`
+                    text-base font-bold
+                    ${theme === 'dark' ? 'text-primary-400' : 'text-primary-600'}
+                  `}
+                />
               </div>
 
               {/* Stock */}

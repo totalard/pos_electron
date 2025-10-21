@@ -1,11 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useAppStore } from '../../stores'
 import { CartItem } from '../../stores/posStore'
-import { IconButton } from '../common'
-
-const formatCurrency = (amount: number): string => {
-  return `₹${amount.toFixed(2)}`
-}
+import { IconButton, CurrencyDisplay } from '../common'
 
 interface SwipeableCartItemProps {
   item: CartItem
@@ -236,12 +232,13 @@ export function SwipeableCartItem({
                 `}>
                   + {modifier.name}
                 </span>
-                <span className={`
-                  text-[10px] font-mono
-                  ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}
-                `}>
-                  {formatCurrency(modifier.price)}
-                </span>
+                <CurrencyDisplay
+                  amount={modifier.price}
+                  className={`
+                    text-[10px] font-mono
+                    ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}
+                  `}
+                />
               </div>
             ))}
           </div>
@@ -298,33 +295,39 @@ export function SwipeableCartItem({
             </button>
             
             {/* Unit Price Display */}
-            <span className={`
-              text-[10px] font-mono ml-1
-              ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}
-            `}>
-              @{formatCurrency(item.unitPrice)}
-            </span>
+            <CurrencyDisplay
+              amount={item.unitPrice}
+              prefix="@"
+              className={`
+                text-[10px] font-mono ml-1
+                ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}
+              `}
+            />
           </div>
 
           {/* Item Total - Monospace */}
           <div className="text-right">
-            <div className={`
-              text-sm font-mono font-bold
-              ${theme === 'dark' ? 'text-primary-400' : 'text-primary-600'}
-            `}>
-              {formatCurrency(item.total)}
-            </div>
+            <CurrencyDisplay
+              amount={item.total}
+              className={`
+                text-sm font-mono font-bold
+                ${theme === 'dark' ? 'text-primary-400' : 'text-primary-600'}
+              `}
+            />
             {item.discount > 0 && (
               <div className="flex flex-col items-end gap-0.5">
-                <div className={`
-                  text-[10px] font-mono line-through
-                  ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}
-                `}>
-                  {formatCurrency(item.unitPrice * item.quantity)}
-                </div>
-                <div className="text-[10px] font-mono font-medium text-green-500">
-                  -{formatCurrency(item.discount * item.quantity)}
-                </div>
+                <CurrencyDisplay
+                  amount={item.unitPrice * item.quantity}
+                  className={`
+                    text-[10px] font-mono line-through
+                    ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}
+                  `}
+                />
+                <CurrencyDisplay
+                  amount={item.discount * item.quantity}
+                  prefix="-"
+                  className="text-[10px] font-mono font-medium text-green-500"
+                />
               </div>
             )}
           </div>

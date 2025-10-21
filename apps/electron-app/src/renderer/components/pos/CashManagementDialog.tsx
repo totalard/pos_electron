@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useAppStore } from '../../stores'
-import { Modal } from '../common/Modal'
+import { Modal, CurrencyInput } from '../common'
 
 interface CashManagementDialogProps {
   isOpen: boolean
@@ -11,7 +11,7 @@ interface CashManagementDialogProps {
 
 export function CashManagementDialog({ isOpen, onClose, type, onSubmit }: CashManagementDialogProps) {
   const { theme } = useAppStore()
-  const [amount, setAmount] = useState<string>('')
+  const [amount, setAmount] = useState<number>(0)
   const [reason, setReason] = useState<string>('')
 
   const title = type === 'in' ? 'Cash In' : 'Cash Out'
@@ -24,19 +24,18 @@ export function CashManagementDialog({ isOpen, onClose, type, onSubmit }: CashMa
     : ['Bank Deposit', 'Petty Cash', 'Expense Payment', 'Other']
 
   const handleSubmit = () => {
-    const amountValue = parseFloat(amount)
-    if (isNaN(amountValue) || amountValue <= 0) {
+    if (amount <= 0) {
       alert('Please enter a valid amount')
       return
     }
 
     if (!reason.trim()) {
-      alert('Please provide a reason')
+      alert('Please enter a reason')
       return
     }
 
-    onSubmit(amountValue, reason)
-    setAmount('')
+    onSubmit(amount, reason)
+    setAmount(0)
     setReason('')
     onClose()
   }
@@ -59,33 +58,21 @@ export function CashManagementDialog({ isOpen, onClose, type, onSubmit }: CashMa
 
         {/* Amount Input */}
         <div>
-          <label className="block text-sm font-medium mb-3">Amount</label>
-          <div className="relative">
-            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg">₹</span>
-            <input
-              type="number"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              placeholder="0.00"
-              className={`
-                w-full pl-10 pr-4 py-3 rounded-lg text-lg font-semibold
-                border-2 focus:outline-none focus:ring-2 focus:ring-blue-500
-                ${theme === 'dark'
-                  ? 'bg-gray-800 border-gray-700 text-white'
-                  : 'bg-white border-gray-200 text-gray-900'
-                }
-              `}
-              step="0.01"
-              min="0"
-            />
-          </div>
+          <CurrencyInput
+            label="Amount"
+            value={amount}
+            onChange={setAmount}
+            min={0}
+            size="lg"
+            showSymbol={true}
+          />
 
           {/* Quick Amount Buttons */}
           <div className="grid grid-cols-6 gap-2 mt-3">
             {quickAmounts.map(quick => (
               <button
                 key={quick}
-                onClick={() => setAmount(quick.toString())}
+                onClick={() => setAmount(quick)}
                 className={`
                   px-3 py-2 rounded-lg text-sm font-medium transition-colors
                   ${theme === 'dark'

@@ -145,7 +145,7 @@ export function SaleScreen({ onBack }: SaleScreenProps) {
   const handleCheckoutComplete = (paymentMethod: string, amountPaid: number) => {
     console.log('Payment completed:', { paymentMethod, amountPaid, total })
     // TODO: Send to backend and print receipt
-    alert(`Payment successful! Method: ${paymentMethod}, Amount: ₹${amountPaid}`)
+    alert(`Payment successful! Method: ${paymentMethod}, Amount: ${amountPaid}`)
     clearCart()
   }
 
@@ -193,7 +193,7 @@ export function SaleScreen({ onBack }: SaleScreenProps) {
   const handleCashInSubmit = (amount: number, reason: string) => {
     console.log('Cash In:', { amount, reason })
     // TODO: Send to backend
-    alert(`Cash In: ₹${amount} - ${reason}`)
+    alert(`Cash In: ${amount} - ${reason}`)
   }
 
   const handleCashOut = () => {
@@ -203,7 +203,7 @@ export function SaleScreen({ onBack }: SaleScreenProps) {
   const handleCashOutSubmit = (amount: number, reason: string) => {
     console.log('Cash Out:', { amount, reason })
     // TODO: Send to backend
-    alert(`Cash Out: ₹${amount} - ${reason}`)
+    alert(`Cash Out: ${amount} - ${reason}`)
   }
 
   const handleAddCarryBag = () => {

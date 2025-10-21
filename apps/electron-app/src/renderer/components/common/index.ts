@@ -48,3 +48,9 @@ export type { ToggleProps } from './Toggle'
 export { ThemeToggle } from './ThemeToggle'
 export type { ThemeToggleProps } from './ThemeToggle'
 
+export { CurrencyDisplay } from './CurrencyDisplay'
+export type { CurrencyDisplayProps } from './CurrencyDisplay'
+
+export { CurrencyInput } from './CurrencyInput'
+export type { CurrencyInputProps } from './CurrencyInput'
+

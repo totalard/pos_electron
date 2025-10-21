@@ -1,5 +1,5 @@
 import { useAppStore } from '../../stores'
-import { Button, Badge } from '../common'
+import { Button, Badge, CurrencyDisplay } from '../common'
 import type { Customer } from '../../services/api'
 
 interface CustomerCardProps {
@@ -96,15 +96,16 @@ export function CustomerCard({ customer, viewMode, onView, onEdit, onDelete }: C
               <p className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
                 Credit Balance
               </p>
-              <p className={`
-                font-bold
-                ${customer.credit_balance > 0
-                  ? 'text-orange-500'
-                  : theme === 'dark' ? 'text-green-400' : 'text-green-600'
-                }
-              `}>
-                ${customer.credit_balance.toFixed(2)}
-              </p>
+              <CurrencyDisplay
+                amount={customer.credit_balance}
+                className={`
+                  font-bold
+                  ${customer.credit_balance > 0
+                    ? 'text-orange-500'
+                    : theme === 'dark' ? 'text-green-400' : 'text-green-600'
+                  }
+                `}
+              />
             </div>
 
             {/* Loyalty Points */}
@@ -207,17 +208,18 @@ export function CustomerCard({ customer, viewMode, onView, onEdit, onDelete }: C
           <p className={`text-xs mb-1 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
             Credit Balance
           </p>
-          <p className={`
-            text-lg font-bold
-            ${customer.credit_balance > 0
-              ? 'text-orange-500'
-              : theme === 'dark' ? 'text-green-400' : 'text-green-600'
-            }
-          `}>
-            ${customer.credit_balance.toFixed(2)}
-          </p>
+          <CurrencyDisplay
+            amount={customer.credit_balance}
+            className={`
+              text-2xl font-bold
+              ${customer.credit_balance > 0
+                ? 'text-orange-500'
+                : theme === 'dark' ? 'text-green-400' : 'text-green-600'
+              }
+            `}
+          />
           <p className={`text-xs ${theme === 'dark' ? 'text-gray-500' : 'text-gray-500'}`}>
-            Limit: ${customer.credit_limit.toFixed(2)}
+            Limit: <CurrencyDisplay amount={customer.credit_limit} className="inline" />
           </p>
         </div>
 

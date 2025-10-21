@@ -1,5 +1,6 @@
 import { ReactNode, useRef, useState, useEffect } from 'react'
-import { useAppStore, useSettingsStore } from '../../stores'
+import { useAppStore } from '../../stores'
+import { CurrencyDisplay } from '../common'
 
 /**
  * POSFooter component props
@@ -39,7 +40,6 @@ export function POSFooter({
   actions
 }: POSFooterProps) {
   const { theme } = useAppStore()
-  const { business } = useSettingsStore()
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const [showLeftScroll, setShowLeftScroll] = useState(false)
   const [showRightScroll, setShowRightScroll] = useState(false)
@@ -75,24 +75,6 @@ export function POSFooter({
       left: direction === 'left' ? -scrollAmount : scrollAmount,
       behavior: 'smooth'
     })
-  }
-
-  // Format currency based on settings
-  const formatCurrency = (amount: number): string => {
-    const { currencyConfig } = business
-    const formatted = amount.toFixed(currencyConfig.decimalPlaces)
-    const parts = formatted.split('.')
-    
-    // Add thousand separator
-    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, currencyConfig.thousandSeparator)
-    
-    const value = parts.join(currencyConfig.decimalSeparator)
-    
-    if (currencyConfig.symbolPosition === 'before') {
-      return `${currencyConfig.symbol}${value}`
-    } else {
-      return `${value}${currencyConfig.symbol}`
-    }
   }
 
   return (
@@ -132,12 +114,13 @@ export function POSFooter({
               `}>
                 Subtotal
               </span>
-              <span className={`
-                text-lg font-semibold
-                ${theme === 'dark' ? 'text-gray-200' : 'text-gray-800'}
-              `}>
-                {formatCurrency(subtotal)}
-              </span>
+              <CurrencyDisplay
+                amount={subtotal}
+                className={`
+                  text-lg font-semibold
+                  ${theme === 'dark' ? 'text-gray-200' : 'text-gray-800'}
+                `}
+              />
             </div>
 
             {/* Tax */}
@@ -148,12 +131,13 @@ export function POSFooter({
               `}>
                 Tax
               </span>
-              <span className={`
-                text-lg font-semibold
-                ${theme === 'dark' ? 'text-gray-200' : 'text-gray-800'}
-              `}>
-                {formatCurrency(tax)}
-              </span>
+              <CurrencyDisplay
+                amount={tax}
+                className={`
+                  text-lg font-semibold
+                  ${theme === 'dark' ? 'text-gray-200' : 'text-gray-800'}
+                `}
+              />
             </div>
 
             {/* Total */}
@@ -164,12 +148,13 @@ export function POSFooter({
               `}>
                 Total
               </span>
-              <span className={`
-                text-2xl font-bold
-                ${theme === 'dark' ? 'text-white' : 'text-gray-900'}
-              `}>
-                {formatCurrency(total)}
-              </span>
+              <CurrencyDisplay
+                amount={total}
+                className={`
+                  text-2xl font-bold
+                  ${theme === 'dark' ? 'text-white' : 'text-gray-900'}
+                `}
+              />
             </div>
           </div>
 

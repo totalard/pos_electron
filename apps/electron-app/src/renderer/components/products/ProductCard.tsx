@@ -1,5 +1,5 @@
 import { useAppStore } from '../../stores'
-import { Card, Badge, IconButton } from '../common'
+import { Card, Badge, IconButton, CurrencyDisplay } from '../common'
 import type { EnhancedProduct } from '../../services/api'
 
 interface ProductCardProps {
@@ -118,19 +118,21 @@ export function ProductCard({ product, onEdit }: ProductCardProps) {
         
         {/* Price */}
         <div className="flex items-baseline gap-2 mb-3">
-          <span className={`
-            text-2xl font-bold
-            ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}
-          `}>
-            ${product.base_price.toFixed(2)}
-          </span>
+          <CurrencyDisplay
+            amount={product.base_price}
+            className={`
+              text-2xl font-bold
+              ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}
+            `}
+          />
           {product.cost_price && (
-            <span className={`
-              text-sm line-through
-              ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}
-            `}>
-              ${product.cost_price.toFixed(2)}
-            </span>
+            <CurrencyDisplay
+              amount={product.cost_price}
+              className={`
+                text-sm line-through
+                ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}
+              `}
+            />
           )}
         </div>
         

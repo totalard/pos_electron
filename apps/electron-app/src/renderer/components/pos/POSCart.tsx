@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { useAppStore, useSettingsStore, usePOSStore } from '../../stores'
-import { IconButton } from '../common'
+import { useAppStore, usePOSStore } from '../../stores'
+import { IconButton, CurrencyDisplay } from '../common'
 import { SwipeableCartItem } from './SwipeableCartItem'
 
 /**
@@ -43,7 +43,6 @@ export function POSCart({
   checkoutDisabled = false
 }: POSCartProps) {
   const { theme } = useAppStore()
-  const { business } = useSettingsStore()
   const {
     getCartItems,
     getActiveTransaction,
@@ -60,22 +59,6 @@ export function POSCart({
   const handleItemDiscountClick = (itemId: string) => {
     setSelectedCartItem(itemId)
     setShowDiscountDialog(true)
-  }
-
-  const formatCurrency = (amount: number): string => {
-    const { currencyConfig } = business
-    const formatted = amount.toFixed(currencyConfig.decimalPlaces)
-    const parts = formatted.split('.')
-    
-    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, currencyConfig.thousandSeparator)
-    
-    const value = parts.join(currencyConfig.decimalSeparator)
-    
-    if (currencyConfig.symbolPosition === 'before') {
-      return `${currencyConfig.symbol}${value}`
-    } else {
-      return `${value}${currencyConfig.symbol}`
-    }
   }
 
   return (
@@ -192,12 +175,13 @@ export function POSCart({
               `}>
                 Subtotal
               </span>
-              <span className={`
-                text-sm font-mono font-semibold
-                ${theme === 'dark' ? 'text-gray-200' : 'text-gray-800'}
-              `}>
-                {formatCurrency(transaction.subtotal)}
-              </span>
+              <CurrencyDisplay
+                amount={transaction.subtotal}
+                className={`
+                  text-sm font-mono font-semibold
+                  ${theme === 'dark' ? 'text-gray-200' : 'text-gray-800'}
+                `}
+              />
             </div>
 
             {/* Discount */}
@@ -209,9 +193,11 @@ export function POSCart({
                 `}>
                   Discount
                 </span>
-                <span className="text-sm font-mono font-semibold text-red-500">
-                  -{formatCurrency(transaction.discount)}
-                </span>
+                <CurrencyDisplay
+                  amount={transaction.discount}
+                  className="text-sm font-mono font-semibold text-red-500"
+                  prefix="-"
+                />
               </div>
             )}
 
@@ -223,12 +209,13 @@ export function POSCart({
               `}>
                 Tax
               </span>
-              <span className={`
-                text-sm font-mono font-semibold
-                ${theme === 'dark' ? 'text-gray-200' : 'text-gray-800'}
-              `}>
-                {formatCurrency(transaction.tax)}
-              </span>
+              <CurrencyDisplay
+                amount={transaction.tax}
+                className={`
+                  text-sm font-mono font-semibold
+                  ${theme === 'dark' ? 'text-gray-200' : 'text-gray-800'}
+                `}
+              />
             </div>
 
             {/* Total */}
@@ -242,12 +229,13 @@ export function POSCart({
               `}>
                 Total
               </span>
-              <span className={`
-                text-xl font-mono font-bold
-                ${theme === 'dark' ? 'text-primary-400' : 'text-primary-600'}
-              `}>
-                {formatCurrency(transaction.total)}
-              </span>
+              <CurrencyDisplay
+                amount={transaction.total}
+                className={`
+                  text-xl font-mono font-bold
+                  ${theme === 'dark' ? 'text-primary-400' : 'text-primary-600'}
+                `}
+              />
             </div>
           </div>
 

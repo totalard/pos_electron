@@ -1,5 +1,5 @@
 import { useAppStore } from '../../stores'
-import { Button, Badge } from '../common'
+import { Button, Badge, CurrencyDisplay } from '../common'
 import type { EnhancedProduct } from '../../services/api'
 
 interface ProductDetailViewProps {
@@ -108,18 +108,19 @@ export function ProductDetailView({ product, onEdit, onClose }: ProductDetailVie
         
         {/* Price */}
         <div className="mb-6">
-          <div className={`
-            text-3xl font-bold
-            ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}
-          `}>
-            ${product.base_price.toFixed(2)}
-          </div>
+          <CurrencyDisplay
+            amount={product.base_price}
+            className={`
+              text-3xl font-bold
+              ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}
+            `}
+          />
           {product.cost_price && product.cost_price > 0 && (
             <div className={`
               text-sm mt-1
               ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}
             `}>
-              Cost: ${product.cost_price.toFixed(2)}
+              Cost: <CurrencyDisplay amount={product.cost_price} className="inline" />
             </div>
           )}
         </div>
