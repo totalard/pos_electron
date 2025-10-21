@@ -923,6 +923,7 @@ export const useSettingsStore = create<SettingsState>()(
             hardware: { ...get().hardware, ...settings.hardware },
             receipts: { ...get().receipts, ...settings.receipts },
             inventory: { ...get().inventory, ...settings.inventory },
+            restaurant: { ...get().restaurant, ...settings.restaurant },
             integration: { ...get().integration, ...settings.integration },
             backup: { ...get().backup, ...settings.backup },
             display: { ...get().display, ...settings.display },

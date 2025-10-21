@@ -12,3 +12,6 @@ export type { CurrencyFormatOptions } from './useCurrency'
 
 export { useInternetConnection } from './useInternetConnection'
 export type { InternetConnectionStatus } from './useInternetConnection'
+
+export { useConfirmDialog } from './useConfirmDialog'
+export type { ConfirmDialogOptions, ConfirmDialogState } from './useConfirmDialog'

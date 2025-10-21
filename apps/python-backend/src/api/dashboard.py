@@ -186,7 +186,7 @@ async def get_dashboard_stats(
         )
         
         # ===== SESSION METRICS =====
-        active_sessions = await POSSession.filter(status=SessionStatus.OPEN).count()
+        active_sessions = await POSSession.filter(status=SessionStatus.ACTIVE).count()
         total_sessions = await POSSession.filter(
             opened_at__gte=date_start,
             opened_at__lte=date_end
@@ -259,7 +259,9 @@ async def get_dashboard_stats(
         # Aggregate product sales from sale items
         product_sales = {}
         for sale in sales:
-            for item in sale.items:
+            # Ensure items is a list (JSONField can return list or None)
+            items = sale.items if isinstance(sale.items, list) else []
+            for item in items:
                 product_id = item.get('product_id')
                 if product_id:
                     if product_id not in product_sales:
@@ -394,7 +396,7 @@ async def get_session_timeline(
         # Get sessions
         query = POSSession.filter(opened_at__gte=date_start, opened_at__lte=date_end)
         if not include_closed:
-            query = query.filter(status=SessionStatus.OPEN)
+            query = query.filter(status=SessionStatus.ACTIVE)
         
         sessions = await query.order_by('-opened_at').all()
         
@@ -424,7 +426,7 @@ async def get_session_timeline(
                 session_number=session.session_number,
                 opened_at=session.opened_at,
                 closed_at=session.closed_at,
-                is_active=session.status == SessionStatus.OPEN,
+                is_active=session.status == SessionStatus.ACTIVE,
                 sales_data=sales_data,
                 total_sales=session.total_sales,
                 transaction_count=len(sales)

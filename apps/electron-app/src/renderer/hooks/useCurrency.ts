@@ -21,7 +21,7 @@ export function useCurrency() {
    * @returns Formatted currency string
    */
   const formatCurrency = (
-    amount: number,
+    amount: number | string,
     options: CurrencyFormatOptions = {}
   ): string => {
     const {
@@ -30,6 +30,12 @@ export function useCurrency() {
       useIndianNumbering = currencyConfig.regionSpecific.india.enabled &&
         currencyConfig.regionSpecific.india.useIndianNumbering
     } = options
+
+    // Convert to number if string, handle null/undefined
+    const numericAmount = typeof amount === 'string' ? parseFloat(amount) : amount
+    if (isNaN(numericAmount) || numericAmount === null || numericAmount === undefined) {
+      return showSymbol ? `${currencyConfig.symbol}0${currencyConfig.decimalSeparator}00` : '0.00'
+    }
 
     // Handle decimal places based on region-specific settings
     let decimalPlaces = currencyConfig.decimalPlaces
@@ -44,7 +50,7 @@ export function useCurrency() {
     }
 
     // Format the number with decimal places
-    const fixedAmount = amount.toFixed(decimalPlaces)
+    const fixedAmount = numericAmount.toFixed(decimalPlaces)
     const [integerPart, decimalPart] = fixedAmount.split('.')
 
     // Apply thousand separator based on numbering system
