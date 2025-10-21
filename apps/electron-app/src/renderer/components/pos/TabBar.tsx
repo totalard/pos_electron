@@ -12,6 +12,7 @@ export interface Tab {
   icon?: ReactNode
   badge?: string | number
   createdAt?: Date
+  status?: 'active' | 'parked' | 'completed' | 'voided'
 }
 
 /**
@@ -34,6 +35,34 @@ function TabItem({
 }) {
   const elapsedTime = useElapsedTime(tab.createdAt || null)
 
+  // Get status-based colors
+  const getStatusColors = () => {
+    if (isActive) {
+      return theme === 'dark'
+        ? 'bg-primary-600 text-white shadow-lg shadow-primary-500/30'
+        : 'bg-primary-500 text-white shadow-lg shadow-primary-400/30'
+    }
+
+    switch (tab.status) {
+      case 'parked':
+        return theme === 'dark'
+          ? 'bg-yellow-700 text-yellow-100 hover:bg-yellow-600 hover:shadow-md'
+          : 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200 hover:shadow-md'
+      case 'completed':
+        return theme === 'dark'
+          ? 'bg-green-700 text-green-100 hover:bg-green-600 hover:shadow-md'
+          : 'bg-green-100 text-green-800 hover:bg-green-200 hover:shadow-md'
+      case 'voided':
+        return theme === 'dark'
+          ? 'bg-red-700 text-red-100 hover:bg-red-600 hover:shadow-md'
+          : 'bg-red-100 text-red-800 hover:bg-red-200 hover:shadow-md'
+      default: // active
+        return theme === 'dark'
+          ? 'bg-gray-700 text-gray-300 hover:bg-gray-600 hover:shadow-md'
+          : 'bg-white text-gray-700 hover:bg-gray-100 hover:shadow-md'
+    }
+  }
+
   return (
     <div
       key={tab.id}
@@ -42,14 +71,7 @@ function TabItem({
         min-h-[44px] min-w-[140px]
         transition-all duration-300 ease-out
         transform hover:scale-105 active:scale-95
-        ${isActive
-          ? theme === 'dark'
-            ? 'bg-primary-600 text-white shadow-lg shadow-primary-500/30'
-            : 'bg-primary-500 text-white shadow-lg shadow-primary-400/30'
-          : theme === 'dark'
-            ? 'bg-gray-700 text-gray-300 hover:bg-gray-600 hover:shadow-md'
-            : 'bg-white text-gray-700 hover:bg-gray-100 hover:shadow-md'
-        }
+        ${getStatusColors()}
       `}
     >
       {/* Tab button */}
@@ -173,21 +195,23 @@ export function TabBar({
       ${theme === 'dark' ? 'border-gray-700 bg-gray-800/30' : 'border-gray-200 bg-gray-50'}
     `}>
       {/* Tabs */}
-      {tabs.map((tab) => (
-        <TabItem
-          key={tab.id}
-          tab={tab}
-          isActive={tab.id === activeTabId}
-          theme={theme}
-          canClose={canClose(tab.id)}
-          onTabChange={onTabChange}
-          onTabClose={onTabClose}
-        />
-      ))}
+      <div className="flex items-center gap-2 flex-1 overflow-x-auto">
+        {tabs.map((tab) => (
+          <TabItem
+            key={tab.id}
+            tab={tab}
+            isActive={tab.id === activeTabId}
+            theme={theme}
+            canClose={canClose(tab.id)}
+            onTabChange={onTabChange}
+            onTabClose={onTabClose}
+          />
+        ))}
+      </div>
 
-      {/* Add Tab Button */}
+      {/* Add Tab Button - Right Edge */}
       {onAddTab && (
-        <div className="transition-transform duration-200 hover:scale-110 active:scale-95">
+        <div className="flex-shrink-0 transition-transform duration-200 hover:scale-110 active:scale-95">
           <IconButton
             icon={
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

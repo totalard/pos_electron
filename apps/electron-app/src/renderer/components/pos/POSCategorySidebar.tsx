@@ -112,11 +112,11 @@ export function POSCategorySidebar({
     <div className="flex flex-col h-full">
       {/* Header */}
       <div className={`
-        px-4 py-3 border-b flex items-center justify-between
+        px-3 py-3 border-b flex items-center justify-between min-h-[48px]
         ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'}
       `}>
         <h2 className={`
-          text-sm font-semibold uppercase tracking-wider
+          text-xs font-semibold uppercase tracking-wider
           ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}
         `}>
           Categories
@@ -180,8 +180,8 @@ export function POSCategorySidebar({
             <button
               onClick={() => onCategorySelect(null)}
               className={`
-                group w-full flex items-center gap-3 px-3 py-3 rounded-lg
-                min-h-[52px] transition-all duration-200 ease-out
+                group w-full flex items-center gap-2 px-2 py-2 rounded-lg
+                min-h-[40px] transition-all duration-200 ease-out
                 ${selectedCategoryId === null
                   ? theme === 'dark'
                     ? 'bg-primary-600 text-white shadow-md'
@@ -193,11 +193,11 @@ export function POSCategorySidebar({
               `}
             >
               <div className="flex-shrink-0 transition-transform duration-200 group-hover:scale-110">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
                 </svg>
               </div>
-              <span className="text-sm font-semibold text-left">All Products</span>
+              <span className="text-xs font-semibold text-left">All Products</span>
             </button>
 
             {/* Categories */}
@@ -208,8 +208,8 @@ export function POSCategorySidebar({
                   key={category.id}
                   onClick={() => onCategorySelect(category.id)}
                   className={`
-                    group w-full flex items-center gap-3 px-3 py-3 rounded-lg
-                    min-h-[52px] transition-all duration-200 ease-out
+                    group w-full flex items-center gap-2 px-2 py-2 rounded-lg
+                    min-h-[40px] transition-all duration-200 ease-out
                     ${isSelected
                       ? theme === 'dark'
                         ? 'bg-primary-600 text-white shadow-md'
@@ -224,7 +224,7 @@ export function POSCategorySidebar({
                     {getCategoryIcon(category.name)}
                   </div>
                   <div className="flex-1 text-left min-w-0">
-                    <span className="text-sm font-semibold truncate block">{category.name}</span>
+                    <span className="text-xs font-semibold truncate block">{category.name}</span>
                   </div>
                 </button>
               )

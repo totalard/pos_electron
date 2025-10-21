@@ -22,21 +22,38 @@ export function useInternetConnection(checkInterval: number = 30000) {
     setStatus(prev => ({ ...prev, isChecking: true }))
     
     try {
-      // Try to fetch a small resource with no-cache to verify actual connectivity
+      // Use a reliable endpoint that supports CORS
       const controller = new AbortController()
       const timeoutId = setTimeout(() => controller.abort(), 5000) // 5 second timeout
       
-      const response = await fetch('https://www.google.com/favicon.ico', {
-        method: 'HEAD',
-        mode: 'no-cors',
-        cache: 'no-cache',
-        signal: controller.signal
-      })
+      // Try multiple endpoints for reliability
+      const endpoints = [
+        'https://dns.google/resolve?name=google.com&type=A',
+        'https://1.1.1.1/cdn-cgi/trace'
+      ]
+      
+      let connected = false
+      for (const endpoint of endpoints) {
+        try {
+          const response = await fetch(endpoint, {
+            method: 'GET',
+            cache: 'no-cache',
+            signal: controller.signal
+          })
+          
+          if (response.ok) {
+            connected = true
+            break
+          }
+        } catch {
+          continue
+        }
+      }
       
       clearTimeout(timeoutId)
       
       setStatus({
-        isOnline: true,
+        isOnline: connected,
         isChecking: false,
         lastChecked: new Date()
       })

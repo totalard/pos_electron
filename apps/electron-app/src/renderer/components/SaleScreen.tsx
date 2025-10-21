@@ -358,7 +358,8 @@ export function SaleScreen({ onBack }: SaleScreenProps) {
               id: t.id,
               name: t.name,
               badge: t.items.reduce((sum, item) => sum + item.quantity, 0) || undefined,
-              createdAt: t.createdAt
+              createdAt: t.createdAt,
+              status: t.status
             }))}
             activeTabId={activeTransactionId || ''}
             onTabChange={setActiveTransaction}
@@ -389,7 +390,7 @@ export function SaleScreen({ onBack }: SaleScreenProps) {
           <div className="flex-1 flex overflow-hidden">
             {/* Categories Sidebar */}
             <div className={`
-              w-1/3 border-r overflow-hidden flex flex-col
+              w-1/5 border-r overflow-hidden flex flex-col
               ${theme === 'dark' ? 'border-gray-700 bg-gray-800/30' : 'border-gray-200 bg-gray-50/50'}
             `}>
               <POSCategorySidebar
@@ -406,7 +407,7 @@ export function SaleScreen({ onBack }: SaleScreenProps) {
             <div className="flex-1 flex flex-col overflow-hidden">
               {/* Search Bar */}
               <div className={`
-                px-4 py-3 border-b
+                px-4 py-3 border-b min-h-[48px] flex items-center
                 ${theme === 'dark' ? 'border-gray-700 bg-gray-800/30' : 'border-gray-200 bg-white'}
               `}>
                 <POSSearchBar
