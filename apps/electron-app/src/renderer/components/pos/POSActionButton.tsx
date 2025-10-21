@@ -115,9 +115,11 @@ export function POSActionButton({
 
   const baseClasses = `
     rounded-lg font-medium
-    transition-all duration-200
+    transition-all duration-200 ease-out
+    transform hover:scale-105 active:scale-95
+    hover:shadow-lg active:shadow-md
     focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-opacity-50
-    disabled:opacity-50 disabled:cursor-not-allowed
+    disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100
     flex items-center justify-center gap-2
     border relative
     ${fullWidth ? 'w-full' : ''}

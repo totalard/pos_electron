@@ -98,7 +98,7 @@ export function SaleScreen({ onBack }: SaleScreenProps) {
   }
 
   const handleCloseTab = (tabId: string) => {
-    if (transactions.length === 1) return
+    // Always allow closing - deleteTransaction will auto-create if it's the last tab
     deleteTransaction(tabId)
   }
 
@@ -188,7 +188,8 @@ export function SaleScreen({ onBack }: SaleScreenProps) {
         tabs={transactions.map(t => ({
           id: t.id,
           name: t.name,
-          badge: t.items.reduce((sum, item) => sum + item.quantity, 0) || undefined
+          badge: t.items.reduce((sum, item) => sum + item.quantity, 0) || undefined,
+          createdAt: t.createdAt
         }))}
         activeTabId={activeTransactionId || ''}
         onTabChange={setActiveTransaction}

@@ -114,17 +114,18 @@ export function POSProductGrid({
             onClick={() => !isOutOfStock && onProductClick(product)}
             disabled={isOutOfStock}
             className={`
-              relative flex flex-col rounded-xl overflow-hidden
-              min-h-[140px] transition-all duration-200
+              group relative flex flex-col rounded-xl overflow-hidden
+              min-h-[140px] transition-all duration-300 ease-out
+              transform
               ${theme === 'dark' 
                 ? 'bg-gray-800 hover:bg-gray-750 active:bg-gray-700' 
                 : 'bg-white hover:bg-gray-50 active:bg-gray-100'
               }
               ${isOutOfStock 
                 ? 'opacity-50 cursor-not-allowed' 
-                : 'hover:shadow-lg active:scale-[0.98] cursor-pointer'
+                : 'hover:shadow-xl hover:scale-105 active:scale-95 cursor-pointer hover:-translate-y-1'
               }
-              border ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'}
+              border ${theme === 'dark' ? 'border-gray-700 hover:border-gray-600' : 'border-gray-200 hover:border-gray-300'}
             `}
           >
             {/* Product Image */}
@@ -136,7 +137,7 @@ export function POSProductGrid({
                 <img
                   src={imageUrl}
                   alt={product.name}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
                 />
               ) : (
                 <svg 

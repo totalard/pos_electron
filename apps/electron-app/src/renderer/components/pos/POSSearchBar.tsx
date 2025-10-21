@@ -67,9 +67,9 @@ export function POSSearchBar({
       <div className="flex-1 relative">
         <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
           <svg 
-            className={`w-5 h-5 ${
+            className={`w-5 h-5 transition-all duration-200 ${
               isFocused 
-                ? theme === 'dark' ? 'text-primary-400' : 'text-primary-600'
+                ? 'scale-110 ' + (theme === 'dark' ? 'text-primary-400' : 'text-primary-600')
                 : theme === 'dark' ? 'text-gray-500' : 'text-gray-400'
             }`} 
             fill="none" 
@@ -112,7 +112,8 @@ export function POSSearchBar({
             <button
               onClick={handleClear}
               className={`
-                p-2 rounded-lg transition-colors
+                p-2 rounded-lg transition-all duration-200 ease-out
+                transform hover:scale-110 active:scale-90
                 ${theme === 'dark'
                   ? 'hover:bg-gray-700 text-gray-400 hover:text-white'
                   : 'hover:bg-gray-100 text-gray-500 hover:text-gray-900'
@@ -132,12 +133,13 @@ export function POSSearchBar({
         <button
           onClick={toggleBarcodeScanner}
           className={`
-            px-4 py-3 rounded-xl min-h-[48px] transition-all duration-200
+            px-4 py-3 rounded-xl min-h-[48px] transition-all duration-200 ease-out
             flex items-center gap-2 font-medium
+            transform hover:scale-105 active:scale-95
             ${barcodeScannerEnabled
               ? theme === 'dark'
-                ? 'bg-green-600 hover:bg-green-700 text-white border-2 border-green-500'
-                : 'bg-green-500 hover:bg-green-600 text-white border-2 border-green-400'
+                ? 'bg-green-600 hover:bg-green-700 text-white border-2 border-green-500 shadow-lg shadow-green-500/30'
+                : 'bg-green-500 hover:bg-green-600 text-white border-2 border-green-400 shadow-lg shadow-green-400/30'
               : theme === 'dark'
                 ? 'bg-gray-700 hover:bg-gray-600 text-gray-300 border-2 border-gray-600'
                 : 'bg-gray-200 hover:bg-gray-300 text-gray-700 border-2 border-gray-300'
@@ -162,7 +164,8 @@ export function POSSearchBar({
         <button
           onClick={() => onViewModeChange('grid')}
           className={`
-            px-4 py-3 min-h-[48px] transition-colors
+            px-4 py-3 min-h-[48px] transition-all duration-200 ease-out
+            transform active:scale-90
             ${viewMode === 'grid'
               ? theme === 'dark'
                 ? 'bg-primary-600 text-white'
@@ -181,7 +184,8 @@ export function POSSearchBar({
         <button
           onClick={() => onViewModeChange('list')}
           className={`
-            px-4 py-3 min-h-[48px] transition-colors border-l
+            px-4 py-3 min-h-[48px] transition-all duration-200 ease-out border-l
+            transform active:scale-90
             ${theme === 'dark' ? 'border-gray-700' : 'border-gray-300'}
             ${viewMode === 'list'
               ? theme === 'dark'

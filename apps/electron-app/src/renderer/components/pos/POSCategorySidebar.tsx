@@ -123,21 +123,21 @@ export function POSCategorySidebar({
         <button
           onClick={() => onCategorySelect(null)}
           className={`
-            w-full flex items-center gap-3 px-4 py-4 border-b
-            min-h-[56px] transition-colors
+            group w-full flex items-center gap-3 px-4 py-4 border-b
+            min-h-[56px] transition-all duration-200 ease-out
             ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'}
             ${selectedCategoryId === null
               ? theme === 'dark'
                 ? 'bg-primary-900/30 border-l-4 border-l-primary-500'
                 : 'bg-primary-50 border-l-4 border-l-primary-500'
               : theme === 'dark'
-                ? 'hover:bg-gray-750 active:bg-gray-700'
-                : 'hover:bg-gray-50 active:bg-gray-100'
+                ? 'hover:bg-gray-750 active:bg-gray-700 hover:shadow-md'
+                : 'hover:bg-gray-50 active:bg-gray-100 hover:shadow-md'
             }
           `}
         >
           <div className={`
-            flex-shrink-0
+            flex-shrink-0 transition-transform duration-200 group-hover:scale-110
             ${selectedCategoryId === null
               ? theme === 'dark' ? 'text-primary-400' : 'text-primary-600'
               : theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
@@ -169,22 +169,22 @@ export function POSCategorySidebar({
                 key={category.id}
                 onClick={() => onCategorySelect(category.id)}
                 className={`
-                  w-full flex items-center gap-3 px-4 py-4 border-b
-                  min-h-[56px] transition-colors
+                  group w-full flex items-center gap-3 px-4 py-4 border-b
+                  min-h-[56px] transition-all duration-200 ease-out
                   ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'}
                   ${isSelected
                     ? theme === 'dark'
                       ? 'bg-primary-900/30 border-l-4 border-l-primary-500'
                       : 'bg-primary-50 border-l-4 border-l-primary-500'
                     : theme === 'dark'
-                      ? 'hover:bg-gray-750 active:bg-gray-700'
-                      : 'hover:bg-gray-50 active:bg-gray-100'
+                      ? 'hover:bg-gray-750 active:bg-gray-700 hover:shadow-md'
+                      : 'hover:bg-gray-50 active:bg-gray-100 hover:shadow-md'
                   }
                 `}
               >
                 {/* Category Icon */}
                 <div className={`
-                  flex-shrink-0
+                  flex-shrink-0 transition-transform duration-200 group-hover:scale-110
                   ${isSelected
                     ? theme === 'dark' ? 'text-primary-400' : 'text-primary-600'
                     : theme === 'dark' ? 'text-gray-400' : 'text-gray-600'

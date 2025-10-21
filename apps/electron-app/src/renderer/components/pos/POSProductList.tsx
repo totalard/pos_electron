@@ -152,14 +152,14 @@ export function POSProductList({
               onClick={() => !isOutOfStock && onProductClick(product)}
               disabled={isOutOfStock}
               className={`
-                w-full grid grid-cols-12 gap-3 px-4 py-3 border-b
-                min-h-[56px] transition-colors
+                group w-full grid grid-cols-12 gap-3 px-4 py-3 border-b
+                min-h-[56px] transition-all duration-200 ease-out
                 ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'}
                 ${isOutOfStock 
                   ? 'opacity-50 cursor-not-allowed' 
                   : theme === 'dark'
-                    ? 'hover:bg-gray-750 active:bg-gray-700'
-                    : 'hover:bg-gray-50 active:bg-gray-100'
+                    ? 'hover:bg-gray-750 active:bg-gray-700 hover:shadow-md hover:border-gray-600'
+                    : 'hover:bg-gray-50 active:bg-gray-100 hover:shadow-md hover:border-gray-300'
                 }
               `}
             >

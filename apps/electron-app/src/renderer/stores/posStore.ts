@@ -216,6 +216,27 @@ export const usePOSStore = create<POSState>()(
           const newTransactions = state.transactions.filter(t => t.id !== transactionId)
           let newActiveId = state.activeTransactionId
           
+          // If this is the last tab, create a new one instead of deleting
+          if (newTransactions.length === 0) {
+            const id = generateId()
+            const newTransaction: POSTransaction = {
+              id,
+              name: 'Sale #1',
+              items: [],
+              subtotal: 0,
+              tax: 0,
+              discount: 0,
+              total: 0,
+              status: 'active',
+              createdAt: new Date(),
+              updatedAt: new Date()
+            }
+            return {
+              transactions: [newTransaction],
+              activeTransactionId: id
+            }
+          }
+          
           // If deleting active transaction, switch to first available
           if (state.activeTransactionId === transactionId) {
             newActiveId = newTransactions.length > 0 ? newTransactions[0].id : null

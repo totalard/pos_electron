@@ -143,8 +143,9 @@ export function POSCart({
               <div
                 key={item.id}
                 className={`
-                  p-4 transition-colors
+                  p-4 transition-all duration-200 ease-out
                   ${theme === 'dark' ? 'hover:bg-gray-750' : 'hover:bg-gray-50'}
+                  hover:shadow-md
                 `}
               >
                 {/* Item Header */}
@@ -220,14 +221,15 @@ export function POSCart({
                       disabled={item.quantity <= 1}
                       className={`
                         w-10 h-10 rounded-lg flex items-center justify-center
-                        transition-colors
+                        transition-all duration-200 ease-out
+                        transform active:scale-90
                         ${item.quantity <= 1
                           ? theme === 'dark'
                             ? 'bg-gray-800 text-gray-600 cursor-not-allowed'
                             : 'bg-gray-100 text-gray-400 cursor-not-allowed'
                           : theme === 'dark'
-                            ? 'bg-gray-700 hover:bg-gray-600 text-white active:bg-gray-600'
-                            : 'bg-gray-200 hover:bg-gray-300 text-gray-900 active:bg-gray-300'
+                            ? 'bg-gray-700 hover:bg-gray-600 text-white active:bg-gray-600 hover:scale-105'
+                            : 'bg-gray-200 hover:bg-gray-300 text-gray-900 active:bg-gray-400 hover:scale-105'
                         }
                       `}
                     >
@@ -247,7 +249,8 @@ export function POSCart({
                       onClick={() => updateCartItemQuantity(item.id, item.quantity + 1)}
                       className={`
                         w-10 h-10 rounded-lg flex items-center justify-center
-                        transition-colors
+                        transition-all duration-200 ease-out
+                        transform hover:scale-105 active:scale-90
                         ${theme === 'dark'
                           ? 'bg-primary-600 hover:bg-primary-700 text-white active:bg-primary-700'
                           : 'bg-primary-500 hover:bg-primary-600 text-white active:bg-primary-600'
