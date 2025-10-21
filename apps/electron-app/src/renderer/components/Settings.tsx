@@ -12,6 +12,7 @@ import { BackupPanel } from './settings/BackupPanel'
 import { DisplayPanel } from './settings/DisplayPanel'
 import { SecurityPanel } from './settings/SecurityPanel'
 import { UserManagementPanel } from './settings/UserManagementPanel'
+import { DemoDataManager } from './settings/DemoDataManager'
 import { AboutPanel } from './settings/AboutPanel'
 import { PageHeader } from './layout'
 import { SplitLayout } from './layout'
@@ -55,6 +56,8 @@ export function Settings({ onBack }: SettingsProps) {
         return <SecurityPanel />
       case 'users':
         return <UserManagementPanel />
+      case 'demo':
+        return <DemoDataManager />
       case 'about':
         return <AboutPanel />
       default:

@@ -7,6 +7,7 @@ import { SaleScreen } from './components/SaleScreen'
 import { Settings } from './components/Settings'
 import { ProductsScreen } from './components/products'
 import { CustomerManagementScreen } from './components/customers'
+import { InventoryScreen } from './components/inventory'
 import { Walkthrough, defaultWalkthroughSteps } from './components/walkthrough'
 
 const API_BASE_URL = 'http://localhost:8001/api'
@@ -120,18 +121,7 @@ function App() {
       )}
 
       {currentScreen === 'inventory' && (
-        <div className="flex items-center justify-center h-screen">
-          <div className="text-center">
-            <h1 className="text-3xl font-bold mb-4">Inventory Management</h1>
-            <p className="text-gray-600 mb-4">Coming soon...</p>
-            <button
-              onClick={handleBackToDashboard}
-              className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
-            >
-              Back to Dashboard
-            </button>
-          </div>
-        </div>
+        <InventoryScreen onBack={handleBackToDashboard} />
       )}
 
       {currentScreen === 'customers' && (

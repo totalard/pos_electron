@@ -27,3 +27,12 @@ export type { ProductState } from './productStore'
 export { useCustomerStore } from './customerStore'
 export type { CustomerState } from './customerStore'
 
+export { useInventoryStore } from './inventoryStore'
+export type {
+  InventoryState,
+  StockTransaction,
+  StockAdjustment,
+  StockAdjustmentLine,
+  LowStockProduct,
+  InventoryStats
+} from './inventoryStore'

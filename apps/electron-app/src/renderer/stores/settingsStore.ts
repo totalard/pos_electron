@@ -18,6 +18,7 @@ export type SettingsSection =
   | 'display'
   | 'security'
   | 'users'
+  | 'demo'
   | 'about'
 
 // Settings data interfaces
