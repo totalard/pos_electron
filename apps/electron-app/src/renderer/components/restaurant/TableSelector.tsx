@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useAppStore, useSettingsStore, usePOSStore } from '../../stores'
-import { Modal } from '../common'
+import { RightPanel } from '../common'
 
 type TableStatus = 'available' | 'occupied' | 'reserved' | 'cleaning'
 type TableShape = 'square' | 'circle' | 'rectangle'
@@ -74,7 +74,7 @@ export function TableSelector({ isOpen, onClose, onSelectTable }: TableSelectorP
   }
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Select Table" size="xl">
+    <RightPanel isOpen={isOpen} onClose={onClose} title="Select Table" width="lg">
       <div className="space-y-4">
         {/* Floor Tabs */}
         {activeFloors.length > 0 && (
@@ -182,6 +182,6 @@ export function TableSelector({ isOpen, onClose, onSelectTable }: TableSelectorP
           </div>
         </div>
       </div>
-    </Modal>
+    </RightPanel>
   )
 }

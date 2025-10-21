@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAppStore, useAddressStore } from '../../stores'
-import { Modal, Button, Input } from '../common'
+import { RightPanel, Button, Input } from '../common'
 import type { CustomerAddress } from '../../types/restaurant'
 
 interface AddressFormProps {
@@ -156,11 +156,11 @@ export function AddressForm({ isOpen, onClose, address, customerId }: AddressFor
   const labelOptions = ['Home', 'Office', 'Other']
 
   return (
-    <Modal
+    <RightPanel
       isOpen={isOpen}
       onClose={onClose}
-      title={address ? 'Edit Address' : 'New Address'}
-      size="lg"
+      title={address ? 'Edit Address' : 'Add Address'}
+      width="md"
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Customer Name */}
@@ -363,6 +363,6 @@ export function AddressForm({ isOpen, onClose, address, customerId }: AddressFor
           </Button>
         </div>
       </form>
-    </Modal>
+    </RightPanel>
   )
 }

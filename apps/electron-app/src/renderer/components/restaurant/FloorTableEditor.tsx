@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { useAppStore, useSettingsStore } from '../../stores'
-import { Modal } from '../common'
+import { RightPanel } from '../common'
 import type { Floor, Table } from '../../types/restaurant'
 
 interface FloorTableEditorProps {
@@ -235,7 +235,7 @@ export function FloorTableEditor({ isOpen, onClose }: FloorTableEditorProps) {
 
   return (
     <>
-      <Modal isOpen={isOpen} onClose={onClose} title="Floor & Table Editor" size="full">
+      <RightPanel isOpen={isOpen} onClose={onClose} title="Floor & Table Editor" width="lg">
         <div className="flex h-full">
           {/* Left Sidebar - Floor List */}
           <div className={`w-64 border-r p-4 space-y-4 ${theme === 'dark' ? 'border-gray-700 bg-gray-800/50' : 'border-gray-200 bg-gray-50'}`}>
@@ -420,7 +420,7 @@ export function FloorTableEditor({ isOpen, onClose }: FloorTableEditorProps) {
             </div>
           </div>
         </div>
-      </Modal>
+      </RightPanel>
 
       {/* Floor Dialog */}
       {showFloorDialog && (

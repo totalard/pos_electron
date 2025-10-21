@@ -103,7 +103,7 @@ export function Dashboard({ onNavigate, onLock, onLogout }: DashboardProps) {
 
   return (
     <div className={`
-      min-h-screen w-screen p-4
+      h-screen w-screen overflow-y-auto p-4
       ${theme === 'dark'
         ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900'
         : 'bg-gradient-to-br from-gray-50 via-white to-gray-100'

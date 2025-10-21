@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useAppStore, useSettingsStore } from '../../stores'
-import { Modal } from '../common'
+import { RightPanel } from '../common'
 import type { AdditionalCharge, ChargeType, OrderType } from '../../types/restaurant'
 
 interface AdditionalChargesManagerProps {
@@ -100,8 +100,8 @@ export function AdditionalChargesManager({ isOpen, onClose }: AdditionalChargesM
 
   return (
     <>
-      <Modal isOpen={isOpen} onClose={onClose} title="Additional Charges Manager" size="xl">
-        <div className="space-y-4">
+      <RightPanel isOpen={isOpen} onClose={onClose} title="Additional Charges Manager" width="lg">
+        <div className="p-6 space-y-4 overflow-y-auto h-full">
           {/* Header with Add Button */}
           <div className="flex items-center justify-between">
             <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
@@ -249,7 +249,7 @@ export function AdditionalChargesManager({ isOpen, onClose }: AdditionalChargesM
             )}
           </div>
         </div>
-      </Modal>
+      </RightPanel>
 
       {/* Charge Dialog */}
       {showChargeDialog && (
@@ -333,8 +333,8 @@ function ChargeDialog({ isOpen, onClose, onSave, charge }: ChargeDialogProps) {
   }
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={charge ? 'Edit Charge' : 'Add Charge'} size="lg">
-      <form onSubmit={handleSubmit} className="space-y-4">
+    <RightPanel isOpen={isOpen} onClose={onClose} title={charge ? 'Edit Charge' : 'Add Charge'} width="md">
+      <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto h-full">
         <div>
           <label className={`block text-sm font-medium mb-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
             Charge Name *
@@ -506,7 +506,7 @@ function ChargeDialog({ isOpen, onClose, onSave, charge }: ChargeDialogProps) {
           </div>
         </div>
 
-        <div className="flex gap-3 justify-end pt-4 border-t">
+        <div className="flex gap-3 justify-end pt-4 border-t mt-6">
           <button
             type="button"
             onClick={onClose}
@@ -530,6 +530,6 @@ function ChargeDialog({ isOpen, onClose, onSave, charge }: ChargeDialogProps) {
           </button>
         </div>
       </form>
-    </Modal>
+    </RightPanel>
   )
 }

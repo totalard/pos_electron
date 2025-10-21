@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useAppStore, useSettingsStore } from '../../stores'
-import { Modal } from '../common'
+import { RightPanel } from '../common'
 import type { ProductCustomization, CustomizationLevel } from '../../types/restaurant'
 
 interface ProductCustomizationDialogProps {
@@ -72,7 +72,7 @@ export function ProductCustomizationDialog({
   }
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={`Customize ${productName}`} size="lg">
+    <RightPanel isOpen={isOpen} onClose={onClose} title={`Customize ${productName}`} width="md">
       <div className="space-y-6">
         {/* Spicy Level */}
         {restaurant.enableSpicyLevel && (
@@ -201,6 +201,6 @@ export function ProductCustomizationDialog({
           </button>
         </div>
       </div>
-    </Modal>
+    </RightPanel>
   )
 }

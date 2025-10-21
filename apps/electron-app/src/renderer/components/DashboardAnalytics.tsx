@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useAppStore } from '../stores'
 import { dashboardAPI, DashboardStats, SessionTimelineData } from '../services/api'
-import { DateRangePicker, DateRange, StatCard, SalesChart, ChartDataPoint, LoadingSpinner } from './common'
+import { StatCard, SalesChart, ChartDataPoint, LoadingSpinner } from './common'
+import { DateRangePicker } from './forms'
 import { useCurrency } from '../hooks/useCurrency'
 
 export function DashboardAnalytics() {
@@ -10,22 +11,19 @@ export function DashboardAnalytics() {
   const [loading, setLoading] = useState(true)
   const [stats, setStats] = useState<DashboardStats | null>(null)
   const [sessionTimeline, setSessionTimeline] = useState<SessionTimelineData[]>([])
-  const [dateRange, setDateRange] = useState<DateRange>({
-    startDate: new Date(new Date().setDate(new Date().getDate() - 7)),
-    endDate: new Date(),
-    preset: 'Last 7 Days'
-  })
+  const [startDate, setStartDate] = useState<Date | null>(new Date(new Date().setDate(new Date().getDate() - 7)))
+  const [endDate, setEndDate] = useState<Date | null>(new Date())
 
   useEffect(() => {
     loadDashboardData()
-  }, [dateRange])
+  }, [startDate, endDate])
 
   const loadDashboardData = async () => {
     setLoading(true)
     try {
       const params = {
-        start_date: dateRange.startDate?.toISOString(),
-        end_date: dateRange.endDate?.toISOString()
+        start_date: startDate?.toISOString(),
+        end_date: endDate?.toISOString()
       }
 
       const [statsData, timelineData] = await Promise.all([
@@ -64,7 +62,16 @@ export function DashboardAnalytics() {
   return (
     <div className="space-y-6">
       {/* Date Range Picker */}
-      <DateRangePicker value={dateRange} onChange={setDateRange} />
+      <DateRangePicker 
+        startDate={startDate} 
+        endDate={endDate} 
+        onChange={(start, end) => {
+          setStartDate(start)
+          setEndDate(end)
+        }}
+        showPresets
+        clearable
+      />
 
       {/* Sales Metrics */}
       <div>

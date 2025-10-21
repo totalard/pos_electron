@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useAppStore, useAddressStore } from '../../stores'
-import { Modal, Button, Input } from '../common'
+import { RightPanel, Button, Input } from '../common'
 import { AddressForm } from './AddressForm'
 import type { CustomerAddress } from '../../types/restaurant'
 
@@ -67,8 +67,8 @@ export function AddressBookManager({
 
   return (
     <>
-      <Modal isOpen={isOpen} onClose={onClose} title="Address Book" size="2xl">
-        <div className="space-y-4">
+      <RightPanel isOpen={isOpen} onClose={onClose} title="Address Book" width="lg">
+        <div className="p-6 space-y-4 overflow-y-auto h-full">
           {/* Action Bar */}
           <div className="flex flex-wrap gap-3">
             <Button
@@ -273,7 +273,7 @@ export function AddressBookManager({
             )}
           </div>
         </div>
-      </Modal>
+      </RightPanel>
 
       {/* Address Form Dialog */}
       <AddressForm

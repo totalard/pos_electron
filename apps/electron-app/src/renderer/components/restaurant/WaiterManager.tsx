@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useAppStore, useSettingsStore } from '../../stores'
-import { Modal } from '../common'
+import { RightPanel } from '../common'
 import type { Waiter } from '../../types/restaurant'
 
 interface WaiterManagerProps {
@@ -75,8 +75,8 @@ export function WaiterManager({ isOpen, onClose }: WaiterManagerProps) {
 
   return (
     <>
-      <Modal isOpen={isOpen} onClose={onClose} title="Waiter Management" size="xl">
-        <div className="space-y-4">
+      <RightPanel isOpen={isOpen} onClose={onClose} title="Waiter Management" width="lg">
+        <div className="p-6 space-y-4 overflow-y-auto h-full">
           {/* Header with Add Button */}
           <div className="flex items-center justify-between">
             <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
@@ -271,7 +271,7 @@ export function WaiterManager({ isOpen, onClose }: WaiterManagerProps) {
             )}
           </div>
         </div>
-      </Modal>
+      </RightPanel>
 
       {/* Waiter Dialog */}
       {showWaiterDialog && (
@@ -316,8 +316,8 @@ function WaiterDialog({ isOpen, onClose, onSave, waiter }: WaiterDialogProps) {
   }
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={waiter ? 'Edit Waiter' : 'Add Waiter'} size="md">
-      <form onSubmit={handleSubmit} className="space-y-4">
+    <RightPanel isOpen={isOpen} onClose={onClose} title={waiter ? 'Edit Waiter' : 'Add Waiter'} width="md">
+      <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto h-full">
         <div>
           <label className={`block text-sm font-medium mb-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
             Name *
@@ -387,7 +387,7 @@ function WaiterDialog({ isOpen, onClose, onSave, waiter }: WaiterDialogProps) {
           />
         </div>
 
-        <div className="flex gap-3 justify-end pt-4 border-t">
+        <div className="flex gap-3 justify-end pt-4 border-t mt-6">
           <button
             type="button"
             onClick={onClose}
@@ -411,6 +411,6 @@ function WaiterDialog({ isOpen, onClose, onSave, waiter }: WaiterDialogProps) {
           </button>
         </div>
       </form>
-    </Modal>
+    </RightPanel>
   )
 }

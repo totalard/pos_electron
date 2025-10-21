@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import { useAppStore, useReservationStore } from '../../stores'
-import { Modal } from '../common'
+import { RightPanel } from '../common'
 import type { TableReservation } from '../../types/restaurant'
 
 interface ReservationCalendarProps {
@@ -132,7 +132,7 @@ export function ReservationCalendar({ isOpen, onClose, onSelectReservation }: Re
   const dayReservations = selectedDate ? getReservationsByDate(selectedDate) : []
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Reservation Calendar" size="2xl">
+    <RightPanel isOpen={isOpen} onClose={onClose} title="Reservation Calendar" width="lg">
       <div className="space-y-4">
         {/* View Mode Toggle */}
         <div className="flex items-center justify-between gap-4">
@@ -374,6 +374,6 @@ export function ReservationCalendar({ isOpen, onClose, onSelectReservation }: Re
           </div>
         )}
       </div>
-    </Modal>
+    </RightPanel>
   )
 }

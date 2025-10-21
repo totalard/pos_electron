@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAppStore, useReservationStore, useSettingsStore } from '../../stores'
-import { Modal, Button, Input } from '../common'
+import { RightPanel, Button, Input } from '../common'
 import type { TableReservation } from '../../types/restaurant'
 
 interface ReservationFormProps {
@@ -143,11 +143,11 @@ export function ReservationForm({ isOpen, onClose, reservation }: ReservationFor
   const availableTables = restaurant.tables.filter(t => t.status === 'available' || t.id === formData.tableId)
 
   return (
-    <Modal
+    <RightPanel
       isOpen={isOpen}
       onClose={onClose}
       title={reservation ? 'Edit Reservation' : 'New Reservation'}
-      size="lg"
+      width="md"
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Table Selection */}
@@ -356,6 +356,6 @@ export function ReservationForm({ isOpen, onClose, reservation }: ReservationFor
           </Button>
         </div>
       </form>
-    </Modal>
+    </RightPanel>
   )
 }

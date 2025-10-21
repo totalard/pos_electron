@@ -1,5 +1,5 @@
 import { useAppStore, useSettingsStore, usePOSStore } from '../../stores'
-import { Modal } from '../common'
+import { RightPanel } from '../common'
 import type { OrderType } from '../../types/restaurant'
 
 interface OrderTypeSelectorProps {
@@ -77,7 +77,7 @@ export function OrderTypeSelector({ isOpen, onClose, onSelectOrderType }: OrderT
   }
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Select Order Type" size="lg">
+    <RightPanel isOpen={isOpen} onClose={onClose} title="Select Order Type" width="sm">
       <div className="space-y-4">
         {enabledOrderTypes.length > 0 ? (
           <div className="grid grid-cols-2 gap-4">
@@ -136,6 +136,6 @@ export function OrderTypeSelector({ isOpen, onClose, onSelectOrderType }: OrderT
           </div>
         )}
       </div>
-    </Modal>
+    </RightPanel>
   )
 }

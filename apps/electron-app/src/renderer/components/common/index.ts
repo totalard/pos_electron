@@ -60,8 +60,7 @@ export type { ResizablePanelProps } from './ResizablePanel'
 export { InternetStatusIndicator } from './InternetStatusIndicator'
 export type { InternetStatusIndicatorProps } from './InternetStatusIndicator'
 
-export { DateRangePicker } from './DateRangePicker'
-export type { DateRange } from './DateRangePicker'
+// DateRangePicker moved to forms - use import { DateRangePicker } from '../forms' instead
 
 export { StatCard } from './StatCard'
 export type { StatCardProps } from './StatCard'
