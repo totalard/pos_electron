@@ -36,3 +36,11 @@ export type {
   LowStockProduct,
   InventoryStats
 } from './inventoryStore'
+
+export { usePOSStore } from './posStore'
+export type {
+  POSState,
+  CartItem,
+  CartItemModifier,
+  POSTransaction
+} from './posStore'

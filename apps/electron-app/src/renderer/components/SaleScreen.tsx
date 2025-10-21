@@ -1,13 +1,8 @@
-import { useState } from 'react'
-import { useAppStore } from '../stores'
-import { POSHeader, POSFooter } from './pos'
-import { Button, IconButton } from './common'
-
-interface Tab {
-  id: string
-  name: string
-  items: number
-}
+import { useState, useEffect } from 'react'
+import { useAppStore, usePOSStore, useProductStore, useSettingsStore } from '../stores'
+import { POSHeader, POSFooter, POSProductGrid, POSProductList, POSCategorySidebar, POSCart, POSSearchBar, POSActionButton } from './pos'
+import { useBarcodeScanner } from '../hooks'
+import type { EnhancedProduct } from '../services/api'
 
 interface SaleScreenProps {
   onBack: () => void
@@ -15,37 +10,110 @@ interface SaleScreenProps {
 
 export function SaleScreen({ onBack }: SaleScreenProps) {
   const { theme } = useAppStore()
-  const [tabs, setTabs] = useState<Tab[]>([
-    { id: '1', name: 'Sale #1', items: 0 }
-  ])
-  const [activeTabId, setActiveTabId] = useState('1')
+  const { business } = useSettingsStore()
+  const {
+    transactions,
+    activeTransactionId,
+    viewMode,
+    selectedCategoryId,
+    searchQuery,
+    createTransaction,
+    deleteTransaction,
+    setActiveTransaction,
+    setViewMode,
+    setSelectedCategory,
+    setSearchQuery,
+    addToCart,
+    getCartItemCount,
+    getCartSubtotal,
+    getCartTax,
+    getCartTotal
+  } = usePOSStore()
+  const { products, categories, fetchProducts, fetchCategories, lookupByBarcode } = useProductStore()
+  const [isLoadingProducts, setIsLoadingProducts] = useState(false)
 
-  // Mock transaction data
-  const [subtotal] = useState(0)
-  const [tax] = useState(0)
-  const [total] = useState(0)
-  const [itemCount] = useState(0)
-
-  const addNewTab = () => {
-    const newTabId = String(tabs.length + 1)
-    const newTab: Tab = {
-      id: newTabId,
-      name: `Sale #${newTabId}`,
-      items: 0
+  // Initialize first transaction if none exists
+  useEffect(() => {
+    if (transactions.length === 0) {
+      createTransaction()
     }
-    setTabs([...tabs, newTab])
-    setActiveTabId(newTabId)
+  }, [])
+
+  // Load products and categories
+  useEffect(() => {
+    const loadData = async () => {
+      setIsLoadingProducts(true)
+      try {
+        await Promise.all([fetchProducts(), fetchCategories()])
+      } catch (error) {
+        console.error('Failed to load POS data:', error)
+      } finally {
+        setIsLoadingProducts(false)
+      }
+    }
+    loadData()
+  }, [])
+
+  // Auto-set view mode based on business mode
+  useEffect(() => {
+    if (business.mode === 'restaurant' && viewMode !== 'grid') {
+      setViewMode('grid')
+    } else if (business.mode === 'retail' && viewMode !== 'list') {
+      setViewMode('list')
+    }
+  }, [business.mode])
+
+  // Filter products based on category and search
+  const filteredProducts = products.filter(product => {
+    // Filter by active status
+    if (!product.is_active) return false
+
+    // Filter by category
+    if (selectedCategoryId !== null && product.category_id !== selectedCategoryId) {
+      return false
+    }
+
+    // Filter by search query
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase()
+      return (
+        product.name.toLowerCase().includes(query) ||
+        product.sku?.toLowerCase().includes(query) ||
+        product.barcode?.toLowerCase().includes(query) ||
+        product.category_name?.toLowerCase().includes(query)
+      )
+    }
+
+    return true
+  })
+
+  // Transaction data
+  const itemCount = getCartItemCount()
+  const subtotal = getCartSubtotal()
+  const tax = getCartTax()
+  const total = getCartTotal()
+
+  const handleAddNewTab = () => {
+    createTransaction()
   }
 
-  const closeTab = (tabId: string) => {
-    if (tabs.length === 1) return // Don't close the last tab
+  const handleCloseTab = (tabId: string) => {
+    if (transactions.length === 1) return
+    deleteTransaction(tabId)
+  }
 
-    const newTabs = tabs.filter(tab => tab.id !== tabId)
-    setTabs(newTabs)
+  const handleProductClick = (product: EnhancedProduct) => {
+    addToCart(product, 1)
+  }
 
-    // If closing active tab, switch to the first tab
-    if (activeTabId === tabId) {
-      setActiveTabId(newTabs[0].id)
+  const handleBarcodeScan = async (barcode: string) => {
+    try {
+      const product = await lookupByBarcode(barcode)
+      if (product) {
+        addToCart(product, 1)
+      }
+    } catch (error) {
+      console.error('Product not found for barcode:', barcode)
     }
   }
 
@@ -69,6 +137,44 @@ export function SaleScreen({ onBack }: SaleScreenProps) {
     // TODO: Implement park transaction logic
   }
 
+  const handleOpenDrawer = () => {
+    console.log('Open Drawer clicked')
+    // TODO: Implement cash drawer open logic
+  }
+
+  const handleCashIn = () => {
+    console.log('Cash In clicked')
+    // TODO: Implement cash in logic
+  }
+
+  const handleCashOut = () => {
+    console.log('Cash Out clicked')
+    // TODO: Implement cash out logic
+  }
+
+  const handleAddCarryBag = () => {
+    console.log('Add Carry Bag clicked')
+    // TODO: Implement add carry bag to cart logic
+  }
+
+  const handleGiftReceipt = () => {
+    console.log('Gift Receipt clicked')
+    // TODO: Implement gift receipt logic
+  }
+
+  const handleEmailReceipt = () => {
+    console.log('Email Receipt clicked')
+    // TODO: Implement email receipt logic
+  }
+
+  // Barcode scanner integration
+  useBarcodeScanner({
+    onScan: handleBarcodeScan,
+    minLength: 3,
+    timeout: 100,
+    preventOnInputFocus: true
+  })
+
   return (
     <div className={`
       fixed inset-0 z-50 flex flex-col
@@ -79,116 +185,91 @@ export function SaleScreen({ onBack }: SaleScreenProps) {
     `}>
       {/* Header with Tabs and User Info */}
       <POSHeader
-        tabs={tabs.map(tab => ({
-          id: tab.id,
-          name: tab.name,
-          badge: tab.items > 0 ? tab.items : undefined
+        tabs={transactions.map(t => ({
+          id: t.id,
+          name: t.name,
+          badge: t.items.reduce((sum, item) => sum + item.quantity, 0) || undefined
         }))}
-        activeTabId={activeTabId}
-        onTabChange={setActiveTabId}
-        onTabClose={closeTab}
-        onAddTab={addNewTab}
+        activeTabId={activeTransactionId || ''}
+        onTabChange={setActiveTransaction}
+        onTabClose={handleCloseTab}
+        onAddTab={handleAddNewTab}
         closeable
         minTabs={1}
         actions={
-          <IconButton
-            icon={
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            }
-            label="Close POS"
+          <button
             onClick={onBack}
-            variant="ghost"
-            size="sm"
-          />
+            className={`
+              px-3 py-2 rounded-lg transition-colors
+              ${theme === 'dark'
+                ? 'hover:bg-gray-700 text-gray-300'
+                : 'hover:bg-gray-100 text-gray-700'
+              }
+            `}
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
         }
       />
 
-      {/* Main Content - Coming Soon Placeholder */}
-      <main className="flex-1 flex items-center justify-center">
-        <div className="text-center max-w-md mx-auto px-6">
-          {/* Icon */}
+      {/* Main Content - Split Screen Layout (1/3 - 2/3) */}
+      <main className="flex-1 flex overflow-hidden">
+        {/* Left Section (1/3) - Categories */}
+        <div className={`
+          w-1/4 border-r overflow-hidden flex flex-col
+          ${theme === 'dark' ? 'border-gray-700 bg-gray-800/30' : 'border-gray-200 bg-gray-50/50'}
+        `}>
+          <POSCategorySidebar
+            categories={categories}
+            selectedCategoryId={selectedCategoryId}
+            onCategorySelect={setSelectedCategory}
+            isLoading={isLoadingProducts}
+          />
+        </div>
+
+        {/* Middle Section (2/3) - Products */}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {/* Search Bar */}
           <div className={`
-            inline-flex items-center justify-center w-32 h-32 rounded-full mb-8
-            ${theme === 'dark' 
-              ? 'bg-gradient-to-br from-primary-600 to-primary-800' 
-              : 'bg-gradient-to-br from-primary-500 to-primary-700'
-            }
+            px-4 py-3 border-b
+            ${theme === 'dark' ? 'border-gray-700 bg-gray-800/30' : 'border-gray-200 bg-white'}
           `}>
-            <svg className="w-16 h-16 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-            </svg>
+            <POSSearchBar
+              value={searchQuery}
+              onChange={setSearchQuery}
+              onBarcodeScan={handleBarcodeScan}
+              viewMode={viewMode}
+              onViewModeChange={setViewMode}
+              placeholder="Search products by name, SKU, or barcode..."
+            />
           </div>
 
-          {/* Title */}
-          <h1 className={`
-            text-4xl font-bold mb-4
-            ${theme === 'dark' ? 'text-white' : 'text-gray-900'}
-          `}>
-            Coming Soon
-          </h1>
-
-          {/* Description */}
-          <p className={`
-            text-lg mb-8
-            ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}
-          `}>
-            The Point of Sale interface is currently under development. This feature will allow you to:
-          </p>
-
-          {/* Features List */}
-          <ul className={`
-            text-left space-y-3 mb-8
-            ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}
-          `}>
-            <li className="flex items-start gap-3">
-              <svg className="w-6 h-6 text-green-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-              <span>Process sales transactions with multiple items</span>
-            </li>
-            <li className="flex items-start gap-3">
-              <svg className="w-6 h-6 text-green-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-              <span>Handle multiple transactions simultaneously with tabs</span>
-            </li>
-            <li className="flex items-start gap-3">
-              <svg className="w-6 h-6 text-green-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-              <span>Support both keyboard and touch input</span>
-            </li>
-            <li className="flex items-start gap-3">
-              <svg className="w-6 h-6 text-green-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-              <span>Apply discounts and calculate taxes automatically</span>
-            </li>
-            <li className="flex items-start gap-3">
-              <svg className="w-6 h-6 text-green-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-              <span>Print receipts and manage payments</span>
-            </li>
-          </ul>
-
-          {/* Info Badge */}
-          <div className={`
-            inline-flex items-center gap-2 px-4 py-2 rounded-lg
-            ${theme === 'dark'
-              ? 'bg-blue-900/30 border border-blue-800 text-blue-300'
-              : 'bg-blue-50 border border-blue-200 text-blue-700'
-            }
-          `}>
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <span className="text-sm font-medium">
-              This feature will be implemented in the next phase
-            </span>
+          {/* Product Display */}
+          <div className="flex-1 overflow-hidden">
+            {viewMode === 'grid' ? (
+              <POSProductGrid
+                products={filteredProducts}
+                onProductClick={handleProductClick}
+                isLoading={isLoadingProducts}
+              />
+            ) : (
+              <POSProductList
+                products={filteredProducts}
+                onProductClick={handleProductClick}
+                isLoading={isLoadingProducts}
+              />
+            )}
           </div>
+        </div>
+
+        {/* Right Section (1/3) - Cart */}
+        <div className={`
+          w-1/3 border-l overflow-hidden
+          ${theme === 'dark' ? 'border-gray-700 bg-gray-800/30' : 'border-gray-200 bg-white'}
+        `}>
+          <POSCart showCustomer />
         </div>
       </main>
 
@@ -200,39 +281,105 @@ export function SaleScreen({ onBack }: SaleScreenProps) {
         itemCount={itemCount}
         actions={
           <>
-            <Button
+            <POSActionButton
+              label="Open Drawer"
+              variant="warning"
+              size="md"
+              onClick={handleOpenDrawer}
+              icon={
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                </svg>
+              }
+            />
+            <POSActionButton
+              label="Cash In"
+              variant="success"
+              size="md"
+              onClick={handleCashIn}
+              icon={
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+              }
+            />
+            <POSActionButton
+              label="Cash Out"
+              variant="danger"
+              size="md"
+              onClick={handleCashOut}
+              icon={
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+                </svg>
+              }
+            />
+            <POSActionButton
+              label="Carry Bag"
+              variant="info"
+              size="md"
+              onClick={handleAddCarryBag}
+              icon={
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                </svg>
+              }
+            />
+            <POSActionButton
+              label="Discount"
+              variant="secondary"
+              size="md"
               onClick={handleDiscount}
-              variant="secondary"
+              icon={
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                </svg>
+              }
+            />
+            <POSActionButton
+              label="Gift Receipt"
+              variant="purple"
               size="md"
-              className="min-h-[44px]"
-            >
-              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-              </svg>
-              Discount
-            </Button>
-            <Button
+              onClick={handleGiftReceipt}
+              icon={
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
+                </svg>
+              }
+            />
+            <POSActionButton
+              label="Email"
+              variant="info"
+              size="md"
+              onClick={handleEmailReceipt}
+              icon={
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+              }
+            />
+            <POSActionButton
+              label="Void"
+              variant="danger"
+              size="md"
               onClick={handleVoid}
-              variant="secondary"
+              icon={
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              }
+            />
+            <POSActionButton
+              label="Park"
+              variant="warning"
               size="md"
-              className="min-h-[44px]"
-            >
-              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-              </svg>
-              Void
-            </Button>
-            <Button
               onClick={handlePark}
-              variant="secondary"
-              size="md"
-              className="min-h-[44px]"
-            >
-              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
-              </svg>
-              Park
-            </Button>
+              icon={
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                </svg>
+              }
+            />
           </>
         }
         primaryAction={{
