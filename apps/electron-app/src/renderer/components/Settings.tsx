@@ -8,6 +8,7 @@ import { PaymentsPanel } from './settings/PaymentsPanel'
 import { HardwarePanel } from './settings/HardwarePanel'
 import { ReceiptsPanel } from './settings/ReceiptsPanel'
 import { InventoryPanel } from './settings/InventoryPanel'
+import { RestaurantPanel } from './settings/RestaurantPanel'
 import { IntegrationPanel } from './settings/IntegrationPanel'
 import { BackupPanel } from './settings/BackupPanel'
 import { DisplayPanel } from './settings/DisplayPanel'
@@ -49,6 +50,8 @@ export function Settings({ onBack }: SettingsProps) {
         return <ReceiptsPanel />
       case 'inventory':
         return <InventoryPanel />
+      case 'restaurant':
+        return <RestaurantPanel />
       case 'integration':
         return <IntegrationPanel />
       case 'backup':

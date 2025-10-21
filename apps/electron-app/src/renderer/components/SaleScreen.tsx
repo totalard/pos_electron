@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react'
 import { useAppStore, usePOSStore, useProductStore, useSettingsStore } from '../stores'
 import { POSHeader, POSFooter, POSProductGrid, POSProductList, POSCategorySidebar, POSCart, POSSearchBar, POSActionButton, CheckoutModal, DiscountDialog, ItemDiscountDialog, CashManagementDialog, EmailReceiptDialog } from './pos'
+import { TableSelector, OrderTypeSelector, ProductCustomizationDialog } from './restaurant'
 import { ConfirmDialog } from './common/ConfirmDialog'
 import { useBarcodeScanner } from '../hooks'
 import type { EnhancedProduct } from '../services/api'
+import type { OrderType, ProductCustomization } from '../types/restaurant'
 
 interface SaleScreenProps {
   onBack: () => void
@@ -11,7 +13,7 @@ interface SaleScreenProps {
 
 export function SaleScreen({ onBack }: SaleScreenProps) {
   const { theme } = useAppStore()
-  const { business } = useSettingsStore()
+  const { business, restaurant } = useSettingsStore()
   const {
     transactions,
     activeTransactionId,
@@ -33,7 +35,10 @@ export function SaleScreen({ onBack }: SaleScreenProps) {
     getCartItemCount,
     getCartSubtotal,
     getCartTax,
-    getCartTotal
+    getCartTotal,
+    setOrderType,
+    setTable,
+    updateCartItemCustomization
   } = usePOSStore()
   const { products, categories, fetchProducts, fetchCategories, lookupByBarcode } = useProductStore()
   const [isLoadingProducts, setIsLoadingProducts] = useState(false)
@@ -51,6 +56,13 @@ export function SaleScreen({ onBack }: SaleScreenProps) {
   const [showPriceOverrideDialog, setShowPriceOverrideDialog] = useState(false)
   const [showQuantityDialog, setShowQuantityDialog] = useState(false)
   const [giftReceiptMode, setGiftReceiptMode] = useState(false)
+  
+  // Restaurant dialog states
+  const [showOrderTypeSelector, setShowOrderTypeSelector] = useState(false)
+  const [showTableSelector, setShowTableSelector] = useState(false)
+  const [showProductCustomization, setShowProductCustomization] = useState(false)
+  const [selectedProductForCustomization, setSelectedProductForCustomization] = useState<EnhancedProduct | null>(null)
+  const [selectedCartItemForCustomization, setSelectedCartItemForCustomization] = useState<string | null>(null)
 
   // Initialize first transaction if none exists
   useEffect(() => {
@@ -269,6 +281,25 @@ export function SaleScreen({ onBack }: SaleScreenProps) {
   const handleQuantity = () => {
     if (itemCount === 0) return
     setShowQuantityDialog(true)
+  }
+
+  // Restaurant-specific handlers
+  const handleOrderTypeSelect = (orderType: OrderType) => {
+    setOrderType(orderType)
+    // If dine-in is selected and table management is enabled, show table selector
+    if (orderType === 'dine-in' && business.enableTableManagement && restaurant.tables.length > 0) {
+      setShowTableSelector(true)
+    }
+  }
+
+  const handleTableSelect = (table: any, floor: any) => {
+    setTable(table.id, table.name, floor.id, floor.name)
+  }
+
+  const handleProductCustomization = (customization: ProductCustomization, note?: string) => {
+    if (selectedCartItemForCustomization) {
+      updateCartItemCustomization(selectedCartItemForCustomization, customization)
+    }
   }
 
   // Barcode scanner integration
@@ -626,6 +657,36 @@ export function SaleScreen({ onBack }: SaleScreenProps) {
         cancelText="Cancel"
         variant="warning"
       />
+
+      {/* Restaurant Dialogs */}
+      {business.mode === 'restaurant' && (
+        <>
+          <OrderTypeSelector
+            isOpen={showOrderTypeSelector}
+            onClose={() => setShowOrderTypeSelector(false)}
+            onSelectOrderType={handleOrderTypeSelect}
+          />
+
+          <TableSelector
+            isOpen={showTableSelector}
+            onClose={() => setShowTableSelector(false)}
+            onSelectTable={handleTableSelect}
+          />
+
+          {selectedProductForCustomization && (
+            <ProductCustomizationDialog
+              isOpen={showProductCustomization}
+              onClose={() => {
+                setShowProductCustomization(false)
+                setSelectedProductForCustomization(null)
+                setSelectedCartItemForCustomization(null)
+              }}
+              onSave={handleProductCustomization}
+              productName={selectedProductForCustomization.name}
+            />
+          )}
+        </>
+      )}
     </div>
   )
 }

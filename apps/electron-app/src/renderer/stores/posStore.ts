@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { EnhancedProduct } from '../services/api'
+import type { ProductCustomization, RestaurantOrderMetadata, OrderType, OrderStatus } from '../types/restaurant'
 
 /**
  * Cart item with modifiers and customizations
@@ -19,6 +20,10 @@ export interface CartItem {
   modifiers?: CartItemModifier[]
   variationId?: number
   variationName?: string
+  // Restaurant-specific fields
+  customization?: ProductCustomization
+  courseName?: string // e.g., 'Appetizer', 'Main Course', 'Dessert'
+  kitchenStatus?: OrderStatus
 }
 
 /**
@@ -47,6 +52,8 @@ export interface POSTransaction {
   createdAt: Date
   updatedAt: Date
   note?: string
+  // Restaurant-specific fields
+  restaurantMetadata?: RestaurantOrderMetadata
 }
 
 /**
@@ -71,6 +78,12 @@ export interface POSState {
   showCustomerSelector: boolean
   showDiscountDialog: boolean
   selectedCartItemId: string | null
+  
+  // Restaurant-specific state
+  showOrderTypeSelector: boolean
+  showTableSelector: boolean
+  showProductCustomization: boolean
+  selectedProductForCustomization: string | null
   
   // Actions - Transaction Management
   createTransaction: (name?: string) => string
@@ -113,6 +126,18 @@ export interface POSState {
   setShowCustomerSelector: (show: boolean) => void
   setShowDiscountDialog: (show: boolean) => void
   setSelectedCartItem: (itemId: string | null) => void
+  
+  // Actions - Restaurant Features
+  setOrderType: (orderType: OrderType) => void
+  setTable: (tableId: string, tableName: string, floorId?: string, floorName?: string) => void
+  clearTable: () => void
+  updateCartItemCustomization: (itemId: string, customization: ProductCustomization) => void
+  setShowOrderTypeSelector: (show: boolean) => void
+  setShowTableSelector: (show: boolean) => void
+  setShowProductCustomization: (show: boolean) => void
+  setSelectedProductForCustomization: (productId: string | null) => void
+  addAdditionalCharge: (chargeId: string, name: string, amount: number) => void
+  removeAdditionalCharge: (chargeId: string) => void
   
   // Computed getters
   getActiveTransaction: () => POSTransaction | null
@@ -178,7 +203,11 @@ const initialState = {
   showNumpad: false,
   showCustomerSelector: false,
   showDiscountDialog: false,
-  selectedCartItemId: null
+  selectedCartItemId: null,
+  showOrderTypeSelector: false,
+  showTableSelector: false,
+  showProductCustomization: false,
+  selectedProductForCustomization: null
 }
 
 /**
@@ -561,6 +590,200 @@ export const usePOSStore = create<POSState>()(
       
       setSelectedCartItem: (itemId: string | null) => {
         set({ selectedCartItemId: itemId })
+      },
+      
+      // Restaurant Features
+      setOrderType: (orderType: OrderType) => {
+        set(state => {
+          const transaction = state.transactions.find(t => t.id === state.activeTransactionId)
+          if (!transaction) return state
+          
+          const updatedTransaction = {
+            ...transaction,
+            restaurantMetadata: {
+              ...transaction.restaurantMetadata,
+              orderType,
+              orderStatus: 'pending' as OrderStatus,
+              additionalCharges: transaction.restaurantMetadata?.additionalCharges || []
+            },
+            updatedAt: new Date()
+          }
+          
+          return {
+            transactions: state.transactions.map(t =>
+              t.id === state.activeTransactionId ? updatedTransaction : t
+            )
+          }
+        })
+      },
+      
+      setTable: (tableId: string, tableName: string, floorId?: string, floorName?: string) => {
+        set(state => {
+          const transaction = state.transactions.find(t => t.id === state.activeTransactionId)
+          if (!transaction) return state
+          
+          const updatedTransaction = {
+            ...transaction,
+            restaurantMetadata: {
+              ...transaction.restaurantMetadata,
+              orderType: transaction.restaurantMetadata?.orderType || 'dine-in' as OrderType,
+              orderStatus: transaction.restaurantMetadata?.orderStatus || 'pending' as OrderStatus,
+              tableId,
+              tableName,
+              floorId,
+              floorName,
+              additionalCharges: transaction.restaurantMetadata?.additionalCharges || []
+            },
+            updatedAt: new Date()
+          }
+          
+          return {
+            transactions: state.transactions.map(t =>
+              t.id === state.activeTransactionId ? updatedTransaction : t
+            )
+          }
+        })
+      },
+      
+      clearTable: () => {
+        set(state => {
+          const transaction = state.transactions.find(t => t.id === state.activeTransactionId)
+          if (!transaction || !transaction.restaurantMetadata) return state
+          
+          const updatedTransaction = {
+            ...transaction,
+            restaurantMetadata: {
+              ...transaction.restaurantMetadata,
+              tableId: undefined,
+              tableName: undefined,
+              floorId: undefined,
+              floorName: undefined
+            },
+            updatedAt: new Date()
+          }
+          
+          return {
+            transactions: state.transactions.map(t =>
+              t.id === state.activeTransactionId ? updatedTransaction : t
+            )
+          }
+        })
+      },
+      
+      updateCartItemCustomization: (itemId: string, customization: ProductCustomization) => {
+        set(state => {
+          const transaction = state.transactions.find(t => t.id === state.activeTransactionId)
+          if (!transaction) return state
+          
+          const updatedItems = transaction.items.map(item =>
+            item.id === itemId ? { ...item, customization } : item
+          )
+          
+          const updatedTransaction = recalculateTransaction({
+            ...transaction,
+            items: updatedItems
+          })
+          
+          return {
+            transactions: state.transactions.map(t =>
+              t.id === state.activeTransactionId ? updatedTransaction : t
+            )
+          }
+        })
+      },
+      
+      setShowOrderTypeSelector: (show: boolean) => {
+        set({ showOrderTypeSelector: show })
+      },
+      
+      setShowTableSelector: (show: boolean) => {
+        set({ showTableSelector: show })
+      },
+      
+      setShowProductCustomization: (show: boolean) => {
+        set({ showProductCustomization: show })
+      },
+      
+      setSelectedProductForCustomization: (productId: string | null) => {
+        set({ selectedProductForCustomization: productId })
+      },
+      
+      addAdditionalCharge: (chargeId: string, name: string, amount: number) => {
+        set(state => {
+          const transaction = state.transactions.find(t => t.id === state.activeTransactionId)
+          if (!transaction) return state
+          
+          const existingCharges = transaction.restaurantMetadata?.additionalCharges || []
+          const chargeExists = existingCharges.some(c => c.chargeId === chargeId)
+          
+          if (chargeExists) return state
+          
+          const updatedTransaction = {
+            ...transaction,
+            restaurantMetadata: {
+              ...transaction.restaurantMetadata,
+              orderType: transaction.restaurantMetadata?.orderType || 'dine-in' as OrderType,
+              orderStatus: transaction.restaurantMetadata?.orderStatus || 'pending' as OrderStatus,
+              additionalCharges: [
+                ...existingCharges,
+                { chargeId, name, amount }
+              ]
+            },
+            updatedAt: new Date()
+          }
+          
+          // Recalculate totals with additional charges
+          const subtotal = updatedTransaction.items.reduce((sum, item) => sum + item.subtotal, 0)
+          const chargesTotal = updatedTransaction.restaurantMetadata.additionalCharges.reduce((sum, c) => sum + c.amount, 0)
+          const tax = (subtotal + chargesTotal) * 0.08
+          const total = subtotal + chargesTotal + tax - updatedTransaction.discount
+          
+          return {
+            transactions: state.transactions.map(t =>
+              t.id === state.activeTransactionId ? {
+                ...updatedTransaction,
+                subtotal: subtotal + chargesTotal,
+                tax,
+                total
+              } : t
+            )
+          }
+        })
+      },
+      
+      removeAdditionalCharge: (chargeId: string) => {
+        set(state => {
+          const transaction = state.transactions.find(t => t.id === state.activeTransactionId)
+          if (!transaction || !transaction.restaurantMetadata) return state
+          
+          const updatedTransaction = {
+            ...transaction,
+            restaurantMetadata: {
+              ...transaction.restaurantMetadata,
+              additionalCharges: transaction.restaurantMetadata.additionalCharges.filter(
+                c => c.chargeId !== chargeId
+              )
+            },
+            updatedAt: new Date()
+          }
+          
+          // Recalculate totals without the removed charge
+          const subtotal = updatedTransaction.items.reduce((sum, item) => sum + item.subtotal, 0)
+          const chargesTotal = updatedTransaction.restaurantMetadata.additionalCharges.reduce((sum, c) => sum + c.amount, 0)
+          const tax = (subtotal + chargesTotal) * 0.08
+          const total = subtotal + chargesTotal + tax - updatedTransaction.discount
+          
+          return {
+            transactions: state.transactions.map(t =>
+              t.id === state.activeTransactionId ? {
+                ...updatedTransaction,
+                subtotal: subtotal + chargesTotal,
+                tax,
+                total
+              } : t
+            )
+          }
+        })
       },
       
       // Computed getters

@@ -14,6 +14,7 @@ export type SettingsSection =
   | 'hardware'
   | 'receipts'
   | 'inventory'
+  | 'restaurant'
   | 'integration'
   | 'backup'
   | 'display'
@@ -289,6 +290,69 @@ export interface InventorySettings {
   enableSizeColorTracking: boolean
 }
 
+export interface RestaurantSettings {
+  // Floor & Table Management
+  floors: Array<{
+    id: string
+    name: string
+    description?: string
+    order: number
+    isActive: boolean
+  }>
+  tables: Array<{
+    id: string
+    floorId: string
+    name: string
+    capacity: number
+    status: 'available' | 'occupied' | 'reserved' | 'cleaning'
+    position?: { x: number; y: number }
+    shape?: 'square' | 'circle' | 'rectangle'
+  }>
+  
+  // Order Type Configuration
+  enableDineIn: boolean
+  enableTakeaway: boolean
+  enableDelivery: boolean
+  enableDriveThru: boolean
+  defaultOrderType: 'dine-in' | 'takeaway' | 'delivery' | 'drive-thru'
+  
+  // Additional Charges
+  additionalCharges: Array<{
+    id: string
+    type: 'parcel' | 'delivery' | 'service' | 'packaging' | 'custom'
+    name: string
+    amount: number
+    isPercentage: boolean
+    isOptional: boolean
+    applicableOrderTypes: Array<'dine-in' | 'takeaway' | 'delivery' | 'drive-thru'>
+    isActive: boolean
+    description?: string
+  }>
+  
+  // Product Customization
+  enableProductNotes: boolean
+  enableSpicyLevel: boolean
+  enableSaltLevel: boolean
+  enableCookingPreferences: boolean
+  customizationOptions: {
+    spicyLevels: string[]
+    saltLevels: string[]
+    cookingPreferences: string[]
+  }
+  
+  // Kitchen Management
+  enableKitchenOrders: boolean
+  enableCourseManagement: boolean
+  courses: string[] // e.g., ['Appetizer', 'Main Course', 'Dessert']
+  defaultPrepTime: number // in minutes
+  
+  // Table Service
+  enableTableService: boolean
+  enableWaiterAssignment: boolean
+  enableGuestCount: boolean
+  autoReleaseTableTime: number // in minutes
+}
+
 export interface IntegrationSettings {
   enableCloudSync: boolean
   cloudSyncInterval: number
@@ -384,6 +448,7 @@ export interface SettingsState {
   hardware: HardwareSettings
   receipts: ReceiptSettings
   inventory: InventorySettings
+  restaurant: RestaurantSettings
   integration: IntegrationSettings
   backup: BackupSettings
   display: DisplaySettings
@@ -405,6 +470,7 @@ export interface SettingsState {
   updateHardwareSettings: (settings: Partial<HardwareSettings>) => Promise<void>
   updateReceiptSettings: (settings: Partial<ReceiptSettings>) => Promise<void>
   updateInventorySettings: (settings: Partial<InventorySettings>) => Promise<void>
+  updateRestaurantSettings: (settings: Partial<RestaurantSettings>) => Promise<void>
   updateIntegrationSettings: (settings: Partial<IntegrationSettings>) => Promise<void>
   updateBackupSettings: (settings: Partial<BackupSettings>) => Promise<void>
   updateDisplaySettings: (settings: Partial<DisplaySettings>) => Promise<void>
@@ -707,6 +773,79 @@ const initialState = {
     enableSizeColorTracking: false
   },
 
+  restaurant: {
+    // Floor & Table Management
+    floors: [],
+    tables: [],
+    
+    // Order Type Configuration
+    enableDineIn: true,
+    enableTakeaway: true,
+    enableDelivery: true,
+    enableDriveThru: false,
+    defaultOrderType: 'dine-in' as const,
+    
+    // Additional Charges
+    additionalCharges: [
+      {
+        id: 'parcel-charge',
+        type: 'parcel' as const,
+        name: 'Parcel Charge',
+        amount: 5,
+        isPercentage: false,
+        isOptional: true,
+        applicableOrderTypes: ['takeaway' as const, 'delivery' as const],
+        isActive: true,
+        description: 'Packaging charge for takeaway and delivery orders'
+      },
+      {
+        id: 'delivery-charge',
+        type: 'delivery' as const,
+        name: 'Delivery Charge',
+        amount: 20,
+        isPercentage: false,
+        isOptional: false,
+        applicableOrderTypes: ['delivery' as const],
+        isActive: true,
+        description: 'Standard delivery charge'
+      },
+      {
+        id: 'service-charge',
+        type: 'service' as const,
+        name: 'Service Charge',
+        amount: 10,
+        isPercentage: true,
+        isOptional: false,
+        applicableOrderTypes: ['dine-in' as const],
+        isActive: false,
+        description: 'Service charge for dine-in orders'
+      }
+    ],
+    
+    // Product Customization
+    enableProductNotes: true,
+    enableSpicyLevel: true,
+    enableSaltLevel: true,
+    enableCookingPreferences: true,
+    customizationOptions: {
+      spicyLevels: ['None', 'Mild', 'Medium', 'Hot', 'Extra Hot'],
+      saltLevels: ['None', 'Low', 'Medium', 'High'],
+      cookingPreferences: ['Well Done', 'Medium', 'Rare', 'No Oil', 'Extra Crispy']
+    },
+    
+    // Kitchen Management
+    enableKitchenOrders: true,
+    enableCourseManagement: true,
+    courses: ['Appetizer', 'Soup', 'Salad', 'Main Course', 'Side Dish', 'Dessert', 'Beverage'],
+    defaultPrepTime: 15,
+    
+    // Table Service
+    enableTableService: true,
+    enableWaiterAssignment: false,
+    enableGuestCount: true,
+    autoReleaseTableTime: 120
+  },
+
   integration: {
     enableCloudSync: false,
     cloudSyncInterval: 60,
@@ -873,6 +1012,19 @@ export const useSettingsStore = create<SettingsState>()(
         } catch (error) {
           console.error('Failed to update inventory settings:', error)
           set({ inventory: currentState.inventory })
+        }
+      },
+
+      updateRestaurantSettings: async (settings: Partial<RestaurantSettings>) => {
+        const currentState = get()
+        const updatedRestaurant = { ...currentState.restaurant, ...settings }
+        set({ restaurant: updatedRestaurant })
+
+        try {
+          await settingsAPI.updateSettings({ restaurant: updatedRestaurant })
+        } catch (error) {
+          console.error('Failed to update restaurant settings:', error)
+          set({ restaurant: currentState.restaurant })
         }
       },
 

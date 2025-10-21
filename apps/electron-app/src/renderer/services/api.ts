@@ -590,6 +590,75 @@ export interface TaxSettings {
   enableMultipleTaxRates: boolean
 }
 
+export interface PaymentSettings {
+  methods: Array<{
+    id: string
+    name: string
+    enabled: boolean
+    icon: string
+    requiresTerminal: boolean
+    allowPartialPayment: boolean
+    order: number
+  }>
+  enableSplitPayment: boolean
+  enableTipping: boolean
+  defaultTipPercentages: number[]
+  cashRoundingEnabled: boolean
+  cashRoundingAmount: number
+}
+
+export interface RestaurantSettings {
+  floors: Array<{
+    id: string
+    name: string
+    description?: string
+    order: number
+    isActive: boolean
+  }>
+  tables: Array<{
+    id: string
+    floorId: string
+    name: string
+    capacity: number
+    status: 'available' | 'occupied' | 'reserved' | 'cleaning'
+    position?: { x: number; y: number }
+    shape?: 'square' | 'circle' | 'rectangle'
+  }>
+  enableDineIn: boolean
+  enableTakeaway: boolean
+  enableDelivery: boolean
+  enableDriveThru: boolean
+  defaultOrderType: 'dine-in' | 'takeaway' | 'delivery' | 'drive-thru'
+  additionalCharges: Array<{
+    id: string
+    type: 'parcel' | 'delivery' | 'service' | 'packaging' | 'custom'
+    name: string
+    amount: number
+    isPercentage: boolean
+    isOptional: boolean
+    applicableOrderTypes: Array<'dine-in' | 'takeaway' | 'delivery' | 'drive-thru'>
+    isActive: boolean
+    description?: string
+  }>
+  enableProductNotes: boolean
+  enableSpicyLevel: boolean
+  enableSaltLevel: boolean
+  enableCookingPreferences: boolean
+  customizationOptions: {
+    spicyLevels: string[]
+    saltLevels: string[]
+    cookingPreferences: string[]
+  }
+  enableKitchenOrders: boolean
+  enableCourseManagement: boolean
+  courses: string[]
+  defaultPrepTime: number
+  enableTableService: boolean
+  enableWaiterAssignment: boolean
+  enableGuestCount: boolean
+  autoReleaseTableTime: number
+}
+
 export interface HardwareSettings {
   printerEnabled: boolean
   printerName: string
@@ -660,9 +729,11 @@ export interface Settings {
   general: GeneralSettings
   business: BusinessSettings
   taxes: TaxSettings
+  payments: PaymentSettings
   hardware: HardwareSettings
   receipts: ReceiptSettings
   inventory: InventorySettings
+  restaurant: RestaurantSettings
   integration: IntegrationSettings
   backup: BackupSettings
   display: DisplaySettings
@@ -676,9 +747,11 @@ export interface SettingsUpdate {
   general?: Partial<GeneralSettings>
   business?: Partial<BusinessSettings>
   taxes?: Partial<TaxSettings>
+  payments?: Partial<PaymentSettings>
   hardware?: Partial<HardwareSettings>
   receipts?: Partial<ReceiptSettings>
   inventory?: Partial<InventorySettings>
+  restaurant?: Partial<RestaurantSettings>
   integration?: Partial<IntegrationSettings>
   backup?: Partial<BackupSettings>
   display?: Partial<DisplaySettings>
