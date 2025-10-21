@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useAppStore, useCustomerStore, usePinStore } from '../../stores'
+import { useAppStore, useCustomerStore } from '../../stores'
 import { RightPanel, Input, Button, Badge } from '../common'
 import { FormField } from '../forms'
 import { CustomerStatementPanel } from './CustomerStatementPanel'
@@ -14,7 +14,6 @@ interface CustomerDetailPanelProps {
 
 export function CustomerDetailPanel({ customer, mode, onClose, onSuccess }: CustomerDetailPanelProps) {
   const { theme } = useAppStore()
-  const { currentUser } = usePinStore()
   const { createCustomer, updateCustomer, addCredit, recordPayment, updateCreditLimit, adjustLoyaltyPoints } = useCustomerStore()
 
   const [formData, setFormData] = useState({
@@ -188,47 +187,80 @@ export function CustomerDetailPanel({ customer, mode, onClose, onSuccess }: Cust
         <div className="flex-1 overflow-y-auto">
           {/* Details Tab */}
           {(mode !== 'view' || activeTab === 'details') && (
-            <div className="space-y-4">
-              <FormField label="Customer Name" required>
-                <Input
-                  type="text"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="Enter customer name"
-                  disabled={mode === 'view'}
-                  required
-                />
-              </FormField>
+            <div className="space-y-6">
+              {/* Form Header for Add/Edit Mode */}
+              {mode !== 'view' && (
+                <div className={`
+                  p-4 rounded-lg
+                  ${theme === 'dark' ? 'bg-blue-500/10 border border-blue-500/30' : 'bg-blue-50 border border-blue-200'}
+                `}>
+                  <div className="flex items-start gap-3">
+                    <svg className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div>
+                      <p className={`text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                        {mode === 'add' ? 'Create New Customer' : 'Update Customer Information'}
+                      </p>
+                      <p className={`text-xs mt-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
+                        {mode === 'add' ? 'Fill in the customer details below to add them to your system.' : 'Modify the fields below to update customer information.'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+              {/* Basic Information Section */}
+              <div className={`
+                p-5 rounded-lg space-y-4
+                ${theme === 'dark' ? 'bg-gray-800/50 border border-gray-700' : 'bg-gray-50 border border-gray-200'}
+              `}>
+                <h4 className={`text-sm font-semibold mb-3 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                  Basic Information
+                </h4>
+                
+                <FormField label="Customer Name" required>
+                  <Input
+                    type="text"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    placeholder="Enter full name"
+                    disabled={mode === 'view'}
+                    required
+                  />
+                </FormField>
 
-              <FormField label="Phone">
-                <Input
-                  type="tel"
-                  value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  placeholder="Enter phone number"
-                  disabled={mode === 'view'}
-                />
-              </FormField>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField label="Phone">
+                    <Input
+                      type="tel"
+                      value={formData.phone}
+                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                      placeholder="+1 (555) 000-0000"
+                      disabled={mode === 'view'}
+                    />
+                  </FormField>
 
-              <FormField label="Email">
-                <Input
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  placeholder="Enter email address"
-                  disabled={mode === 'view'}
-                />
-              </FormField>
+                  <FormField label="Email">
+                    <Input
+                      type="email"
+                      value={formData.email}
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      placeholder="customer@example.com"
+                      disabled={mode === 'view'}
+                    />
+                  </FormField>
+                </div>
 
-              <FormField label="Address">
-                <Input
-                  type="text"
-                  value={formData.address}
-                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                  placeholder="Enter address"
-                  disabled={mode === 'view'}
-                />
-              </FormField>
+                <FormField label="Address">
+                  <Input
+                    type="text"
+                    value={formData.address}
+                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                    placeholder="Street address, City, State, ZIP"
+                    disabled={mode === 'view'}
+                  />
+                </FormField>
+              </div>
 
               {mode !== 'add' && (
                 <FormField label="Credit Limit">
@@ -344,7 +376,7 @@ export function CustomerDetailPanel({ customer, mode, onClose, onSuccess }: Cust
                   />
                 </FormField>
                 <Button
-                  variant="success"
+                  variant="primary"
                   onClick={handleRecordPayment}
                   disabled={!paymentAmount || isSubmitting}
                   className="w-full min-h-[44px]"

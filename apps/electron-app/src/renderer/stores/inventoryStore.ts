@@ -225,7 +225,11 @@ export const useInventoryStore = create<InventoryState>()(
           if (transactionFilters.dateTo) params.append('date_to', transactionFilters.dateTo)
 
           const response = await fetch(`${API_BASE_URL}/products/stock-transactions?${params}`)
-          if (!response.ok) throw new Error('Failed to fetch transactions')
+          
+          if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ detail: 'Unknown error' }))
+            throw new Error(errorData.detail || `HTTP ${response.status}: Failed to fetch transactions`)
+          }
 
           const transactions = await response.json()
 
