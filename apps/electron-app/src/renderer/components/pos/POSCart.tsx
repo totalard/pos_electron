@@ -170,13 +170,13 @@ export function POSCart({
           {/* Subtotal */}
           <div className="flex items-center justify-between">
             <span className={`
-              text-sm
+              text-sm font-mono
               ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}
             `}>
               Subtotal
             </span>
             <span className={`
-              text-sm font-semibold
+              text-sm font-mono font-semibold
               ${theme === 'dark' ? 'text-gray-200' : 'text-gray-800'}
             `}>
               {formatCurrency(transaction.subtotal)}
@@ -187,12 +187,12 @@ export function POSCart({
           {transaction.discount > 0 && (
             <div className="flex items-center justify-between">
               <span className={`
-                text-sm
+                text-sm font-mono
                 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}
               `}>
                 Discount
               </span>
-              <span className="text-sm font-semibold text-red-500">
+              <span className="text-sm font-mono font-semibold text-red-500">
                 -{formatCurrency(transaction.discount)}
               </span>
             </div>
@@ -201,13 +201,13 @@ export function POSCart({
           {/* Tax */}
           <div className="flex items-center justify-between">
             <span className={`
-              text-sm
+              text-sm font-mono
               ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}
             `}>
               Tax
             </span>
             <span className={`
-              text-sm font-semibold
+              text-sm font-mono font-semibold
               ${theme === 'dark' ? 'text-gray-200' : 'text-gray-800'}
             `}>
               {formatCurrency(transaction.tax)}
@@ -220,13 +220,13 @@ export function POSCart({
             ${theme === 'dark' ? 'border-gray-700' : 'border-gray-300'}
           `}>
             <span className={`
-              text-base font-bold
+              text-base font-mono font-bold
               ${theme === 'dark' ? 'text-white' : 'text-gray-900'}
             `}>
               Total
             </span>
             <span className={`
-              text-xl font-bold
+              text-xl font-mono font-bold
               ${theme === 'dark' ? 'text-primary-400' : 'text-primary-600'}
             `}>
               {formatCurrency(transaction.total)}

@@ -16,12 +16,14 @@ export function SaleScreen({ onBack }: SaleScreenProps) {
     transactions,
     activeTransactionId,
     viewMode,
+    categoryViewMode,
     selectedCategoryId,
     searchQuery,
     createTransaction,
     deleteTransaction,
     setActiveTransaction,
     setViewMode,
+    setCategoryViewMode,
     setSelectedCategory,
     setSearchQuery,
     addToCart,
@@ -328,6 +330,8 @@ export function SaleScreen({ onBack }: SaleScreenProps) {
             categories={categories}
             selectedCategoryId={selectedCategoryId}
             onCategorySelect={setSelectedCategory}
+            viewMode={categoryViewMode}
+            onViewModeChange={setCategoryViewMode}
             isLoading={isLoadingProducts}
           />
         </div>

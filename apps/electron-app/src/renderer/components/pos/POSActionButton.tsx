@@ -95,18 +95,18 @@ export function POSActionButton({
     onClick?.(e)
   }
 
-  // Consistent height, variable width - touch-safe (min 44px height)
+  // Square layout - touch-safe (min 80x80px for md)
   const sizeClasses = {
-    sm: 'h-10 px-3 text-xs',
-    md: 'h-11 px-4 text-sm',
-    lg: 'h-12 px-5 text-base'
+    sm: 'w-16 h-16 text-xs',
+    md: 'w-20 h-20 text-xs',
+    lg: 'w-24 h-24 text-sm'
   }
 
   // Icon size classes
   const iconSizeClasses = {
-    sm: 'w-4 h-4',
-    md: 'w-5 h-5',
-    lg: 'w-6 h-6'
+    sm: 'w-5 h-5',
+    md: 'w-6 h-6',
+    lg: 'w-8 h-8'
   }
 
   // Unified professional variant classes with subtle theme support
@@ -143,8 +143,8 @@ export function POSActionButton({
     hover:shadow-lg active:shadow-sm
     focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-opacity-50
     disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:translate-y-0
-    flex items-center justify-center gap-2
-    border relative overflow-hidden whitespace-nowrap
+    flex flex-col items-center justify-center gap-1
+    border relative overflow-hidden
     ${fullWidth ? 'w-full' : ''}
     ${sizeClasses[size]}
     ${variantClasses[variant]}
@@ -177,17 +177,17 @@ export function POSActionButton({
       {isLoading ? (
         <>
           <div className={`animate-spin rounded-full border-2 border-current border-t-transparent ${iconSizeClasses[size]}`} />
-          <span className="font-semibold">Loading...</span>
+          <span className="font-semibold text-center mt-1">Loading</span>
         </>
       ) : (
         <>
-          {/* Icon on left */}
+          {/* Icon on top */}
           <span className={`flex-shrink-0 ${iconSizeClasses[size]} transition-transform duration-300 group-hover:scale-110`}>
             {icon}
           </span>
           
-          {/* Label on right */}
-          <span className="font-semibold leading-tight text-center px-1">
+          {/* Label on bottom */}
+          <span className="font-semibold leading-tight text-center px-1 break-words max-w-full">
             {label}
           </span>
           

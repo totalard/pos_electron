@@ -11,6 +11,10 @@ export interface POSCategorySidebarProps {
   selectedCategoryId: number | null
   /** Category selection handler */
   onCategorySelect: (categoryId: number | null) => void
+  /** View mode */
+  viewMode?: 'grid' | 'list'
+  /** View mode change handler */
+  onViewModeChange?: (mode: 'grid' | 'list') => void
   /** Loading state */
   isLoading?: boolean
 }
@@ -38,6 +42,8 @@ export function POSCategorySidebar({
   categories,
   selectedCategoryId,
   onCategorySelect,
+  viewMode = 'list',
+  onViewModeChange,
   isLoading = false
 }: POSCategorySidebarProps) {
   const { theme } = useAppStore()
@@ -106,7 +112,7 @@ export function POSCategorySidebar({
     <div className="flex flex-col h-full">
       {/* Header */}
       <div className={`
-        px-4 py-4 border-b
+        px-4 py-3 border-b flex items-center justify-between
         ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'}
       `}>
         <h2 className={`
@@ -115,107 +121,171 @@ export function POSCategorySidebar({
         `}>
           Categories
         </h2>
+        
+        {/* View Mode Toggle */}
+        {onViewModeChange && (
+          <div className={`
+            flex items-center rounded-lg border overflow-hidden
+            ${theme === 'dark' ? 'border-gray-700 bg-gray-800' : 'border-gray-300 bg-white'}
+          `}>
+            <button
+              onClick={() => onViewModeChange('grid')}
+              className={`
+                px-2 py-1.5 transition-all duration-200
+                ${viewMode === 'grid'
+                  ? theme === 'dark'
+                    ? 'bg-primary-600 text-white'
+                    : 'bg-primary-500 text-white'
+                  : theme === 'dark'
+                    ? 'text-gray-400 hover:text-white hover:bg-gray-700'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                }
+              `}
+              title="Grid view"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2 a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+              </svg>
+            </button>
+            <button
+              onClick={() => onViewModeChange('list')}
+              className={`
+                px-2 py-1.5 transition-all duration-200 border-l
+                ${theme === 'dark' ? 'border-gray-700' : 'border-gray-300'}
+                ${viewMode === 'list'
+                  ? theme === 'dark'
+                    ? 'bg-primary-600 text-white'
+                    : 'bg-primary-500 text-white'
+                  : theme === 'dark'
+                    ? 'text-gray-400 hover:text-white hover:bg-gray-700'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                }
+              `}
+              title="List view"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+              </svg>
+            </button>
+          </div>
+        )}
       </div>
 
-      {/* Category List */}
-      <div className="flex-1 overflow-y-auto">
-        {/* All Products */}
-        <button
-          onClick={() => onCategorySelect(null)}
-          className={`
-            group w-full flex items-center gap-3 px-4 py-4 border-b
-            min-h-[56px] transition-all duration-200 ease-out
-            ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'}
-            ${selectedCategoryId === null
-              ? theme === 'dark'
-                ? 'bg-primary-900/30 border-l-4 border-l-primary-500'
-                : 'bg-primary-50 border-l-4 border-l-primary-500'
-              : theme === 'dark'
-                ? 'hover:bg-gray-750 active:bg-gray-700 hover:shadow-md'
-                : 'hover:bg-gray-50 active:bg-gray-100 hover:shadow-md'
-            }
-          `}
-        >
-          <div className={`
-            flex-shrink-0 transition-transform duration-200 group-hover:scale-110
-            ${selectedCategoryId === null
-              ? theme === 'dark' ? 'text-primary-400' : 'text-primary-600'
-              : theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
-            }
-          `}>
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-            </svg>
-          </div>
-          <span className={`
-            text-sm font-semibold text-left
-            ${selectedCategoryId === null
-              ? theme === 'dark' ? 'text-white' : 'text-gray-900'
-              : theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-            }
-          `}>
-            All Products
-          </span>
-        </button>
+      {/* Category List/Grid */}
+      <div className="flex-1 overflow-y-auto p-2">
+        {viewMode === 'list' ? (
+          /* List View */
+          <div className="space-y-1">
+            {/* All Products */}
+            <button
+              onClick={() => onCategorySelect(null)}
+              className={`
+                group w-full flex items-center gap-3 px-3 py-3 rounded-lg
+                min-h-[52px] transition-all duration-200 ease-out
+                ${selectedCategoryId === null
+                  ? theme === 'dark'
+                    ? 'bg-primary-600 text-white shadow-md'
+                    : 'bg-primary-500 text-white shadow-md'
+                  : theme === 'dark'
+                    ? 'hover:bg-gray-700 active:bg-gray-600'
+                    : 'hover:bg-gray-100 active:bg-gray-200'
+                }
+              `}
+            >
+              <div className="flex-shrink-0 transition-transform duration-200 group-hover:scale-110">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                </svg>
+              </div>
+              <span className="text-sm font-semibold text-left">All Products</span>
+            </button>
 
-        {/* Categories */}
-        {categories
-          .filter(cat => cat.is_active)
-          .map((category) => {
-            const isSelected = selectedCategoryId === category.id
-            
-            return (
-              <button
-                key={category.id}
-                onClick={() => onCategorySelect(category.id)}
-                className={`
-                  group w-full flex items-center gap-3 px-4 py-4 border-b
-                  min-h-[56px] transition-all duration-200 ease-out
-                  ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'}
-                  ${isSelected
-                    ? theme === 'dark'
-                      ? 'bg-primary-900/30 border-l-4 border-l-primary-500'
-                      : 'bg-primary-50 border-l-4 border-l-primary-500'
-                    : theme === 'dark'
-                      ? 'hover:bg-gray-750 active:bg-gray-700 hover:shadow-md'
-                      : 'hover:bg-gray-50 active:bg-gray-100 hover:shadow-md'
-                  }
-                `}
-              >
-                {/* Category Icon */}
-                <div className={`
-                  flex-shrink-0 transition-transform duration-200 group-hover:scale-110
-                  ${isSelected
-                    ? theme === 'dark' ? 'text-primary-400' : 'text-primary-600'
-                    : theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
-                  }
-                `}>
-                  {getCategoryIcon(category.name)}
-                </div>
-
-                {/* Category Name */}
-                <div className="flex-1 text-left min-w-0">
-                  <span className={`
-                    text-sm font-semibold truncate block
+            {/* Categories */}
+            {categories.filter(cat => cat.is_active).map((category) => {
+              const isSelected = selectedCategoryId === category.id
+              return (
+                <button
+                  key={category.id}
+                  onClick={() => onCategorySelect(category.id)}
+                  className={`
+                    group w-full flex items-center gap-3 px-3 py-3 rounded-lg
+                    min-h-[52px] transition-all duration-200 ease-out
                     ${isSelected
-                      ? theme === 'dark' ? 'text-white' : 'text-gray-900'
-                      : theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                      ? theme === 'dark'
+                        ? 'bg-primary-600 text-white shadow-md'
+                        : 'bg-primary-500 text-white shadow-md'
+                      : theme === 'dark'
+                        ? 'hover:bg-gray-700 active:bg-gray-600 text-gray-300'
+                        : 'hover:bg-gray-100 active:bg-gray-200 text-gray-700'
                     }
-                  `}>
-                    {category.name}
-                  </span>
-                  {category.description && (
-                    <span className={`
-                      text-xs truncate block
-                      ${theme === 'dark' ? 'text-gray-500' : 'text-gray-500'}
-                    `}>
-                      {category.description}
-                    </span>
-                  )}
-                </div>
-              </button>
-            )
-          })}
+                  `}
+                >
+                  <div className="flex-shrink-0 transition-transform duration-200 group-hover:scale-110">
+                    {getCategoryIcon(category.name)}
+                  </div>
+                  <div className="flex-1 text-left min-w-0">
+                    <span className="text-sm font-semibold truncate block">{category.name}</span>
+                  </div>
+                </button>
+              )
+            })}
+          </div>
+        ) : (
+          /* Grid View */
+          <div className="grid grid-cols-2 gap-2">
+            {/* All Products */}
+            <button
+              onClick={() => onCategorySelect(null)}
+              className={`
+                group flex flex-col items-center justify-center gap-2 p-4 rounded-lg
+                min-h-[100px] transition-all duration-200 ease-out
+                ${selectedCategoryId === null
+                  ? theme === 'dark'
+                    ? 'bg-primary-600 text-white shadow-md'
+                    : 'bg-primary-500 text-white shadow-md'
+                  : theme === 'dark'
+                    ? 'hover:bg-gray-700 active:bg-gray-600 text-gray-300'
+                    : 'hover:bg-gray-100 active:bg-gray-200 text-gray-700'
+                }
+              `}
+            >
+              <div className="transition-transform duration-200 group-hover:scale-110">
+                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                </svg>
+              </div>
+              <span className="text-xs font-semibold text-center">All</span>
+            </button>
+
+            {/* Categories */}
+            {categories.filter(cat => cat.is_active).map((category) => {
+              const isSelected = selectedCategoryId === category.id
+              return (
+                <button
+                  key={category.id}
+                  onClick={() => onCategorySelect(category.id)}
+                  className={`
+                    group flex flex-col items-center justify-center gap-2 p-4 rounded-lg
+                    min-h-[100px] transition-all duration-200 ease-out
+                    ${isSelected
+                      ? theme === 'dark'
+                        ? 'bg-primary-600 text-white shadow-md'
+                        : 'bg-primary-500 text-white shadow-md'
+                      : theme === 'dark'
+                        ? 'hover:bg-gray-700 active:bg-gray-600 text-gray-300'
+                        : 'hover:bg-gray-100 active:bg-gray-200 text-gray-700'
+                    }
+                  `}
+                >
+                  <div className="transition-transform duration-200 group-hover:scale-110">
+                    {getCategoryIcon(category.name)}
+                  </div>
+                  <span className="text-xs font-semibold text-center line-clamp-2">{category.name}</span>
+                </button>
+              )
+            })}
+          </div>
+        )}
       </div>
 
       {/* Empty State */}

@@ -9,6 +9,7 @@ import { CategoryManagement } from './CategoryManagement'
 import { ProductDetailView } from './ProductDetailView'
 import { ProductTileView } from './ProductTileView'
 import { ProductGridView } from './ProductGridView'
+import { ProductDashboard } from './ProductDashboard'
 import type { EnhancedProduct } from '../../services/api'
 
 interface ProductsScreenProps {
@@ -200,6 +201,11 @@ export function ProductsScreen({ onBack }: ProductsScreenProps) {
         {error && (
           <ErrorMessage message={error} className="mb-4" />
         )}
+
+        {/* Dashboard */}
+        <div className="mb-4">
+          <ProductDashboard />
+        </div>
 
         {/* Single Pane Layout */}
         <div className="h-full flex flex-col">

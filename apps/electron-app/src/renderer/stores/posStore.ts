@@ -59,6 +59,7 @@ export interface POSState {
   
   // Product display
   viewMode: 'grid' | 'list'
+  categoryViewMode: 'grid' | 'list'
   selectedCategoryId: number | null
   searchQuery: string
   
@@ -99,6 +100,7 @@ export interface POSState {
   
   // Actions - View & Filters
   setViewMode: (mode: 'grid' | 'list') => void
+  setCategoryViewMode: (mode: 'grid' | 'list') => void
   setSelectedCategory: (categoryId: number | null) => void
   setSearchQuery: (query: string) => void
   
@@ -169,6 +171,7 @@ const initialState = {
   transactions: [],
   activeTransactionId: null,
   viewMode: 'grid' as const,
+  categoryViewMode: 'list' as const,
   selectedCategoryId: null,
   searchQuery: '',
   barcodeScannerEnabled: true,
@@ -522,6 +525,10 @@ export const usePOSStore = create<POSState>()(
         set({ viewMode: mode })
       },
       
+      setCategoryViewMode: (mode: 'grid' | 'list') => {
+        set({ categoryViewMode: mode })
+      },
+      
       setSelectedCategory: (categoryId: number | null) => {
         set({ selectedCategoryId: categoryId })
       },
@@ -598,6 +605,7 @@ export const usePOSStore = create<POSState>()(
         transactions: state.transactions,
         activeTransactionId: state.activeTransactionId,
         viewMode: state.viewMode,
+        categoryViewMode: state.categoryViewMode,
         barcodeScannerEnabled: state.barcodeScannerEnabled
       })
     }

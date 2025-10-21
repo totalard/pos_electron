@@ -154,26 +154,40 @@ export function POSFooter({
       </div>
 
       {/* Quick Actions */}
-      <div className="px-6 py-3">
-        <div className="flex items-center justify-between max-w-7xl mx-auto gap-4">
-          {/* Left: Quick Action Buttons */}
+      <div className="px-6 py-3 flex items-center gap-4">
+        {/* Left: Quick Action Buttons - Scrollable with hidden scrollbar */}
+        <div className="flex-1 overflow-x-auto scrollbar-hide">
           <div className="flex items-center gap-2">
             {actions}
           </div>
-
-          {/* Right: Primary Action */}
-          {primaryAction && (
-            <Button
-              onClick={primaryAction.onClick}
-              disabled={primaryAction.disabled}
-              variant="primary"
-              size="lg"
-              className="min-w-[200px] min-h-[56px] text-lg font-semibold"
-            >
-              {primaryAction.label}
-            </Button>
-          )}
         </div>
+
+        {/* Right: Primary Action - Fixed Position */}
+        {primaryAction && (
+          <Button
+            onClick={primaryAction.onClick}
+            disabled={primaryAction.disabled}
+            variant="primary"
+            size="lg"
+            className={`
+              min-w-[240px] min-h-[64px] text-xl font-bold flex-shrink-0
+              shadow-xl hover:shadow-2xl
+              ${theme === 'dark' 
+                ? 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600' 
+                : 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600'
+              }
+              transform hover:scale-105 transition-all duration-200
+              ring-2 ring-blue-400/50
+            `}
+          >
+            <div className="flex items-center gap-2">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+              <span>{primaryAction.label}</span>
+            </div>
+          </Button>
+        )}
       </div>
     </div>
   )
