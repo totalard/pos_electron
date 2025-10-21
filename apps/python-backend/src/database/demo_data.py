@@ -23,11 +23,15 @@ from .models import (
     ProductVariation,
     ProductBundle,
     Customer,
+    CustomerTransaction,
     StockTransaction,
     TransactionType,
     StockAdjustment,
     StockAdjustmentLine,
-    User
+    User,
+    Sale,
+    CashTransaction,
+    Expense
 )
 
 
@@ -493,14 +497,29 @@ async def clear_demo_data():
     """Clear all demo data (use with caution)."""
     print("Clearing demo data...")
     
-    # Delete in reverse order of dependencies
-    await StockAdjustmentLine.all().delete()
-    await StockAdjustment.all().delete()
-    await StockTransaction.all().delete()
-    await ProductBundle.all().delete()
-    await ProductVariation.all().delete()
-    await Customer.all().delete()
-    await Product.all().delete()
-    await ProductCategory.all().delete()
-    
-    print("Demo data cleared")
+    try:
+        # Delete in reverse order of dependencies
+        # First delete transaction-related data
+        await Expense.all().delete()
+        await CashTransaction.all().delete()
+        await Sale.all().delete()
+        await CustomerTransaction.all().delete()
+        
+        # Then delete inventory data
+        await StockAdjustmentLine.all().delete()
+        await StockAdjustment.all().delete()
+        await StockTransaction.all().delete()
+        
+        # Then delete product-related data
+        await ProductBundle.all().delete()
+        await ProductVariation.all().delete()
+        await Product.all().delete()
+        await ProductCategory.all().delete()
+        
+        # Finally delete customer data
+        await Customer.all().delete()
+        
+        print("Demo data cleared successfully")
+    except Exception as e:
+        print(f"Error clearing demo data: {e}")
+        raise

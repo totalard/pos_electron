@@ -29,6 +29,9 @@ from .tax_rule import (
     TaxInclusionType,
     RoundingMethod
 )
+from .sale import Sale, PaymentMethod, SaleStatus
+from .cash_transaction import CashTransaction, CashTransactionType
+from .expense import Expense, ExpenseCategory, ExpenseStatus
 
 __all__ = [
     "BaseModel",
@@ -58,5 +61,13 @@ __all__ = [
     "TaxCalculationMethod",
     "TaxInclusionType",
     "RoundingMethod",
+    "Sale",
+    "PaymentMethod",
+    "SaleStatus",
+    "CashTransaction",
+    "CashTransactionType",
+    "Expense",
+    "ExpenseCategory",
+    "ExpenseStatus",
 ]
 

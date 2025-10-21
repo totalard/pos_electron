@@ -8,11 +8,12 @@ import { Settings } from './components/Settings'
 import { ProductsScreen } from './components/products'
 import { CustomerManagementScreen } from './components/customers'
 import { InventoryScreen } from './components/inventory'
+import { TransactionManagementScreen } from './components/transactions/TransactionManagementScreen'
 import { Walkthrough, defaultWalkthroughSteps } from './components/walkthrough'
 
 const API_BASE_URL = 'http://localhost:8001/api'
 
-type AppScreen = 'splash' | 'walkthrough' | 'pin' | 'dashboard' | 'sales' | 'products' | 'inventory' | 'users' | 'settings' | 'customers'
+type AppScreen = 'splash' | 'walkthrough' | 'pin' | 'dashboard' | 'sales' | 'products' | 'inventory' | 'users' | 'settings' | 'customers' | 'transactions'
 
 function App() {
   const [currentScreen, setCurrentScreen] = useState<AppScreen>('splash')
@@ -46,7 +47,7 @@ function App() {
   }
 
   // Handle navigation from dashboard with role-based access control
-  const handleNavigate = (screen: 'sales' | 'products' | 'inventory' | 'users' | 'settings' | 'customers') => {
+  const handleNavigate = (screen: 'sales' | 'products' | 'inventory' | 'users' | 'settings' | 'customers' | 'transactions') => {
     // Restrict admin-only screens
     if ((screen === 'users' || screen === 'settings') && currentUser?.role !== 'admin') {
       console.warn(`Access denied: ${screen} is only available to admin users`)
@@ -126,6 +127,10 @@ function App() {
 
       {currentScreen === 'customers' && (
         <CustomerManagementScreen onBack={handleBackToDashboard} />
+      )}
+
+      {currentScreen === 'transactions' && (
+        <TransactionManagementScreen onBack={handleBackToDashboard} />
       )}
 
       {currentScreen === 'users' && (

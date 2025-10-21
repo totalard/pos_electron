@@ -1008,3 +1008,196 @@ class ScheduleConfiguration(BaseModel):
     retention_policy: RetentionPolicy = Field(default_factory=RetentionPolicy)
     notify_on_success: bool = Field(default=False)
     notify_on_failure: bool = Field(default=True)
+
+
+# ============================================================================
+# Transaction Management Schemas
+# ============================================================================
+
+class TransactionSummary(BaseModel):
+    """Summary statistics for transactions"""
+    total_sales: float
+    total_cash_in: float
+    total_cash_out: float
+    total_expenses: float
+    total_credit_sales: float
+    total_payments: float
+    net_cash_flow: float
+    transaction_count: int
+
+
+class TransactionFilter(BaseModel):
+    """Filter parameters for transaction queries"""
+    transaction_types: Optional[List[str]] = None
+    start_date: Optional[datetime] = None
+    end_date: Optional[datetime] = None
+    min_amount: Optional[float] = None
+    max_amount: Optional[float] = None
+    user_id: Optional[int] = None
+    customer_id: Optional[int] = None
+    status: Optional[str] = None
+    search_query: Optional[str] = None
+
+
+class UnifiedTransactionResponse(BaseModel):
+    """Unified transaction response for all transaction types"""
+    id: int
+    transaction_type: str  # sale, stock_in, stock_out, cash_in, cash_out, expense, credit, payment
+    amount: float
+    description: str
+    reference_number: Optional[str] = None
+    status: Optional[str] = None
+    user_name: Optional[str] = None
+    customer_name: Optional[str] = None
+    created_at: datetime
+    metadata: Optional[Dict[str, Any]] = None
+
+    class Config:
+        from_attributes = True
+
+
+class TransactionListResponse(BaseModel):
+    """Paginated transaction list response"""
+    total: int
+    page: int
+    page_size: int
+    transactions: List[UnifiedTransactionResponse]
+    summary: Optional[TransactionSummary] = None
+
+
+# Sale Schemas
+class SaleItemSchema(BaseModel):
+    """Schema for sale line items"""
+    product_id: int
+    product_name: str
+    quantity: int
+    unit_price: float
+    tax_amount: float
+    discount_amount: float
+    total: float
+
+
+class SaleCreate(BaseModel):
+    """Schema for creating a sale"""
+    customer_id: Optional[int] = None
+    items: List[SaleItemSchema]
+    payment_method: str
+    amount_paid: float
+    notes: Optional[str] = None
+
+
+class SaleResponse(BaseModel):
+    """Schema for sale response"""
+    id: int
+    invoice_number: str
+    customer_id: Optional[int] = None
+    customer_name: Optional[str] = None
+    subtotal: float
+    tax_amount: float
+    discount_amount: float
+    total_amount: float
+    payment_method: str
+    amount_paid: float
+    change_given: float
+    status: str
+    items: List[Dict[str, Any]]
+    sold_by_id: Optional[int] = None
+    sold_by_name: Optional[str] = None
+    sale_date: datetime
+    notes: Optional[str] = None
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+# Cash Transaction Schemas
+class CashTransactionCreate(BaseModel):
+    """Schema for creating a cash transaction"""
+    transaction_type: str  # cash_in, cash_out, opening_balance, closing_balance
+    amount: float
+    category: Optional[str] = None
+    description: Optional[str] = None
+    reference_number: Optional[str] = None
+    notes: Optional[str] = None
+
+
+class CashTransactionResponse(BaseModel):
+    """Schema for cash transaction response"""
+    id: int
+    transaction_type: str
+    amount: float
+    balance_before: float
+    balance_after: float
+    category: Optional[str] = None
+    description: Optional[str] = None
+    reference_number: Optional[str] = None
+    notes: Optional[str] = None
+    performed_by_id: Optional[int] = None
+    performed_by_name: Optional[str] = None
+    transaction_date: datetime
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+# Expense Schemas
+class ExpenseCreate(BaseModel):
+    """Schema for creating an expense"""
+    title: str
+    description: Optional[str] = None
+    amount: float
+    category: str
+    vendor_name: Optional[str] = None
+    vendor_contact: Optional[str] = None
+    payment_method: Optional[str] = None
+    payment_reference: Optional[str] = None
+    expense_date: datetime
+    due_date: Optional[datetime] = None
+    notes: Optional[str] = None
+
+
+class ExpenseUpdate(BaseModel):
+    """Schema for updating an expense"""
+    title: Optional[str] = None
+    description: Optional[str] = None
+    amount: Optional[float] = None
+    category: Optional[str] = None
+    vendor_name: Optional[str] = None
+    vendor_contact: Optional[str] = None
+    payment_method: Optional[str] = None
+    payment_reference: Optional[str] = None
+    status: Optional[str] = None
+    expense_date: Optional[datetime] = None
+    due_date: Optional[datetime] = None
+    payment_date: Optional[datetime] = None
+    notes: Optional[str] = None
+
+
+class ExpenseResponse(BaseModel):
+    """Schema for expense response"""
+    id: int
+    expense_number: str
+    title: str
+    description: Optional[str] = None
+    amount: float
+    category: str
+    status: str
+    vendor_name: Optional[str] = None
+    vendor_contact: Optional[str] = None
+    payment_method: Optional[str] = None
+    payment_reference: Optional[str] = None
+    expense_date: datetime
+    due_date: Optional[datetime] = None
+    payment_date: Optional[datetime] = None
+    created_by_id: Optional[int] = None
+    created_by_name: Optional[str] = None
+    approved_by_id: Optional[int] = None
+    approved_by_name: Optional[str] = None
+    notes: Optional[str] = None
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True

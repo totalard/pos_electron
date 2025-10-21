@@ -30,12 +30,17 @@ TORTOISE_ORM = {
         "models": {
             "models": [
                 "src.database.models.user",
+                "src.database.models.user_activity",
                 "src.database.models.customer",
+                "src.database.models.customer_transaction",
                 "src.database.models.product",
                 "src.database.models.inventory",
                 "src.database.models.settings",  # Old JSON-based settings (deprecated)
                 "src.database.models.setting",   # New normalized settings
                 "src.database.models.tax_rule",
+                "src.database.models.sale",
+                "src.database.models.cash_transaction",
+                "src.database.models.expense",
                 "aerich.models"  # Required for Aerich migrations
             ],
             "default_connection": "default",
