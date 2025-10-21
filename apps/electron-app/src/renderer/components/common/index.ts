@@ -39,6 +39,9 @@ export type { ModalProps } from './Modal'
 export { RightPanel } from './RightPanel'
 export type { RightPanelProps } from './RightPanel'
 
+export { Sidebar } from './Sidebar'
+export type { SidebarProps, SidebarContentVariant } from './Sidebar'
+
 export { Toast } from './Toast'
 export type { ToastProps } from './Toast'
 

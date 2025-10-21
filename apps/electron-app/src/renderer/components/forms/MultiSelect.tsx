@@ -1,6 +1,6 @@
 import { useState, ReactNode } from 'react'
 import { useAppStore } from '../../stores'
-import { RightPanel, Badge } from '../common'
+import { Sidebar, Badge } from '../common'
 
 /**
  * Option type for MultiSelect
@@ -246,150 +246,149 @@ export function MultiSelect<T = string | number>({
       </div>
 
       {/* Selection Panel */}
-      <RightPanel
+      <Sidebar
         isOpen={isOpen}
         onClose={handleClose}
         title={label || 'Select Options'}
         width="md"
+        contentVariant="list"
       >
-        <div className="space-y-4">
-          {/* Header Actions */}
-          <div className="flex items-center justify-between gap-2 pb-4 border-b border-gray-700 dark:border-gray-600">
-            <div className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-              {value.length} selected
-              {maxSelections > 0 && ` of ${maxSelections} max`}
-            </div>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={handleSelectAll}
-                disabled={isMaxReached}
-                className={`
-                  px-3 py-1.5 text-sm rounded-lg
-                  ${theme === 'dark'
-                    ? 'bg-gray-700 hover:bg-gray-600 text-white'
-                    : 'bg-gray-100 hover:bg-gray-200 text-gray-900'
-                  }
-                  disabled:opacity-50 disabled:cursor-not-allowed
-                  transition-colors
-                `}
-              >
-                Select All
-              </button>
-              <button
-                type="button"
-                onClick={handleClearAll}
-                disabled={value.length === 0}
-                className={`
-                  px-3 py-1.5 text-sm rounded-lg
-                  ${theme === 'dark'
-                    ? 'bg-gray-700 hover:bg-gray-600 text-white'
-                    : 'bg-gray-100 hover:bg-gray-200 text-gray-900'
-                  }
-                  disabled:opacity-50 disabled:cursor-not-allowed
-                  transition-colors
-                `}
-              >
-                Clear All
-              </button>
-            </div>
+        {/* Header Actions */}
+        <div className="flex items-center justify-between gap-2 pb-4 border-b border-gray-700 dark:border-gray-600 px-4">
+          <div className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+            {value.length} selected
+            {maxSelections > 0 && ` of ${maxSelections} max`}
           </div>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={handleSelectAll}
+              disabled={isMaxReached}
+              className={`
+                px-3 py-1.5 text-sm rounded-lg
+                ${theme === 'dark'
+                  ? 'bg-gray-700 hover:bg-gray-600 text-white'
+                  : 'bg-gray-100 hover:bg-gray-200 text-gray-900'
+                }
+                disabled:opacity-50 disabled:cursor-not-allowed
+                transition-colors
+              `}
+            >
+              Select All
+            </button>
+            <button
+              type="button"
+              onClick={handleClearAll}
+              disabled={value.length === 0}
+              className={`
+                px-3 py-1.5 text-sm rounded-lg
+                ${theme === 'dark'
+                  ? 'bg-gray-700 hover:bg-gray-600 text-white'
+                  : 'bg-gray-100 hover:bg-gray-200 text-gray-900'
+                }
+                disabled:opacity-50 disabled:cursor-not-allowed
+                transition-colors
+              `}
+            >
+              Clear All
+            </button>
+          </div>
+        </div>
 
-          {/* Search */}
-          {searchable && (
-            <div className="sticky top-0 z-10">
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search..."
-                className={`
-                  w-full px-4 py-3 rounded-lg text-base
-                  min-h-[44px]
-                  ${theme === 'dark'
-                    ? 'bg-gray-700 border border-gray-600 text-white placeholder-gray-400'
-                    : 'bg-white border border-gray-300 text-gray-900 placeholder-gray-500'
-                  }
-                  focus:outline-none focus:ring-2 focus:ring-primary-500/20
-                `}
-                autoFocus
-              />
-            </div>
-          )}
+        {/* Search */}
+        {searchable && (
+          <div className="sticky top-0 z-10 px-4 pt-4">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search..."
+              className={`
+                w-full px-4 py-3 rounded-lg text-base
+                min-h-[44px]
+                ${theme === 'dark'
+                  ? 'bg-gray-700 border border-gray-600 text-white placeholder-gray-400'
+                  : 'bg-white border border-gray-300 text-gray-900 placeholder-gray-500'
+                }
+                focus:outline-none focus:ring-2 focus:ring-primary-500/20
+              `}
+              autoFocus
+            />
+          </div>
+        )}
 
-          {/* Options List */}
-          {filteredOptions.length === 0 ? (
-            <div className={`
-              text-center py-8
-              ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}
-            `}>
-              {emptyMessage}
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {filteredOptions.map((option) => {
-                const isSelected = value.includes(option.value)
-                const isDisabled = option.disabled || (!isSelected && isMaxReached)
+        {/* Options List */}
+        {filteredOptions.length === 0 ? (
+          <div className={`
+            text-center py-8 px-4
+            ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}
+          `}>
+            {emptyMessage}
+          </div>
+        ) : (
+          <div className="space-y-2 px-4 pt-4">
+            {filteredOptions.map((option) => {
+              const isSelected = value.includes(option.value)
+              const isDisabled = option.disabled || (!isSelected && isMaxReached)
 
-                return (
-                  <button
-                    key={String(option.value)}
-                    type="button"
-                    onClick={() => !isDisabled && handleToggle(option.value)}
-                    disabled={isDisabled}
-                    className={`
-                      w-full px-4 py-3 rounded-lg text-left
-                      min-h-[44px]
-                      transition-colors duration-200
-                      flex items-start gap-3
-                      ${theme === 'dark'
-                        ? 'bg-gray-700 hover:bg-gray-600 text-white'
-                        : 'bg-gray-50 hover:bg-gray-100 text-gray-900'
+              return (
+                <button
+                  key={String(option.value)}
+                  type="button"
+                  onClick={() => !isDisabled && handleToggle(option.value)}
+                  disabled={isDisabled}
+                  className={`
+                    w-full px-4 py-3 rounded-lg text-left
+                    min-h-[44px]
+                    transition-colors duration-200
+                    flex items-start gap-3
+                    ${theme === 'dark'
+                      ? 'bg-gray-700 hover:bg-gray-600 text-white'
+                      : 'bg-gray-50 hover:bg-gray-100 text-gray-900'
+                    }
+                    ${isDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
+                  `}
+                >
+                  {/* Checkbox */}
+                  <div className="flex-shrink-0 mt-0.5">
+                    <div className={`
+                      w-5 h-5 rounded border-2 flex items-center justify-center
+                      ${isSelected
+                        ? 'bg-primary-500 border-primary-500'
+                        : theme === 'dark'
+                          ? 'border-gray-500'
+                          : 'border-gray-400'
                       }
-                      ${isDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
-                    `}
-                  >
-                    {/* Checkbox */}
-                    <div className="flex-shrink-0 mt-0.5">
-                      <div className={`
-                        w-5 h-5 rounded border-2 flex items-center justify-center
-                        ${isSelected
-                          ? 'bg-primary-500 border-primary-500'
-                          : theme === 'dark'
-                            ? 'border-gray-500'
-                            : 'border-gray-400'
-                        }
-                      `}>
-                        {isSelected && (
-                          <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                          </svg>
-                        )}
-                      </div>
-                    </div>
-
-                    {option.icon && (
-                      <span className="flex-shrink-0 mt-0.5">{option.icon}</span>
-                    )}
-                    
-                    <div className="flex-1 min-w-0">
-                      <div className="font-medium truncate">{option.label}</div>
-                      {option.description && (
-                        <div className={`
-                          text-sm mt-1
-                          ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}
-                        `}>
-                          {option.description}
-                        </div>
+                    `}>
+                      {isSelected && (
+                        <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
                       )}
                     </div>
-                  </button>
-                )
-              })}
-            </div>
-          )}
-        </div>
-      </RightPanel>
+                  </div>
+
+                  {option.icon && (
+                    <span className="flex-shrink-0 mt-0.5">{option.icon}</span>
+                  )}
+                  
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium truncate">{option.label}</div>
+                    {option.description && (
+                      <div className={`
+                        text-sm mt-1
+                        ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}
+                      `}>
+                        {option.description}
+                      </div>
+                    )}
+                  </div>
+                </button>
+              )
+            })}
+          </div>
+        )}
+      </Sidebar>
     </>
   )
 }

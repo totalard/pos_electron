@@ -1,6 +1,6 @@
 import { useState, ReactNode } from 'react'
 import { useAppStore } from '../../stores'
-import { RightPanel } from '../common'
+import { Sidebar } from '../common'
 
 /**
  * Option type for TouchSelect
@@ -204,100 +204,99 @@ export function TouchSelect<T = string | number>({
       </div>
 
       {/* Selection Panel */}
-      <RightPanel
+      <Sidebar
         isOpen={isOpen}
         onClose={handleClose}
         title={label || 'Select Option'}
         width="md"
+        contentVariant="list"
       >
-        <div className="space-y-4">
-          {/* Search */}
-          {searchable && (
-            <div className="sticky top-0 z-10 pb-4">
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search..."
-                className={`
-                  w-full px-4 py-3 rounded-lg text-base
-                  min-h-[44px]
-                  ${theme === 'dark'
-                    ? 'bg-gray-700 border border-gray-600 text-white placeholder-gray-400'
-                    : 'bg-white border border-gray-300 text-gray-900 placeholder-gray-500'
-                  }
-                  focus:outline-none focus:ring-2 focus:ring-primary-500/20
-                `}
-                autoFocus
-              />
-            </div>
-          )}
+        {/* Search */}
+        {searchable && (
+          <div className="sticky top-0 z-10 px-4 pb-4 pt-2">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search..."
+              className={`
+                w-full px-4 py-3 rounded-lg text-base
+                min-h-[44px]
+                ${theme === 'dark'
+                  ? 'bg-gray-700 border border-gray-600 text-white placeholder-gray-400'
+                  : 'bg-white border border-gray-300 text-gray-900 placeholder-gray-500'
+                }
+                focus:outline-none focus:ring-2 focus:ring-primary-500/20
+              `}
+              autoFocus
+            />
+          </div>
+        )}
 
-          {/* Options List */}
-          {filteredOptions.length === 0 ? (
-            <div className={`
-              text-center py-8
-              ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}
-            `}>
-              {emptyMessage}
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {filteredOptions.map((option) => {
-                const isSelected = option.value === value
-                const isDisabled = option.disabled
+        {/* Options List */}
+        {filteredOptions.length === 0 ? (
+          <div className={`
+            text-center py-8 px-4
+            ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}
+          `}>
+            {emptyMessage}
+          </div>
+        ) : (
+          <div className="space-y-2 px-4">
+            {filteredOptions.map((option) => {
+              const isSelected = option.value === value
+              const isDisabled = option.disabled
 
-                return (
-                  <button
-                    key={String(option.value)}
-                    type="button"
-                    onClick={() => !isDisabled && handleSelect(option.value)}
-                    disabled={isDisabled}
-                    className={`
-                      w-full px-4 py-3 rounded-lg text-left
-                      min-h-[44px]
-                      transition-colors duration-200
-                      flex items-start gap-3
-                      ${isSelected
-                        ? theme === 'dark'
-                          ? 'bg-primary-600 text-white'
-                          : 'bg-primary-500 text-white'
-                        : theme === 'dark'
-                          ? 'bg-gray-700 hover:bg-gray-600 text-white'
-                          : 'bg-gray-50 hover:bg-gray-100 text-gray-900'
-                      }
-                      ${isDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
-                    `}
-                  >
-                    {option.icon && (
-                      <span className="flex-shrink-0 mt-0.5">{option.icon}</span>
+              return (
+                <button
+                  key={String(option.value)}
+                  type="button"
+                  onClick={() => !isDisabled && handleSelect(option.value)}
+                  disabled={isDisabled}
+                  className={`
+                    w-full px-4 py-3 rounded-lg text-left
+                    min-h-[44px]
+                    transition-colors duration-200
+                    flex items-start gap-3
+                    ${isSelected
+                      ? theme === 'dark'
+                        ? 'bg-primary-600 text-white'
+                        : 'bg-primary-500 text-white'
+                      : theme === 'dark'
+                        ? 'bg-gray-700 hover:bg-gray-600 text-white'
+                        : 'bg-gray-50 hover:bg-gray-100 text-gray-900'
+                    }
+                    ${isDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
+                  `}
+                >
+                  {option.icon && (
+                    <span className="flex-shrink-0 mt-0.5">{option.icon}</span>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium truncate">{option.label}</div>
+                    {option.description && (
+                      <div className={`
+                        text-sm mt-1
+                        ${isSelected
+                          ? 'text-white/80'
+                          : theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
+                        }
+                      `}>
+                        {option.description}
+                      </div>
                     )}
-                    <div className="flex-1 min-w-0">
-                      <div className="font-medium truncate">{option.label}</div>
-                      {option.description && (
-                        <div className={`
-                          text-sm mt-1
-                          ${isSelected
-                            ? 'text-white/80'
-                            : theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
-                          }
-                        `}>
-                          {option.description}
-                        </div>
-                      )}
-                    </div>
-                    {isSelected && (
-                      <svg className="w-5 h-5 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                      </svg>
-                    )}
-                  </button>
-                )
-              })}
-            </div>
-          )}
-        </div>
-      </RightPanel>
+                  </div>
+                  {isSelected && (
+                    <svg className="w-5 h-5 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                  )}
+                </button>
+              )
+            })}
+          </div>
+        )}
+      </Sidebar>
     </>
   )
 }
