@@ -11,6 +11,7 @@ from .settings import router as settings_router
 from .tax_rules import router as tax_rules_router
 from .demo import router as demo_router
 from .transactions import router as transactions_router
+from .discounts import router as discounts_router
 
 # Create main API router
 router = APIRouter()
@@ -24,4 +25,5 @@ router.include_router(product_management_router, prefix="/product-management", t
 router.include_router(settings_router, prefix="/settings", tags=["settings"])
 router.include_router(tax_rules_router)
 router.include_router(transactions_router, prefix="/transactions", tags=["transactions"])
+router.include_router(discounts_router, prefix="/discounts", tags=["discounts"])
 router.include_router(demo_router, prefix="/demo", tags=["demo"])

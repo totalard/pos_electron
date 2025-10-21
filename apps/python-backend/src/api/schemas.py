@@ -2,6 +2,7 @@
 Pydantic schemas for API request/response validation
 """
 from datetime import datetime
+from decimal import Decimal
 from typing import Optional, Any, Dict, List
 from pydantic import BaseModel, Field, field_validator
 
@@ -1201,3 +1202,151 @@ class ExpenseResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+# ===== DISCOUNT SCHEMAS =====
+
+class DiscountBase(BaseModel):
+    """Base schema for discount"""
+    code: str = Field(..., max_length=50, description="Unique discount code")
+    name: str = Field(..., max_length=200, description="Display name")
+    description: Optional[str] = None
+    discount_type: str = Field(..., description="Type: percentage, fixed_amount, buy_x_get_y, bundle, free_shipping")
+    value: Decimal = Field(..., ge=0, description="Discount value")
+    max_discount_amount: Optional[Decimal] = Field(None, ge=0)
+    min_purchase_amount: Optional[Decimal] = Field(None, ge=0)
+    min_quantity: Optional[int] = Field(None, ge=1)
+    applicable_products: List[int] = Field(default_factory=list)
+    applicable_categories: List[int] = Field(default_factory=list)
+    applicable_customer_segments: List[str] = Field(default_factory=list)
+    first_purchase_only: bool = False
+    buy_quantity: Optional[int] = Field(None, ge=1)
+    get_quantity: Optional[int] = Field(None, ge=1)
+    bundle_products: List[int] = Field(default_factory=list)
+    usage_limit: Optional[int] = Field(None, ge=1)
+    usage_limit_per_customer: Optional[int] = Field(None, ge=1)
+    valid_from: Optional[datetime] = None
+    valid_until: Optional[datetime] = None
+    time_restrictions: dict = Field(default_factory=dict)
+    priority: int = Field(default=0, description="Higher priority applies first")
+    can_stack: bool = False
+    stackable_with: List[int] = Field(default_factory=list)
+    auto_apply: bool = False
+    status: str = Field(default="draft", description="Status: active, inactive, scheduled, expired, draft")
+    is_active: bool = True
+    notes: Optional[str] = None
+    tags: List[str] = Field(default_factory=list)
+
+
+class DiscountCreate(DiscountBase):
+    """Schema for creating a discount"""
+    created_by_id: Optional[int] = None
+
+
+class DiscountUpdate(BaseModel):
+    """Schema for updating a discount"""
+    code: Optional[str] = Field(None, max_length=50)
+    name: Optional[str] = Field(None, max_length=200)
+    description: Optional[str] = None
+    discount_type: Optional[str] = None
+    value: Optional[Decimal] = Field(None, ge=0)
+    max_discount_amount: Optional[Decimal] = Field(None, ge=0)
+    min_purchase_amount: Optional[Decimal] = Field(None, ge=0)
+    min_quantity: Optional[int] = Field(None, ge=1)
+    applicable_products: Optional[List[int]] = None
+    applicable_categories: Optional[List[int]] = None
+    applicable_customer_segments: Optional[List[str]] = None
+    first_purchase_only: Optional[bool] = None
+    buy_quantity: Optional[int] = Field(None, ge=1)
+    get_quantity: Optional[int] = Field(None, ge=1)
+    bundle_products: Optional[List[int]] = None
+    usage_limit: Optional[int] = Field(None, ge=1)
+    usage_limit_per_customer: Optional[int] = Field(None, ge=1)
+    valid_from: Optional[datetime] = None
+    valid_until: Optional[datetime] = None
+    time_restrictions: Optional[dict] = None
+    priority: Optional[int] = None
+    can_stack: Optional[bool] = None
+    stackable_with: Optional[List[int]] = None
+    auto_apply: Optional[bool] = None
+    status: Optional[str] = None
+    is_active: Optional[bool] = None
+    notes: Optional[str] = None
+    tags: Optional[List[str]] = None
+
+
+class DiscountResponse(DiscountBase):
+    """Schema for discount response"""
+    id: int
+    usage_count: int
+    total_revenue_impact: Decimal
+    total_orders: int
+    created_by_id: Optional[int] = None
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class DiscountUsageCreate(BaseModel):
+    """Schema for creating a discount usage record"""
+    discount_id: int
+    sale_id: Optional[int] = None
+    customer_id: Optional[int] = None
+    discount_amount: Decimal = Field(..., ge=0)
+    original_amount: Decimal = Field(..., ge=0)
+    final_amount: Decimal = Field(..., ge=0)
+    applied_by_id: Optional[int] = None
+    metadata: dict = Field(default_factory=dict)
+
+
+class DiscountUsageResponse(BaseModel):
+    """Schema for discount usage response"""
+    id: int
+    discount_id: int
+    sale_id: Optional[int] = None
+    customer_id: Optional[int] = None
+    discount_amount: Decimal
+    original_amount: Decimal
+    final_amount: Decimal
+    applied_by_id: Optional[int] = None
+    usage_date: datetime
+    metadata: dict
+
+    class Config:
+        from_attributes = True
+
+
+class DiscountValidationRequest(BaseModel):
+    """Schema for validating a discount"""
+    discount_code: str
+    customer_id: Optional[int] = None
+    cart_items: List[dict] = Field(..., description="List of cart items with product_id, quantity, price")
+    subtotal: Decimal = Field(..., ge=0)
+
+
+class DiscountValidationResponse(BaseModel):
+    """Schema for discount validation response"""
+    valid: bool
+    discount: Optional[DiscountResponse] = None
+    discount_amount: Decimal = Field(default=Decimal('0.00'))
+    final_amount: Decimal = Field(default=Decimal('0.00'))
+    message: Optional[str] = None
+    errors: List[str] = Field(default_factory=list)
+
+
+class DiscountDashboardStats(BaseModel):
+    """Schema for discount dashboard statistics"""
+    total_discounts: int
+    active_discounts: int
+    inactive_discounts: int
+    scheduled_discounts: int
+    expired_discounts: int
+    total_usage_count: int
+    total_revenue_impact: Decimal
+    average_discount_amount: Decimal
+    top_discounts: List[dict]
+    recent_usages: List[DiscountUsageResponse]
+    discount_by_type: dict
+    usage_trend: List[dict]
