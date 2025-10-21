@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useAppStore, useProductStore } from '../../stores'
-import { Button, LoadingSpinner, ErrorMessage } from '../common'
-import { FormField, FormSection, Select } from '../forms'
+import { Button, LoadingSpinner, ErrorMessage, Input, Toggle } from '../common'
+import { FormField, FormSection, Select, TextArea } from '../forms'
 import type { EnhancedProduct, EnhancedProductCreate } from '../../services/api'
 
 interface ProductFormProps {
@@ -109,72 +109,40 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
         
         {/* Basic Information */}
         <FormSection title="Basic Information">
-          <FormField label="Product Name" required>
-            <input
-              type="text"
-              value={formData.name}
-              onChange={(e) => handleChange('name', e.target.value)}
-              required
-              className={`
-                w-full px-4 py-2.5 rounded-lg
-                ${theme === 'dark'
-                  ? 'bg-gray-700 text-white border-gray-600'
-                  : 'bg-white text-gray-900 border-gray-300'
-                }
-                border focus:outline-none focus:ring-2 focus:ring-blue-500
-              `}
-            />
-          </FormField>
+          <Input
+            label="Product Name"
+            type="text"
+            value={formData.name}
+            onChange={(e) => handleChange('name', e.target.value)}
+            required
+            placeholder="Enter product name"
+          />
           
-          <div className="grid grid-cols-2 gap-4">
-            <FormField label="SKU">
-              <input
-                type="text"
-                value={formData.sku || ''}
-                onChange={(e) => handleChange('sku', e.target.value)}
-                className={`
-                  w-full px-4 py-2.5 rounded-lg
-                  ${theme === 'dark'
-                    ? 'bg-gray-700 text-white border-gray-600'
-                    : 'bg-white text-gray-900 border-gray-300'
-                  }
-                  border focus:outline-none focus:ring-2 focus:ring-blue-500
-                `}
-              />
-            </FormField>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Input
+              label="SKU"
+              type="text"
+              value={formData.sku || ''}
+              onChange={(e) => handleChange('sku', e.target.value)}
+              placeholder="Stock Keeping Unit"
+            />
             
-            <FormField label="Barcode">
-              <input
-                type="text"
-                value={formData.barcode || ''}
-                onChange={(e) => handleChange('barcode', e.target.value)}
-                className={`
-                  w-full px-4 py-2.5 rounded-lg
-                  ${theme === 'dark'
-                    ? 'bg-gray-700 text-white border-gray-600'
-                    : 'bg-white text-gray-900 border-gray-300'
-                  }
-                  border focus:outline-none focus:ring-2 focus:ring-blue-500
-                `}
-              />
-            </FormField>
+            <Input
+              label="Barcode"
+              type="text"
+              value={formData.barcode || ''}
+              onChange={(e) => handleChange('barcode', e.target.value)}
+              placeholder="Product barcode"
+            />
           </div>
           
-          <FormField label="Description">
-            <textarea
-              value={formData.description || ''}
-              onChange={(e) => handleChange('description', e.target.value)}
-              rows={3}
-              className={`
-                w-full px-4 py-2.5 rounded-lg
-                ${theme === 'dark'
-                  ? 'bg-gray-700 text-white border-gray-600'
-                  : 'bg-white text-gray-900 border-gray-300'
-                }
-                border focus:outline-none focus:ring-2 focus:ring-blue-500
-              `}
-            />
-          </FormField>
+          <TextArea
+            label="Description"
+            value={formData.description || ''}
+            onChange={(e) => handleChange('description', e.target.value)}
+            rows={3}
+            placeholder="Product description (optional)"
+          />
         </FormSection>
         
         {/* Classification */}
@@ -260,111 +228,88 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
         
         {/* Pricing */}
         <FormSection title="Pricing">
-          <div className="grid grid-cols-2 gap-4">
-            <FormField label="Selling Price" required>
-              <input
-                type="number"
-                step="0.01"
-                min="0"
-                value={formData.base_price}
-                onChange={(e) => handleChange('base_price', parseFloat(e.target.value) || 0)}
-                required
-                className={`
-                  w-full px-4 py-2.5 rounded-lg
-                  ${theme === 'dark'
-                    ? 'bg-gray-700 text-white border-gray-600'
-                    : 'bg-white text-gray-900 border-gray-300'
-                  }
-                  border focus:outline-none focus:ring-2 focus:ring-blue-500
-                `}
-              />
-            </FormField>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Input
+              label="Selling Price"
+              type="number"
+              step="0.01"
+              min="0"
+              value={formData.base_price}
+              onChange={(e) => handleChange('base_price', parseFloat(e.target.value) || 0)}
+              required
+              placeholder="0.00"
+              icon={
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              }
+            />
             
-            <FormField label="Cost Price">
-              <input
-                type="number"
-                step="0.01"
-                min="0"
-                value={formData.cost_price || ''}
-                onChange={(e) => handleChange('cost_price', e.target.value ? parseFloat(e.target.value) : undefined)}
-                className={`
-                  w-full px-4 py-2.5 rounded-lg
-                  ${theme === 'dark'
-                    ? 'bg-gray-700 text-white border-gray-600'
-                    : 'bg-white text-gray-900 border-gray-300'
-                  }
-                  border focus:outline-none focus:ring-2 focus:ring-blue-500
-                `}
-              />
-            </FormField>
+            <Input
+              label="Cost Price"
+              type="number"
+              step="0.01"
+              min="0"
+              value={formData.cost_price || ''}
+              onChange={(e) => handleChange('cost_price', e.target.value ? parseFloat(e.target.value) : undefined)}
+              placeholder="0.00"
+              helperText="Optional: for profit margin calculation"
+              icon={
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              }
+            />
           </div>
         </FormSection>
         
         {/* Inventory */}
         {showInventorySection && (
           <FormSection title="Inventory">
-            <div className="mb-4">
-              <label className="flex items-center gap-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={formData.track_inventory}
-                  onChange={(e) => handleChange('track_inventory', e.target.checked)}
-                  className="w-5 h-5 rounded text-blue-600 focus:ring-2 focus:ring-blue-500"
-                />
-                <span className={theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}>
-                  Track Inventory
-                </span>
-              </label>
-              <p className={`
-                text-xs mt-1 ml-8
-                ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}
-              `}>
-                Enable to track stock levels for this product
-              </p>
-            </div>
+            <Toggle
+              label="Track Inventory"
+              checked={formData.track_inventory ?? true}
+              onChange={(checked) => handleChange('track_inventory', checked)}
+              description="Enable to track stock levels for this product"
+            />
 
             {formData.track_inventory && (
               <>
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField label="Stock Quantity" required>
-                    <input
-                      type="number"
-                      min="0"
-                      value={formData.stock_quantity || 0}
-                      onChange={(e) => handleChange('stock_quantity', parseInt(e.target.value) || 0)}
-                      required
-                      className={`
-                        w-full px-4 py-2.5 rounded-lg
-                        ${theme === 'dark'
-                          ? 'bg-gray-700 text-white border-gray-600'
-                          : 'bg-white text-gray-900 border-gray-300'
-                        }
-                        border focus:outline-none focus:ring-2 focus:ring-blue-500
-                      `}
-                    />
-                  </FormField>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                  <Input
+                    label="Stock Quantity"
+                    type="number"
+                    min="0"
+                    value={formData.stock_quantity || 0}
+                    onChange={(e) => handleChange('stock_quantity', parseInt(e.target.value) || 0)}
+                    required
+                    placeholder="0"
+                    icon={
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                      </svg>
+                    }
+                  />
 
-                  <FormField label="Low Stock Threshold">
-                    <input
-                      type="number"
-                      min="0"
-                      value={formData.low_stock_threshold || 0}
-                      onChange={(e) => handleChange('low_stock_threshold', parseInt(e.target.value) || 0)}
-                      className={`
-                        w-full px-4 py-2.5 rounded-lg
-                        ${theme === 'dark'
-                          ? 'bg-gray-700 text-white border-gray-600'
-                          : 'bg-white text-gray-900 border-gray-300'
-                        }
-                        border focus:outline-none focus:ring-2 focus:ring-blue-500
-                      `}
-                    />
-                  </FormField>
+                  <Input
+                    label="Low Stock Threshold"
+                    type="number"
+                    min="0"
+                    value={formData.low_stock_threshold || 10}
+                    onChange={(e) => handleChange('low_stock_threshold', parseInt(e.target.value) || 10)}
+                    placeholder="10"
+                    helperText="Alert when stock falls below this level"
+                    icon={
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                      </svg>
+                    }
+                  />
                 </div>
 
                 <div className={`
                   mt-3 p-3 rounded-lg text-xs
-                  ${theme === 'dark' ? 'bg-blue-900/20 text-blue-300' : 'bg-blue-50 text-blue-700'}
+                  ${theme === 'dark' ? 'bg-blue-900/20 text-blue-300 border border-blue-800' : 'bg-blue-50 text-blue-700 border border-blue-200'}
                 `}>
                   <strong>Tip:</strong> Set a low stock threshold to receive alerts when inventory runs low. This helps prevent stockouts.
                 </div>
@@ -398,21 +343,13 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
         
         {/* Notes */}
         <FormSection title="Additional Information">
-          <FormField label="Notes">
-            <textarea
-              value={formData.notes || ''}
-              onChange={(e) => handleChange('notes', e.target.value)}
-              rows={3}
-              className={`
-                w-full px-4 py-2.5 rounded-lg
-                ${theme === 'dark'
-                  ? 'bg-gray-700 text-white border-gray-600'
-                  : 'bg-white text-gray-900 border-gray-300'
-                }
-                border focus:outline-none focus:ring-2 focus:ring-blue-500
-              `}
-            />
-          </FormField>
+          <TextArea
+            label="Notes"
+            value={formData.notes || ''}
+            onChange={(e) => handleChange('notes', e.target.value)}
+            rows={3}
+            placeholder="Internal notes about this product (optional)"
+          />
         </FormSection>
       </div>
       

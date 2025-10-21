@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useAppStore, useProductStore } from '../../stores'
 import { PageHeader, PageContainer, SplitLayout } from '../layout'
-import { Button, LoadingSpinner, ErrorMessage, RightPanel, IconButton, ThemeToggle } from '../common'
+import { Button, LoadingSpinner, ErrorMessage, RightPanel, IconButton, ThemeToggle, Input } from '../common'
+import { Select } from '../forms'
 import { ProductForm } from './ProductForm'
 import { CategoryManagement } from './CategoryManagement'
 import { ProductDetailView } from './ProductDetailView'
@@ -110,79 +111,61 @@ export function ProductsScreen({ onBack }: ProductsScreenProps) {
   const leftPanel = (
     <div className="h-full flex flex-col">
       {/* Search and Filters */}
-      <div className="p-4 border-b border-gray-700">
+      <div className={`
+        p-4 border-b space-y-3
+        ${theme === 'dark' ? 'border-gray-700 bg-gray-800/30' : 'border-gray-200 bg-gray-50/50'}
+      `}>
         {/* Search */}
-        <div className="mb-3">
-          <input
-            type="text"
-            placeholder="Search products..."
-            value={filters.search}
-            onChange={(e) => handleSearchChange(e.target.value)}
-            className={`
-              w-full px-3 py-2 rounded-lg text-sm
-              ${theme === 'dark'
-                ? 'bg-gray-700 text-white border-gray-600'
-                : 'bg-white text-gray-900 border-gray-300'
-              }
-              border focus:outline-none focus:ring-2 focus:ring-blue-500
-            `}
-          />
-        </div>
+        <Input
+          type="text"
+          placeholder="Search products..."
+          value={filters.search}
+          onChange={(e) => handleSearchChange(e.target.value)}
+          icon={
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          }
+        />
 
         {/* Category Filter */}
-        <select
+        <Select
           value={filters.categoryId || ''}
           onChange={(e) => handleCategoryFilter(e.target.value ? Number(e.target.value) : null)}
-          className={`
-            w-full px-3 py-2 rounded-lg text-sm mb-2
-            ${theme === 'dark'
-              ? 'bg-gray-700 text-white border-gray-600'
-              : 'bg-white text-gray-900 border-gray-300'
-            }
-            border focus:outline-none focus:ring-2 focus:ring-blue-500
-          `}
         >
           <option value="">All Categories</option>
           {categories.map(cat => (
             <option key={cat.id} value={cat.id}>{cat.name}</option>
           ))}
-        </select>
+        </Select>
 
         {/* Product Type Filter */}
-        <select
+        <Select
           value={filters.productType || ''}
           onChange={(e) => handleProductTypeFilter(e.target.value || null)}
-          className={`
-            w-full px-3 py-2 rounded-lg text-sm
-            ${theme === 'dark'
-              ? 'bg-gray-700 text-white border-gray-600'
-              : 'bg-white text-gray-900 border-gray-300'
-            }
-            border focus:outline-none focus:ring-2 focus:ring-blue-500
-          `}
         >
           <option value="">All Types</option>
           <option value="simple">Simple</option>
           <option value="variation">Variation</option>
           <option value="bundle">Bundle</option>
           <option value="service">Service</option>
-        </select>
+        </Select>
 
         {/* Clear Filters */}
         {(filters.search || filters.categoryId || filters.productType) && (
-          <button
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={handleClearFilters}
-            className={`
-              w-full mt-2 px-3 py-1.5 rounded-lg text-xs
-              ${theme === 'dark'
-                ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }
-              transition-colors
-            `}
+            fullWidth
+            icon={
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            }
           >
             Clear Filters
-          </button>
+          </Button>
         )}
       </div>
 
