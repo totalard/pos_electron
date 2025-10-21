@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useAppStore } from '../../stores'
 import { Button } from '../common'
+import { ThemeToggle } from '../common/ThemeToggle'
 import { getIllustrationComponent } from './walkthroughSteps'
 
 const API_BASE_URL = 'http://localhost:8001/api'
@@ -140,10 +141,10 @@ export function Walkthrough({
     <div
       className={`
         fixed inset-0 z-[9999] flex items-center justify-center
-        w-screen h-screen overflow-hidden
+        w-screen h-screen overflow-hidden relative
         ${theme === 'dark'
-          ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900'
-          : 'bg-gradient-to-br from-blue-50 via-white to-purple-50'
+          ? 'bg-gradient-to-br from-slate-950 to-gray-950'
+          : 'bg-gradient-to-br from-gray-50 to-blue-50'
         }
         transition-colors duration-500
       `}
@@ -154,6 +155,19 @@ export function Walkthrough({
         animation: 'fadeIn 0.5s ease-out'
       }}
     >
+      {/* Animated Background Gradient - Minimal */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className={`
+          absolute top-0 right-0 w-[400px] h-[400px] rounded-full
+          ${theme === 'dark' ? 'bg-blue-600/15' : 'bg-blue-400/10'}
+          blur-3xl animate-float-slow
+        `} />
+        <div className={`
+          absolute bottom-0 left-0 w-[400px] h-[400px] rounded-full
+          ${theme === 'dark' ? 'bg-blue-500/10' : 'bg-blue-300/8'}
+          blur-3xl animate-float-medium
+        `} style={{ animationDelay: '1.5s' }} />
+      </div>
       {/* CSS Animations */}
       <style>{`
         @keyframes fadeIn {
@@ -209,9 +223,10 @@ export function Walkthrough({
         }
       `}</style>
 
-      <div className="w-full h-full max-w-6xl mx-auto px-8 py-12 flex flex-col">
-        {/* Skip Button */}
-        <div className="flex justify-end mb-6" style={{ animation: 'fadeIn 0.5s ease-out 0.2s both' }}>
+      <div className="w-full h-full max-w-6xl mx-auto px-8 py-12 flex flex-col relative z-10">
+        {/* Top Bar - Skip Button and Theme Toggle */}
+        <div className="flex justify-between items-center mb-6" style={{ animation: 'fadeIn 0.5s ease-out 0.2s both' }}>
+          <div className="w-10" /> {/* Spacer for centering */}
           <Button
             variant="ghost"
             size="md"
@@ -221,9 +236,10 @@ export function Walkthrough({
           >
             Skip Tutorial
           </Button>
+          <ThemeToggle size="md" className="backdrop-blur-xl bg-white/10 dark:bg-gray-800/30 rounded-full p-2 shadow-lg hover:scale-110 transition-transform" />
         </div>
 
-        {/* Main Content Card */}
+        {/* Main Content Card - Enhanced */}
         <div
           className={`
             flex-1 rounded-3xl shadow-2xl overflow-hidden
@@ -231,14 +247,14 @@ export function Walkthrough({
               ? 'bg-gray-800/90 border border-gray-700/50'
               : 'bg-white/90 border border-gray-200/50'
             }
-            backdrop-blur-xl
+            backdrop-blur-2xl
           `}
           style={{ animation: 'scaleIn 0.5s ease-out 0.3s both' }}
         >
-          {/* Step Indicators */}
+          {/* Step Indicators - Enhanced */}
           <div className={`
             flex items-center justify-center gap-3 py-8 border-b
-            ${theme === 'dark' ? 'border-gray-700/50' : 'border-gray-200/50'}
+            ${theme === 'dark' ? 'border-gray-700/50 bg-gray-800/20' : 'border-gray-200/50 bg-gray-50/30'}
           `}>
             {steps.map((_, index) => (
               <button
@@ -253,9 +269,13 @@ export function Walkthrough({
                   h-3 rounded-full transition-all duration-500 cursor-pointer
                   hover:scale-110
                   ${index === currentStep
-                    ? 'w-12 bg-primary-500 shadow-lg shadow-primary-500/50'
+                    ? theme === 'dark'
+                      ? 'w-12 bg-blue-500 shadow-lg shadow-blue-500/30'
+                      : 'w-12 bg-blue-500 shadow-lg shadow-blue-500/20'
                     : index < currentStep
-                      ? 'w-3 bg-primary-300 hover:bg-primary-400'
+                      ? theme === 'dark'
+                        ? 'w-3 bg-blue-400 hover:bg-blue-300'
+                        : 'w-3 bg-blue-500 hover:bg-blue-600'
                       : 'w-3 bg-gray-300 hover:bg-gray-400'
                   }
                 `}
@@ -279,23 +299,23 @@ export function Walkthrough({
               {getIllustrationComponent(currentStepData.illustration, theme)}
             </div>
 
-            {/* Title */}
+            {/* Title - Enhanced */}
             <h2
               id="walkthrough-title"
               className={`
-                text-4xl font-bold text-center mb-6
-                ${theme === 'dark' ? 'text-white' : 'text-gray-900'}
+                text-5xl font-bold text-center mb-6
+                ${theme === 'dark' ? 'text-blue-300' : 'text-blue-700'}
               `}
               style={{ animation: 'fadeIn 0.5s ease-out 0.2s both' }}
             >
               {currentStepData.title}
             </h2>
 
-            {/* Description */}
+            {/* Description - Enhanced */}
             <p
               className={`
-                text-xl text-center mb-12 leading-relaxed max-w-2xl
-                ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}
+                text-xl text-center mb-12 leading-relaxed max-w-2xl font-medium
+                ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}
               `}
               style={{ animation: 'fadeIn 0.5s ease-out 0.3s both' }}
             >
@@ -335,10 +355,10 @@ export function Walkthrough({
             )}
           </div>
 
-          {/* Navigation */}
+          {/* Navigation - Enhanced */}
           <div className={`
             flex items-center justify-between px-12 py-8 border-t
-            ${theme === 'dark' ? 'border-gray-700/50 bg-gray-800/30' : 'border-gray-200/50 bg-gray-50/50'}
+            ${theme === 'dark' ? 'border-gray-700/50 bg-gray-800/30' : 'border-gray-200/50 bg-gray-50/40'}
             backdrop-blur-sm
           `}>
             {/* Previous Button */}
@@ -358,17 +378,17 @@ export function Walkthrough({
               Previous
             </Button>
 
-            {/* Step Counter */}
+            {/* Step Counter - Enhanced */}
             <div className="flex flex-col items-center gap-1">
               <span className={`
                 text-lg font-bold
-                ${theme === 'dark' ? 'text-white' : 'text-gray-900'}
+                ${theme === 'dark' ? 'text-blue-300' : 'text-blue-700'}
               `}>
                 {currentStep + 1} / {steps.length}
               </span>
               <span className={`
-                text-xs
-                ${theme === 'dark' ? 'text-gray-500' : 'text-gray-500'}
+                text-xs font-medium
+                ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}
               `}>
                 {Math.round(((currentStep + 1) / steps.length) * 100)}% Complete
               </span>

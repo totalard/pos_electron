@@ -139,23 +139,37 @@ export function FeatureCarousel() {
 
   return (
     <div className={`
-      h-full flex flex-col items-center justify-center p-12
+      w-full h-full flex flex-col items-center justify-center p-12 relative overflow-hidden
       ${theme === 'dark'
-        ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-950'
-        : 'bg-gradient-to-br from-primary-600 via-primary-700 to-primary-800'
+        ? 'bg-gradient-to-br from-slate-950 to-gray-950'
+        : 'bg-gradient-to-br from-blue-600 to-blue-700'
       }
     `}>
+      {/* Animated Background Gradient - Minimal */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className={`
+          absolute top-0 right-0 w-80 h-80 rounded-full
+          ${theme === 'dark' ? 'bg-blue-600/15' : 'bg-blue-500/15'}
+          blur-3xl animate-float-slow
+        `} />
+        <div className={`
+          absolute bottom-0 left-0 w-80 h-80 rounded-full
+          ${theme === 'dark' ? 'bg-blue-500/10' : 'bg-blue-400/10'}
+          blur-3xl animate-float-medium
+        `} style={{ animationDelay: '1.5s' }} />
+      </div>
       {/* Logo/Brand */}
-      <div className="mb-12">
+      <div className="mb-12 relative z-10">
         <h1 className={`
-          text-5xl font-bold mb-2
-          ${theme === 'dark' ? 'text-white' : 'text-white'}
+          text-6xl font-bold mb-3 tracking-tight
+          ${theme === 'dark' ? 'text-white drop-shadow-lg' : 'text-white drop-shadow-lg'}
         `}>
           MidLogic POS
         </h1>
+        <div className="w-16 h-1.5 mx-auto mb-4 rounded-full bg-white/30" />
         <p className={`
-          text-center text-lg
-          ${theme === 'dark' ? 'text-gray-300' : 'text-primary-200'}
+          text-center text-xl font-medium
+          ${theme === 'dark' ? 'text-gray-200' : 'text-blue-100'}
         `}>
           Modern Point of Sale System
         </p>
@@ -163,7 +177,7 @@ export function FeatureCarousel() {
 
       {/* Feature Display */}
       <div
-        className="flex-1 flex flex-col items-center justify-center max-w-md"
+        className="flex-1 flex flex-col items-center justify-center max-w-md relative z-10"
         role="region"
         aria-live="polite"
         aria-atomic="true"
@@ -176,7 +190,7 @@ export function FeatureCarousel() {
 
         {/* Title */}
         <h2 className={`
-          text-3xl font-bold mb-4 text-center
+          text-4xl font-bold mb-4 text-center drop-shadow-lg
           ${theme === 'dark' ? 'text-white' : 'text-white'}
         `}>
           {currentFeature.title}
@@ -184,29 +198,29 @@ export function FeatureCarousel() {
 
         {/* Description */}
         <p className={`
-          text-center text-lg leading-relaxed
-          ${theme === 'dark' ? 'text-gray-300' : 'text-primary-100'}
+          text-center text-xl leading-relaxed font-medium
+          ${theme === 'dark' ? 'text-gray-200' : 'text-blue-100'}
         `}>
           {currentFeature.description}
         </p>
       </div>
 
-      {/* Carousel Indicators - Touch-safe with minimum 44x44px */}
-      <div className="flex gap-2 mt-12" role="tablist" aria-label="Feature carousel navigation">
+      {/* Carousel Indicators - Touch-safe with minimum 44x44px - Enhanced */}
+      <div className="flex gap-2 mt-12 relative z-10" role="tablist" aria-label="Feature carousel navigation">
         {features.map((feature, index) => (
           <button
             key={index}
             onClick={() => goToSlide(index)}
             className={`
               min-w-[44px] min-h-[44px] p-3 rounded-lg transition-all duration-300
-              flex items-center justify-center
+              flex items-center justify-center backdrop-blur-sm
               ${index === currentIndex
                 ? theme === 'dark'
-                  ? 'bg-white/20 hover:bg-white/30'
-                  : 'bg-white/30 hover:bg-white/40'
+                  ? 'bg-white/25 hover:bg-white/35 shadow-lg'
+                  : 'bg-white/35 hover:bg-white/45 shadow-lg'
                 : theme === 'dark'
                   ? 'bg-gray-700/30 hover:bg-gray-600/40'
-                  : 'bg-white/10 hover:bg-white/20'
+                  : 'bg-white/15 hover:bg-white/25'
               }
             `}
             role="tab"
@@ -217,10 +231,10 @@ export function FeatureCarousel() {
             <div className={`
               h-2 rounded-full transition-all duration-300
               ${index === currentIndex
-                ? 'w-8 bg-white'
+                ? 'w-8 bg-white shadow-lg'
                 : theme === 'dark'
-                  ? 'w-2 bg-gray-400'
-                  : 'w-2 bg-white/60'
+                  ? 'w-2 bg-gray-300'
+                  : 'w-2 bg-white/70'
               }
             `} />
           </button>
@@ -229,8 +243,8 @@ export function FeatureCarousel() {
 
       {/* Footer */}
       <div className={`
-        mt-8 text-sm
-        ${theme === 'dark' ? 'text-gray-400' : 'text-primary-200'}
+        mt-8 text-sm font-medium relative z-10
+        ${theme === 'dark' ? 'text-gray-300' : 'text-blue-100'}
       `}>
         © {currentYear} MidLogic. All rights reserved.
       </div>

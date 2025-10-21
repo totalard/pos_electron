@@ -5,6 +5,7 @@ import { usePinStore } from '../stores'
 import { useAppStore } from '../stores'
 import { authAPI, type User } from '../services/api'
 import { Avatar, LoadingSpinner, Button } from './common'
+import { ThemeToggle } from './common/ThemeToggle'
 
 interface LoginProps {
   onAuthenticated?: () => void
@@ -97,33 +98,37 @@ export function Login({ onAuthenticated }: LoginProps) {
   }
 
   return (
-    <div className="h-screen w-screen flex overflow-hidden">
+    <div className="h-screen w-screen flex overflow-hidden bg-slate-950">
       {/* Left Side - Feature Carousel (1/3 width) */}
-      <div className="hidden lg:flex lg:w-1/3">
+      <div className="hidden lg:flex lg:w-1/3 w-full h-full">
         <FeatureCarousel />
       </div>
 
       {/* Right Side - User Selection / PIN Entry (2/3 width) */}
       <div className={`
-        w-full lg:w-2/3 flex items-center justify-center overflow-hidden
+        w-full lg:w-2/3 flex items-center justify-center overflow-hidden relative
         transition-all duration-300
         ${theme === 'dark'
-          ? 'bg-gradient-to-br from-gray-950 to-gray-900'
+          ? 'bg-gradient-to-br from-slate-950 to-gray-950'
           : 'bg-gradient-to-br from-gray-50 to-blue-50'
         }
       `}>
-        {/* Animated background gradients */}
-        <div className="absolute inset-0 overflow-hidden">
+        {/* Theme Toggle - Top Right Corner */}
+        <div className="absolute top-6 right-6 z-50 animate-fade-in">
+          <ThemeToggle size="md" className="backdrop-blur-xl bg-white/10 dark:bg-gray-800/30 rounded-full p-2 shadow-lg hover:scale-110 transition-transform" />
+        </div>
+        {/* Animated background gradients - Minimal */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className={`
-            absolute -top-40 -right-40 w-80 h-80 rounded-full opacity-20
+            absolute -top-40 -right-40 w-80 h-80 rounded-full
             blur-3xl animate-float-slow
-            ${theme === 'dark' ? 'bg-primary-600/30' : 'bg-primary-400/15'}
+            ${theme === 'dark' ? 'bg-blue-600/15' : 'bg-blue-400/10'}
           `} />
           <div className={`
-            absolute -bottom-40 -left-40 w-80 h-80 rounded-full opacity-15
+            absolute -bottom-40 -left-40 w-80 h-80 rounded-full
             blur-3xl animate-float-medium
-            ${theme === 'dark' ? 'bg-primary-500/30' : 'bg-primary-500/10'}
-          `} style={{ animationDelay: '1s' }} />
+            ${theme === 'dark' ? 'bg-blue-500/10' : 'bg-blue-300/8'}
+          `} style={{ animationDelay: '1.5s' }} />
         </div>
 
         <div className="w-full max-w-md px-8 py-12 relative z-10">
@@ -171,18 +176,19 @@ export function Login({ onAuthenticated }: LoginProps) {
             <div className="animate-fade-in">
               <div className="text-center mb-12">
                 <h1 className={`
-                  text-5xl font-bold mb-2 tracking-tight
+                  text-6xl font-bold mb-3 tracking-tight
                   bg-gradient-to-r bg-clip-text text-transparent
                   ${theme === 'dark'
-                    ? 'from-primary-300 to-primary-500'
-                    : 'from-primary-600 to-primary-700'
+                    ? 'from-blue-400 to-blue-300'
+                    : 'from-blue-600 to-blue-700'
                   }
                 `}>
                   Welcome Back
                 </h1>
+                <div className={`w-16 h-1.5 mx-auto mb-4 rounded-full ${theme === 'dark' ? 'bg-blue-500' : 'bg-blue-500'}`} />
                 <p className={`
-                  text-lg
-                  ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}
+                  text-xl font-medium
+                  ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}
                 `}>
                   Select your account to continue
                 </p>
@@ -198,7 +204,7 @@ export function Login({ onAuthenticated }: LoginProps) {
                       group flex flex-col items-center p-8 rounded-2xl
                       backdrop-blur-xl border transition-all duration-300
                       transform hover:scale-105 active:scale-100
-                      min-h-[220px] justify-center
+                      min-h-[200px] justify-center
                       animate-scale-in
                       ${theme === 'dark'
                         ? 'bg-gray-800/40 border-gray-700/50 hover:border-primary-500/50 active:border-primary-600/70 hover:shadow-2xl hover:shadow-primary-900/20'
@@ -208,21 +214,21 @@ export function Login({ onAuthenticated }: LoginProps) {
                     style={{ animationDelay: `${index * 100}ms` }}
                     aria-label={`Select user ${user.full_name}`}
                   >
-                    {/* Avatar with Glow */}
-                    <div className="relative mb-4">
+                    {/* Avatar with Glow - Enhanced */}
+                    <div className="relative mb-3">
                       <div className={`
                         absolute inset-0 rounded-full opacity-40 blur-lg
                         ${theme === 'dark'
-                          ? 'bg-gradient-to-r from-primary-600 to-primary-500'
-                          : 'bg-gradient-to-r from-primary-500 to-primary-400'
+                          ? 'bg-blue-600'
+                          : 'bg-blue-500'
                         }
                         group-hover:opacity-60 transition-opacity duration-300
                       `} />
                       <Avatar
                         name={user.full_name}
                         color={getAvatarColor(user)}
-                        size="2xl"
-                        className="relative shadow-lg group-hover:scale-110 group-active:scale-100 transition-transform duration-200"
+                        size="xl"
+                        className="relative shadow-xl group-hover:scale-110 group-active:scale-100 transition-transform duration-200"
                       />
                     </div>
 
@@ -300,39 +306,39 @@ export function Login({ onAuthenticated }: LoginProps) {
                 <span className="text-sm font-medium">Back</span>
               </button>
 
-              {/* User Info Card */}
+              {/* User Info Card - Enhanced */}
               <div className={`
                 text-center mb-10 p-6 rounded-2xl
                 backdrop-blur-xl border
                 ${theme === 'dark'
-                  ? 'bg-gray-800/40 border-gray-700/40'
-                  : 'bg-white/30 border-white/50'
+                  ? 'bg-gray-800/40 border-gray-700/50'
+                  : 'bg-white/70 border-white/80'
                 }
               `}>
-                <div className="relative min-w-[80px] min-h-[80px] w-20 h-20 mx-auto mb-4">
+                <div className="relative min-w-[64px] min-h-[64px] w-16 h-16 mx-auto mb-4">
                   <div className={`
-                    absolute inset-0 rounded-full opacity-60 blur-lg
+                    absolute inset-0 rounded-full opacity-40 blur-lg
                     ${theme === 'dark'
-                      ? 'bg-gradient-to-r from-primary-600 to-primary-500'
-                      : 'bg-gradient-to-r from-primary-500 to-primary-400'
+                      ? 'bg-blue-600'
+                      : 'bg-blue-500'
                     }
                   `} />
                   <Avatar
                     name={selectedUser.full_name}
                     color={getAvatarColor(selectedUser)}
-                    size="xl"
-                    className="relative shadow-lg"
+                    size="lg"
+                    className="relative shadow-xl"
                   />
                 </div>
                 <h2 className={`
-                  text-2xl font-bold mb-1
-                  ${theme === 'dark' ? 'text-gray-100' : 'text-gray-900'}
+                  text-2xl font-bold mb-2
+                  ${theme === 'dark' ? 'text-blue-300' : 'text-blue-700'}
                 `}>
                   {selectedUser.full_name}
                 </h2>
                 <p className={`
-                  text-sm
-                  ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}
+                  text-base font-medium
+                  ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}
                 `}>
                   Enter your 6-digit PIN
                 </p>
@@ -344,17 +350,17 @@ export function Login({ onAuthenticated }: LoginProps) {
                   flex justify-center items-center gap-3 mb-6 p-8 rounded-2xl
                   backdrop-blur-xl border
                   ${theme === 'dark'
-                    ? 'bg-gray-800/30 border-gray-700/30'
-                    : 'bg-white/40 border-white/60'
+                    ? 'bg-gray-800/30 border-gray-700/40'
+                    : 'bg-white/60 border-white/80'
                   }
                 `}>
                   {Array.from({ length: 6 }).map((_, index) => (
                     <div
                       key={index}
                       className={`
-                        w-3.5 h-3.5 rounded-full transition-all duration-200
+                        w-4 h-4 rounded-full transition-all duration-200
                         ${index < pin.length
-                          ? `bg-gradient-to-br ${theme === 'dark' ? 'from-primary-400 to-primary-500' : 'from-primary-600 to-primary-700'} scale-125 shadow-lg`
+                          ? `${theme === 'dark' ? 'bg-blue-500 shadow-lg shadow-blue-500/30' : 'bg-blue-600 shadow-lg shadow-blue-500/20'} scale-125`
                           : `border-2 ${theme === 'dark' ? 'border-gray-600 bg-gray-700/50' : 'border-gray-300 bg-white/50'}`
                         }
                       `}
@@ -401,7 +407,7 @@ export function Login({ onAuthenticated }: LoginProps) {
                 {showPin && pin && (
                   <div className={`
                     text-center mt-4 text-3xl font-mono tracking-[0.3em] font-bold
-                    ${theme === 'dark' ? 'text-primary-400' : 'text-primary-600'}
+                    ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}
                   `}>
                     {pin}
                   </div>
@@ -483,8 +489,8 @@ export function Login({ onAuthenticated }: LoginProps) {
               <div className={`
                 p-6 rounded-2xl backdrop-blur-xl border
                 ${theme === 'dark'
-                  ? 'bg-gray-800/30 border-gray-700/30'
-                  : 'bg-white/40 border-white/60'
+                  ? 'bg-gray-800/30 border-gray-700/40'
+                  : 'bg-white/60 border-white/80'
                 }
               `}>
                 <NumericKeypad
