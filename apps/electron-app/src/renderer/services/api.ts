@@ -2,7 +2,10 @@
  * API service for communicating with the Python backend
  */
 
-const API_BASE_URL = `${(import.meta as any).env?.VITE_API_URL || 'http://localhost:8000'}/api`
+import { jsonRpcFetch, APIError } from '../utils/jsonrpc'
+import { getApiUrl } from '../utils/env'
+
+const API_BASE_URL = `${getApiUrl()}/api`
 
 // ============================================================================
 // Types
@@ -373,33 +376,13 @@ export interface StockTransactionCreate {
 // API Error Handling
 // ============================================================================
 
-class APIError extends Error {
-  constructor(
-    message: string,
-    public statusCode?: number,
-    public details?: unknown
-  ) {
-    super(message)
-    this.name = 'APIError'
-  }
-}
+// Export APIError from jsonrpc module
+export { APIError } from '../utils/jsonrpc'
 
+// Helper function to handle responses with JSON-RPC
 async function handleResponse<T>(response: Response): Promise<T> {
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ detail: 'Unknown error' }))
-    throw new APIError(
-      error.detail || `HTTP ${response.status}: ${response.statusText}`,
-      response.status,
-      error
-    )
-  }
-  
-  // Handle 204 No Content
-  if (response.status === 204) {
-    return null as T
-  }
-  
-  return response.json()
+  const { parseJSONRPCResponse } = await import('../utils/jsonrpc')
+  return parseJSONRPCResponse<T>(response)
 }
 
 // ============================================================================
@@ -951,9 +934,7 @@ export const productManagementAPI = {
     const response = await fetch(`${API_BASE_URL}/product-management/categories/${categoryId}`, {
       method: 'DELETE'
     })
-    if (!response.ok) {
-      throw new APIError('Failed to delete category', response.status)
-    }
+    return handleResponse<void>(response)
   },
 
   /**
@@ -977,9 +958,7 @@ export const productManagementAPI = {
     const response = await fetch(`${API_BASE_URL}/product-management/categories/${categoryId}/image`, {
       method: 'DELETE'
     })
-    if (!response.ok) {
-      throw new APIError('Failed to delete category image', response.status)
-    }
+    return handleResponse<void>(response)
   },
 
   // ============================================================================
@@ -1058,9 +1037,7 @@ export const productManagementAPI = {
     const response = await fetch(`${API_BASE_URL}/product-management/products/${productId}`, {
       method: 'DELETE'
     })
-    if (!response.ok) {
-      throw new APIError('Failed to delete product', response.status)
-    }
+    return handleResponse<void>(response)
   },
 
   /**
@@ -1089,9 +1066,7 @@ export const productManagementAPI = {
     const response = await fetch(`${API_BASE_URL}/product-management/products/${productId}/images/${imageIndex}`, {
       method: 'DELETE'
     })
-    if (!response.ok) {
-      throw new APIError('Failed to delete product image', response.status)
-    }
+    return handleResponse<void>(response)
   },
 
   // ============================================================================
@@ -1147,9 +1122,7 @@ export const productManagementAPI = {
         method: 'DELETE'
       }
     )
-    if (!response.ok) {
-      throw new APIError('Failed to delete variation', response.status)
-    }
+    return handleResponse<void>(response)
   },
 
   // ============================================================================
@@ -1189,9 +1162,7 @@ export const productManagementAPI = {
         method: 'DELETE'
       }
     )
-    if (!response.ok) {
-      throw new APIError('Failed to remove bundle component', response.status)
-    }
+    return handleResponse<void>(response)
   }
 }
 
@@ -1265,9 +1236,7 @@ export const customerAPI = {
     const response = await fetch(`${API_BASE_URL}/customers/${customerId}`, {
       method: 'DELETE'
     })
-    if (!response.ok) {
-      throw new APIError('Failed to delete customer', response.status)
-    }
+    return handleResponse<void>(response)
   },
 
   /**
@@ -1453,6 +1422,3 @@ export const userActivityAPI = {
     return handleResponse<UserPerformanceMetrics[]>(response)
   }
 }
-
-export { APIError }
-

@@ -10,6 +10,7 @@ import { CustomerManagementScreen } from './components/customers'
 import { InventoryScreen } from './components/inventory'
 import { TransactionManagementScreen } from './components/transactions/TransactionManagementScreen'
 import { Walkthrough, defaultWalkthroughSteps } from './components/walkthrough'
+import { ErrorModal } from './components/common/ErrorModal'
 
 const API_BASE_URL = 'http://localhost:8000/api'
 
@@ -140,6 +141,9 @@ function App() {
       {currentScreen === 'settings' && (
         <Settings onBack={handleBackToDashboard} />
       )}
+
+      {/* Global Error Modal */}
+      <ErrorModal />
     </div>
   )
 }

@@ -5,6 +5,9 @@ export type { AppState } from './appStore'
 export { usePinStore, getPinDisplay, isPinComplete } from './pinStore'
 export type { PinState } from './pinStore'
 
+export { useErrorStore } from './errorStore'
+export type { ErrorDetails } from './errorStore'
+
 export { useSettingsStore } from './settingsStore'
 export type {
   SettingsState,

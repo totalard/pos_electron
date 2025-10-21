@@ -5,7 +5,9 @@ import logging
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.exceptions import RequestValidationError
 from .api import router as api_router
+from .api.jsonrpc import jsonrpc_exception_handler
 from .config import settings
 from .database import init_db, close_db, get_db_info
 
@@ -69,6 +71,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Register JSON-RPC exception handlers
+app.add_exception_handler(Exception, jsonrpc_exception_handler)
+app.add_exception_handler(RequestValidationError, jsonrpc_exception_handler)
 
 # Include API routes
 app.include_router(api_router, prefix="/api")

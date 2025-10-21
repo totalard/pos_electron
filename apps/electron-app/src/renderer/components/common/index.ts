@@ -22,6 +22,8 @@ export type { ConfirmDialogProps } from './ConfirmDialog'
 export { ErrorMessage } from './ErrorMessage'
 export type { ErrorMessageProps } from './ErrorMessage'
 
+export { ErrorModal } from './ErrorModal'
+
 export { IconButton } from './IconButton'
 export type { IconButtonProps } from './IconButton'
 

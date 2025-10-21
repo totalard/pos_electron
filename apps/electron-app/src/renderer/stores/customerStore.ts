@@ -11,6 +11,7 @@ import type {
   CustomerStatementResponse
 } from '../services/api'
 import { customerAPI } from '../services/api'
+import { withErrorHandler } from '../utils/apiErrorHandler'
 
 // ============================================================================
 // Types
@@ -107,22 +108,24 @@ export const useCustomerStore = create<CustomerState>()(
       
       fetchCustomers: async () => {
         set({ isLoading: true, error: null })
-        try {
-          const { filters, pagination } = get()
-          const customers = await customerAPI.getAllCustomers({
+        const { filters, pagination } = get()
+        
+        const customers = await withErrorHandler(
+          () => customerAPI.getAllCustomers({
             skip: pagination.skip,
             limit: pagination.limit,
             search: filters.search || undefined
           })
-          
+        )
+        
+        if (customers) {
           set({ 
             customers,
             isLoading: false,
             pagination: { ...pagination, total: customers.length }
           })
-        } catch (error) {
-          const errorMessage = error instanceof Error ? error.message : 'Failed to fetch customers'
-          set({ error: errorMessage, isLoading: false })
+        } else {
+          set({ isLoading: false })
         }
       },
       
