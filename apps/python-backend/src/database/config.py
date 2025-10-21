@@ -42,6 +42,7 @@ TORTOISE_ORM = {
                 "src.database.models.cash_transaction",
                 "src.database.models.expense",
                 "src.database.models.discount",
+                "src.database.models.pos_session",  # POS Session management
                 "aerich.models"  # Required for Aerich migrations
             ],
             "default_connection": "default",

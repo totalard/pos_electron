@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react'
-import { useAppStore, usePOSStore, useProductStore, useSettingsStore } from '../stores'
-import { POSHeader, POSFooter, POSProductGrid, POSProductList, POSCategorySidebar, POSCart, POSSearchBar, POSActionButton, CheckoutModal, DiscountDialog, ItemDiscountDialog, CashManagementDialog, EmailReceiptDialog } from './pos'
+import { useAppStore, usePOSStore, useProductStore, useSettingsStore, useSessionStore, usePinStore } from '../stores'
+import { POSHeader, POSFooter, POSProductGrid, POSProductList, POSCategorySidebar, POSCart, POSSearchBar, POSActionButton, CheckoutModal, DiscountDialog, ItemDiscountDialog, CashManagementDialog, EmailReceiptDialog, SessionCreationDialog, SessionClosureDialog } from './pos'
 import { TableSelector, OrderTypeSelector, ProductCustomizationDialog } from './restaurant'
 import { ConfirmDialog } from './common/ConfirmDialog'
 import { useBarcodeScanner } from '../hooks'
+import { posSessionAPI } from '../services/api'
 import type { EnhancedProduct } from '../services/api'
 import type { OrderType, ProductCustomization } from '../types/restaurant'
 
@@ -14,6 +15,8 @@ interface SaleScreenProps {
 export function SaleScreen({ onBack }: SaleScreenProps) {
   const { theme } = useAppStore()
   const { business, restaurant } = useSettingsStore()
+  const { currentUser } = usePinStore()
+  const { activeSession, setActiveSession, hasActiveSession } = useSessionStore()
   const {
     transactions,
     activeTransactionId,
@@ -63,6 +66,37 @@ export function SaleScreen({ onBack }: SaleScreenProps) {
   const [showProductCustomization, setShowProductCustomization] = useState(false)
   const [selectedProductForCustomization, setSelectedProductForCustomization] = useState<EnhancedProduct | null>(null)
   const [selectedCartItemForCustomization, setSelectedCartItemForCustomization] = useState<string | null>(null)
+
+  // Session dialog states
+  const [showSessionCreation, setShowSessionCreation] = useState(false)
+  const [showSessionClosure, setShowSessionClosure] = useState(false)
+  const [isCheckingSession, setIsCheckingSession] = useState(true)
+
+  // Check for active session on mount
+  useEffect(() => {
+    const checkSession = async () => {
+      if (!currentUser) {
+        setIsCheckingSession(false)
+        return
+      }
+
+      try {
+        const session = await posSessionAPI.getActiveSession(currentUser.id)
+        if (session) {
+          setActiveSession(session)
+        } else {
+          // No active session, show creation dialog
+          setShowSessionCreation(true)
+        }
+      } catch (error) {
+        console.error('Failed to check session:', error)
+      } finally {
+        setIsCheckingSession(false)
+      }
+    }
+
+    checkSession()
+  }, [currentUser])
 
   // Initialize first transaction if none exists
   useEffect(() => {
@@ -336,6 +370,7 @@ export function SaleScreen({ onBack }: SaleScreenProps) {
             onAddTab={handleAddNewTab}
             closeable
             minTabs={1}
+            onCloseSession={() => setShowSessionClosure(true)}
             actions={
               <button
                 onClick={onBack}
@@ -686,6 +721,31 @@ export function SaleScreen({ onBack }: SaleScreenProps) {
             />
           )}
         </>
+      )}
+
+      {/* Session Dialogs */}
+      {showSessionCreation && (
+        <SessionCreationDialog
+          onSessionCreated={() => {
+            setShowSessionCreation(false)
+          }}
+          onCancel={() => {
+            // User must create a session to use POS
+            onBack()
+          }}
+        />
+      )}
+
+      {showSessionClosure && (
+        <SessionClosureDialog
+          onSessionClosed={() => {
+            setShowSessionClosure(false)
+            onBack()
+          }}
+          onCancel={() => {
+            setShowSessionClosure(false)
+          }}
+        />
       )}
     </div>
   )

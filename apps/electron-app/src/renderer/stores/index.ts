@@ -55,3 +55,6 @@ export type { ReservationState } from './reservationStore'
 
 export { useAddressStore } from './addressStore'
 export type { AddressState } from './addressStore'
+
+export { useSessionStore } from './sessionStore'
+export type { SessionState } from './sessionStore'

@@ -1,8 +1,8 @@
 import { ReactNode } from 'react'
-import { useAppStore } from '../../stores'
+import { useAppStore, useSessionStore } from '../../stores'
 import { usePinStore } from '../../stores'
 import { TabBar, Tab } from './TabBar'
-import { Avatar } from '../common'
+import { Avatar, Button } from '../common'
 
 /**
  * POSHeader component props
@@ -24,6 +24,8 @@ export interface POSHeaderProps {
   minTabs?: number
   /** Additional actions to display in header */
   actions?: ReactNode
+  /** Close session handler */
+  onCloseSession?: () => void
 }
 
 /**
@@ -49,10 +51,12 @@ export function POSHeader({
   onAddTab,
   closeable = false,
   minTabs = 1,
-  actions
+  actions,
+  onCloseSession
 }: POSHeaderProps) {
   const { theme } = useAppStore()
   const { currentUser } = usePinStore()
+  const { activeSession } = useSessionStore()
 
   // Get current date and time
   const now = new Date()
@@ -115,8 +119,28 @@ export function POSHeader({
           )}
         </div>
 
-        {/* Center: Date & Time */}
-        <div className="flex items-center gap-4">
+        {/* Center: Session Info, Date & Time */}
+        <div className="flex items-center gap-6">
+          {/* Session Info */}
+          {activeSession && (
+            <div className={`
+              flex items-center gap-2 px-3 py-1.5 rounded-lg
+              ${theme === 'dark' ? 'bg-primary-900/30 border border-primary-700' : 'bg-primary-50 border border-primary-200'}
+            `}>
+              <svg className="w-4 h-4 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <div className="flex flex-col">
+                <span className={`text-xs font-semibold ${theme === 'dark' ? 'text-primary-400' : 'text-primary-700'}`}>
+                  Session: {activeSession.session_number}
+                </span>
+                <span className={`text-xs ${theme === 'dark' ? 'text-primary-500' : 'text-primary-600'}`}>
+                  Opening: ${activeSession.opening_cash.toFixed(2)}
+                </span>
+              </div>
+            </div>
+          )}
+          
           <div className="flex items-center gap-2">
             <svg className={`w-4 h-4 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -153,6 +177,21 @@ export function POSHeader({
               Online
             </span>
           </div>
+
+          {/* Close Session Button */}
+          {activeSession && onCloseSession && (
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={onCloseSession}
+              className="text-xs"
+            >
+              <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+              Close Session
+            </Button>
+          )}
 
           {/* Additional Actions */}
           {actions}

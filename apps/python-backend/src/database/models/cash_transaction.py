@@ -72,6 +72,15 @@ class CashTransaction(BaseModel):
         description="Additional notes"
     )
     
+    # Session tracking
+    session = fields.ForeignKeyField(
+        'models.POSSession',
+        related_name='cash_transactions',
+        null=True,
+        on_delete=fields.SET_NULL,
+        description="POS session this transaction belongs to"
+    )
+    
     # User tracking
     performed_by = fields.ForeignKeyField(
         'models.User',

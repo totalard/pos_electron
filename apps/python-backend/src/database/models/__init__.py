@@ -39,6 +39,7 @@ from .discount import (
     DiscountConditionType,
     DiscountStatus
 )
+from .pos_session import POSSession, SessionStatus
 
 __all__ = [
     "BaseModel",
@@ -81,5 +82,7 @@ __all__ = [
     "DiscountType",
     "DiscountConditionType",
     "DiscountStatus",
+    "POSSession",
+    "SessionStatus",
 ]
 

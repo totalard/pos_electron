@@ -39,6 +39,15 @@ class Sale(BaseModel):
         description="Unique invoice number"
     )
     
+    # Session tracking
+    session = fields.ForeignKeyField(
+        'models.POSSession',
+        related_name='sales',
+        null=True,
+        on_delete=fields.SET_NULL,
+        description="POS session this sale belongs to"
+    )
+    
     # Customer information
     customer = fields.ForeignKeyField(
         'models.Customer',

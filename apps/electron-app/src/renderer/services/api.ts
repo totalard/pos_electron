@@ -1505,3 +1505,150 @@ export const userActivityAPI = {
     return handleResponse<UserPerformanceMetrics[]>(response)
   }
 }
+
+// ============================================================================
+// POS Session Types
+// ============================================================================
+
+export interface DenominationCount {
+  value: number
+  count: number
+  total: number
+}
+
+export interface CashDenominations {
+  bills?: DenominationCount[]
+  coins?: DenominationCount[]
+}
+
+export interface POSSession {
+  id: number
+  session_number: string
+  user_id: number
+  user_name: string
+  status: 'active' | 'closed' | 'suspended'
+  opening_cash: number
+  opening_denominations: Record<string, any>
+  closing_cash?: number
+  closing_denominations?: Record<string, any>
+  expected_cash?: number
+  cash_variance?: number
+  total_sales: number
+  total_cash_in: number
+  total_cash_out: number
+  payment_summary: Record<string, any>
+  opened_at: string
+  closed_at?: string
+  opening_notes?: string
+  closing_notes?: string
+}
+
+export interface SessionCreateRequest {
+  user_id: number
+  opening_cash: number
+  opening_denominations: Record<string, any>
+  opening_notes?: string
+}
+
+export interface SessionCloseRequest {
+  closing_cash: number
+  closing_denominations: Record<string, any>
+  closing_notes?: string
+}
+
+export interface PaymentSummaryItem {
+  payment_method: string
+  count: number
+  total: number
+}
+
+export interface SessionSummary {
+  session_id: number
+  session_number: string
+  user_name: string
+  status: string
+  opened_at: string
+  closed_at?: string
+  opening_cash: number
+  closing_cash?: number
+  expected_cash?: number
+  cash_variance?: number
+  total_sales: number
+  total_cash_in: number
+  total_cash_out: number
+  payment_summary: PaymentSummaryItem[]
+  sales_count: number
+}
+
+// ============================================================================
+// POS Session API
+// ============================================================================
+
+export const posSessionAPI = {
+  /**
+   * Create a new POS session
+   */
+  async createSession(request: SessionCreateRequest): Promise<POSSession> {
+    const response = await fetch(`${API_BASE_URL}/pos-sessions`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(request)
+    })
+    return handleResponse<POSSession>(response)
+  },
+
+  /**
+   * Get active session for a user
+   */
+  async getActiveSession(userId: number): Promise<POSSession | null> {
+    const response = await fetch(`${API_BASE_URL}/pos-sessions/active?user_id=${userId}`)
+    return handleResponse<POSSession | null>(response)
+  },
+
+  /**
+   * Close a session
+   */
+  async closeSession(sessionId: number, request: SessionCloseRequest): Promise<POSSession> {
+    const response = await fetch(`${API_BASE_URL}/pos-sessions/${sessionId}/close`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(request)
+    })
+    return handleResponse<POSSession>(response)
+  },
+
+  /**
+   * Get session summary
+   */
+  async getSessionSummary(sessionId: number): Promise<SessionSummary> {
+    const response = await fetch(`${API_BASE_URL}/pos-sessions/${sessionId}/summary`)
+    return handleResponse<SessionSummary>(response)
+  },
+
+  /**
+   * List sessions with optional filters
+   */
+  async listSessions(params?: {
+    user_id?: number
+    status?: string
+    skip?: number
+    limit?: number
+  }): Promise<POSSession[]> {
+    const queryParams = new URLSearchParams()
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined) {
+          queryParams.append(key, String(value))
+        }
+      })
+    }
+
+    const url = `${API_BASE_URL}/pos-sessions?${queryParams.toString()}`
+    const response = await fetch(url)
+    return handleResponse<POSSession[]>(response)
+  }
+}
