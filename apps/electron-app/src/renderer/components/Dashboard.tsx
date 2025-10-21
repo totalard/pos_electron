@@ -1,16 +1,17 @@
 import { useState, useEffect } from 'react'
-import { useAppStore, usePinStore } from '../stores'
+import { useAppStore, usePinStore, useSettingsStore } from '../stores'
 import { MenuCard } from './pos'
 import { Grid } from './layout'
 import { ThemeToggle } from './common'
 
 interface DashboardProps {
-  onNavigate: (screen: 'sales' | 'products' | 'inventory' | 'users' | 'settings' | 'customers' | 'transactions') => void
+  onNavigate: (screen: 'sales' | 'products' | 'inventory' | 'users' | 'settings' | 'customers' | 'transactions' | 'restaurant') => void
 }
 
 export function Dashboard({ onNavigate }: DashboardProps) {
   const { theme } = useAppStore()
   const { currentUser } = usePinStore()
+  const { business } = useSettingsStore()
   const [currentTime, setCurrentTime] = useState(new Date())
 
   // Update time every second
@@ -81,19 +82,21 @@ export function Dashboard({ onNavigate }: DashboardProps) {
       available: true
     },
     {
-      id: 'settings',
-      title: 'Settings',
-      description: 'Configure system settings',
+      id: 'restaurant',
+      title: 'Restaurant Management',
+      description: 'Manage restaurant operations',
       icon: (
         <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
         </svg>
       ),
-      color: 'from-gray-500 to-gray-700',
-      available: currentUser?.role === 'admin' // Only available to admin users
+      color: 'from-red-500 to-red-700',
+      available: business.mode === 'restaurant'
     }
   ]
+
+  // Filter out unavailable items
+  const availableMenuItems = menuItems.filter(item => item.available)
 
   return (
     <div className={`
@@ -143,7 +146,7 @@ export function Dashboard({ onNavigate }: DashboardProps) {
               </div>
             </div>
 
-            {/* User Info, Time, and Theme Toggle */}
+            {/* User Info, Time, Settings, and Theme Toggle */}
             <div className="flex items-center gap-6">
               <div className="text-right">
                 <p className={`
@@ -173,6 +176,25 @@ export function Dashboard({ onNavigate }: DashboardProps) {
                   {currentTime.toLocaleDateString()}
                 </p>
               </div>
+              {currentUser?.role === 'admin' && (
+                <button
+                  onClick={() => onNavigate('settings')}
+                  className={`
+                    p-3 rounded-xl transition-all duration-200
+                    transform hover:scale-110 active:scale-95
+                    ${theme === 'dark'
+                      ? 'bg-gray-700 hover:bg-gray-600 text-gray-300'
+                      : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
+                    }
+                  `}
+                  title="Settings"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                </button>
+              )}
               <ThemeToggle size="md" />
             </div>
           </div>
@@ -184,25 +206,9 @@ export function Dashboard({ onNavigate }: DashboardProps) {
         px-6 py-8 rounded-b-xl
         ${theme === 'dark' ? 'bg-gray-800/30' : 'bg-white/50'}
       `}>
-        {/* Welcome Section */}
-        <div className="mb-8">
-          <h2 className={`
-            text-3xl font-bold mb-2
-            ${theme === 'dark' ? 'text-white' : 'text-gray-900'}
-          `}>
-            Welcome back, {currentUser?.full_name?.split(' ')[0] || 'User'}!
-          </h2>
-          <p className={`
-            text-lg
-            ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}
-          `}>
-            What would you like to do today?
-          </p>
-        </div>
-
         {/* Menu Grid - Touch-safe with minimum 44x44px targets */}
-        <Grid cols={1} gap="lg" responsive={{ md: 2, lg: 3, xl: 5 }}>
-          {menuItems.map((item) => (
+        <Grid cols={1} gap="lg" responsive={{ md: 2, lg: 3, xl: 6 }}>
+          {availableMenuItems.map((item) => (
             <MenuCard
               key={item.id}
               title={item.title}
