@@ -177,3 +177,40 @@ export interface TableReservation {
   createdAt: Date
   updatedAt: Date
 }
+
+/**
+ * Waiter/Server definition
+ */
+export interface Waiter {
+  id: string
+  name: string
+  employeeId?: string
+  phone?: string
+  email?: string
+  isActive: boolean
+  assignedTables: string[] // Array of table IDs
+  currentOrders: string[] // Array of order IDs
+  createdAt: Date
+  updatedAt: Date
+}
+
+/**
+ * Customer address for delivery
+ */
+export interface CustomerAddress {
+  id: string
+  customerId?: number
+  customerName: string
+  phone: string
+  email?: string
+  label: string // e.g., 'Home', 'Office', 'Other'
+  street: string
+  city: string
+  state: string
+  zipCode: string
+  landmark?: string
+  instructions?: string
+  isDefault: boolean
+  createdAt: Date
+  updatedAt: Date
+}

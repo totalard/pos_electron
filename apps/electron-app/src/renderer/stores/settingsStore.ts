@@ -309,6 +309,18 @@ export interface RestaurantSettings {
     shape?: 'square' | 'circle' | 'rectangle'
   }>
   
+  // Waiter/Server Management
+  waiters: Array<{
+    id: string
+    name: string
+    employeeId?: string
+    phone?: string
+    email?: string
+    isActive: boolean
+    assignedTables: string[]
+    currentOrders: string[]
+  }>
+  
   // Order Type Configuration
   enableDineIn: boolean
   enableTakeaway: boolean
@@ -777,6 +789,9 @@ const initialState = {
     // Floor & Table Management
     floors: [],
     tables: [],
+    
+    // Waiter/Server Management
+    waiters: [],
     
     // Order Type Configuration
     enableDineIn: true,

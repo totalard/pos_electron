@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { EnhancedProduct } from '../services/api'
 import type { ProductCustomization, RestaurantOrderMetadata, OrderType, OrderStatus } from '../types/restaurant'
+import type { PaymentSplit, SplitPaymentConfig } from '../types/payment'
 
 /**
  * Cart item with modifiers and customizations
@@ -54,6 +55,8 @@ export interface POSTransaction {
   note?: string
   // Restaurant-specific fields
   restaurantMetadata?: RestaurantOrderMetadata
+  // Payment splitting
+  splitPayment?: SplitPaymentConfig
 }
 
 /**
@@ -131,6 +134,8 @@ export interface POSState {
   setOrderType: (orderType: OrderType) => void
   setTable: (tableId: string, tableName: string, floorId?: string, floorName?: string) => void
   clearTable: () => void
+  setDeliveryAddress: (address: { street: string; city: string; state: string; zipCode: string; phone: string; instructions?: string }) => void
+  clearDeliveryAddress: () => void
   updateCartItemCustomization: (itemId: string, customization: ProductCustomization) => void
   setShowOrderTypeSelector: (show: boolean) => void
   setShowTableSelector: (show: boolean) => void
@@ -138,6 +143,15 @@ export interface POSState {
   setSelectedProductForCustomization: (productId: string | null) => void
   addAdditionalCharge: (chargeId: string, name: string, amount: number) => void
   removeAdditionalCharge: (chargeId: string) => void
+  
+  // Actions - Payment Splitting
+  enableSplitPayment: () => void
+  disableSplitPayment: () => void
+  addPaymentSplit: (split: Omit<PaymentSplit, 'id' | 'isPaid'>) => string
+  updatePaymentSplit: (splitId: string, updates: Partial<PaymentSplit>) => void
+  removePaymentSplit: (splitId: string) => void
+  markSplitAsPaid: (splitId: string, paymentMethod: string) => void
+  calculateSplitAmounts: () => void
   
   // Computed getters
   getActiveTransaction: () => POSTransaction | null
@@ -670,6 +684,53 @@ export const usePOSStore = create<POSState>()(
         })
       },
       
+      setDeliveryAddress: (address) => {
+        set(state => {
+          const transaction = state.transactions.find(t => t.id === state.activeTransactionId)
+          if (!transaction) return state
+          
+          const updatedTransaction = {
+            ...transaction,
+            restaurantMetadata: {
+              ...transaction.restaurantMetadata,
+              orderType: transaction.restaurantMetadata?.orderType || 'delivery' as OrderType,
+              orderStatus: transaction.restaurantMetadata?.orderStatus || 'pending' as OrderStatus,
+              deliveryAddress: address,
+              additionalCharges: transaction.restaurantMetadata?.additionalCharges || []
+            },
+            updatedAt: new Date()
+          }
+          
+          return {
+            transactions: state.transactions.map(t =>
+              t.id === state.activeTransactionId ? updatedTransaction : t
+            )
+          }
+        })
+      },
+      
+      clearDeliveryAddress: () => {
+        set(state => {
+          const transaction = state.transactions.find(t => t.id === state.activeTransactionId)
+          if (!transaction || !transaction.restaurantMetadata) return state
+          
+          const updatedTransaction = {
+            ...transaction,
+            restaurantMetadata: {
+              ...transaction.restaurantMetadata,
+              deliveryAddress: undefined
+            },
+            updatedAt: new Date()
+          }
+          
+          return {
+            transactions: state.transactions.map(t =>
+              t.id === state.activeTransactionId ? updatedTransaction : t
+            )
+          }
+        })
+      },
+      
       updateCartItemCustomization: (itemId: string, customization: ProductCustomization) => {
         set(state => {
           const transaction = state.transactions.find(t => t.id === state.activeTransactionId)
@@ -781,6 +842,235 @@ export const usePOSStore = create<POSState>()(
                 tax,
                 total
               } : t
+            )
+          }
+        })
+      },
+      
+      // Payment Splitting
+      enableSplitPayment: () => {
+        set(state => {
+          const transaction = state.transactions.find(t => t.id === state.activeTransactionId)
+          if (!transaction) return state
+          
+          const updatedTransaction = {
+            ...transaction,
+            splitPayment: {
+              enabled: true,
+              splits: [],
+              totalAmount: transaction.total,
+              remainingAmount: transaction.total
+            },
+            updatedAt: new Date()
+          }
+          
+          return {
+            transactions: state.transactions.map(t =>
+              t.id === state.activeTransactionId ? updatedTransaction : t
+            )
+          }
+        })
+      },
+      
+      disableSplitPayment: () => {
+        set(state => {
+          const transaction = state.transactions.find(t => t.id === state.activeTransactionId)
+          if (!transaction) return state
+          
+          const updatedTransaction = {
+            ...transaction,
+            splitPayment: undefined,
+            updatedAt: new Date()
+          }
+          
+          return {
+            transactions: state.transactions.map(t =>
+              t.id === state.activeTransactionId ? updatedTransaction : t
+            )
+          }
+        })
+      },
+      
+      addPaymentSplit: (splitData) => {
+        const id = generateId()
+        
+        set(state => {
+          const transaction = state.transactions.find(t => t.id === state.activeTransactionId)
+          if (!transaction || !transaction.splitPayment) return state
+          
+          const newSplit: PaymentSplit = {
+            ...splitData,
+            id,
+            isPaid: false
+          }
+          
+          const updatedSplits = [...transaction.splitPayment.splits, newSplit]
+          
+          // Calculate remaining amount
+          const paidAmount = updatedSplits
+            .filter(s => s.isPaid)
+            .reduce((sum, s) => sum + s.amount, 0)
+          const remainingAmount = transaction.splitPayment.totalAmount - paidAmount
+          
+          const updatedTransaction = {
+            ...transaction,
+            splitPayment: {
+              ...transaction.splitPayment,
+              splits: updatedSplits,
+              remainingAmount
+            },
+            updatedAt: new Date()
+          }
+          
+          return {
+            transactions: state.transactions.map(t =>
+              t.id === state.activeTransactionId ? updatedTransaction : t
+            )
+          }
+        })
+        
+        return id
+      },
+      
+      updatePaymentSplit: (splitId, updates) => {
+        set(state => {
+          const transaction = state.transactions.find(t => t.id === state.activeTransactionId)
+          if (!transaction || !transaction.splitPayment) return state
+          
+          const updatedSplits = transaction.splitPayment.splits.map(split =>
+            split.id === splitId ? { ...split, ...updates } : split
+          )
+          
+          // Recalculate remaining amount
+          const paidAmount = updatedSplits
+            .filter(s => s.isPaid)
+            .reduce((sum, s) => sum + s.amount, 0)
+          const remainingAmount = transaction.splitPayment.totalAmount - paidAmount
+          
+          const updatedTransaction = {
+            ...transaction,
+            splitPayment: {
+              ...transaction.splitPayment,
+              splits: updatedSplits,
+              remainingAmount
+            },
+            updatedAt: new Date()
+          }
+          
+          return {
+            transactions: state.transactions.map(t =>
+              t.id === state.activeTransactionId ? updatedTransaction : t
+            )
+          }
+        })
+      },
+      
+      removePaymentSplit: (splitId) => {
+        set(state => {
+          const transaction = state.transactions.find(t => t.id === state.activeTransactionId)
+          if (!transaction || !transaction.splitPayment) return state
+          
+          const updatedSplits = transaction.splitPayment.splits.filter(s => s.id !== splitId)
+          
+          // Recalculate remaining amount
+          const paidAmount = updatedSplits
+            .filter(s => s.isPaid)
+            .reduce((sum, s) => sum + s.amount, 0)
+          const remainingAmount = transaction.splitPayment.totalAmount - paidAmount
+          
+          const updatedTransaction = {
+            ...transaction,
+            splitPayment: {
+              ...transaction.splitPayment,
+              splits: updatedSplits,
+              remainingAmount
+            },
+            updatedAt: new Date()
+          }
+          
+          return {
+            transactions: state.transactions.map(t =>
+              t.id === state.activeTransactionId ? updatedTransaction : t
+            )
+          }
+        })
+      },
+      
+      markSplitAsPaid: (splitId, paymentMethod) => {
+        set(state => {
+          const transaction = state.transactions.find(t => t.id === state.activeTransactionId)
+          if (!transaction || !transaction.splitPayment) return state
+          
+          const updatedSplits = transaction.splitPayment.splits.map(split =>
+            split.id === splitId
+              ? { ...split, isPaid: true, paymentMethod, paidAt: new Date() }
+              : split
+          )
+          
+          // Recalculate remaining amount
+          const paidAmount = updatedSplits
+            .filter(s => s.isPaid)
+            .reduce((sum, s) => sum + s.amount, 0)
+          const remainingAmount = transaction.splitPayment.totalAmount - paidAmount
+          
+          const updatedTransaction = {
+            ...transaction,
+            splitPayment: {
+              ...transaction.splitPayment,
+              splits: updatedSplits,
+              remainingAmount
+            },
+            updatedAt: new Date()
+          }
+          
+          return {
+            transactions: state.transactions.map(t =>
+              t.id === state.activeTransactionId ? updatedTransaction : t
+            )
+          }
+        })
+      },
+      
+      calculateSplitAmounts: () => {
+        set(state => {
+          const transaction = state.transactions.find(t => t.id === state.activeTransactionId)
+          if (!transaction || !transaction.splitPayment) return state
+          
+          const splits = transaction.splitPayment.splits.map(split => {
+            let amount = split.amount
+            
+            // Calculate amount based on split type
+            if (split.splitType === 'percentage' && split.percentage) {
+              amount = (transaction.total * split.percentage) / 100
+            } else if (split.splitType === 'items' && split.itemIds) {
+              // Calculate total for specific items
+              amount = transaction.items
+                .filter(item => split.itemIds?.includes(item.id))
+                .reduce((sum, item) => sum + item.total, 0)
+            }
+            
+            return { ...split, amount }
+          })
+          
+          // Recalculate remaining amount
+          const paidAmount = splits
+            .filter(s => s.isPaid)
+            .reduce((sum, s) => sum + s.amount, 0)
+          const remainingAmount = transaction.splitPayment.totalAmount - paidAmount
+          
+          const updatedTransaction = {
+            ...transaction,
+            splitPayment: {
+              ...transaction.splitPayment,
+              splits,
+              remainingAmount
+            },
+            updatedAt: new Date()
+          }
+          
+          return {
+            transactions: state.transactions.map(t =>
+              t.id === state.activeTransactionId ? updatedTransaction : t
             )
           }
         })

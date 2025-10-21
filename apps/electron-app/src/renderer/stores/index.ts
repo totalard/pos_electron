@@ -49,3 +49,9 @@ export type {
   CartItemModifier,
   POSTransaction
 } from './posStore'
+
+export { useReservationStore } from './reservationStore'
+export type { ReservationState } from './reservationStore'
+
+export { useAddressStore } from './addressStore'
+export type { AddressState } from './addressStore'
