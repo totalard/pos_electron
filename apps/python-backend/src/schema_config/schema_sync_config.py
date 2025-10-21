@@ -24,8 +24,8 @@ class SchemaSyncConfig(BaseSettings):
     )
     
     watch_enabled: bool = Field(
-        default=True,
-        description="Enable file watching for automatic regeneration during development"
+        default=False,
+        description="Enable file watching for automatic regeneration during development (deprecated - use startup sync instead)"
     )
     
     backup_enabled: bool = Field(

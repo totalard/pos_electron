@@ -4,7 +4,7 @@ import { Button } from '../common'
 import { ThemeToggle } from '../common/ThemeToggle'
 import { getIllustrationComponent } from './walkthroughSteps'
 
-const API_BASE_URL = 'http://localhost:8001/api'
+const API_BASE_URL = 'http://localhost:8000/api'
 
 /**
  * Walkthrough step interface

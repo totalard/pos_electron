@@ -11,7 +11,7 @@ import { InventoryScreen } from './components/inventory'
 import { TransactionManagementScreen } from './components/transactions/TransactionManagementScreen'
 import { Walkthrough, defaultWalkthroughSteps } from './components/walkthrough'
 
-const API_BASE_URL = 'http://localhost:8001/api'
+const API_BASE_URL = 'http://localhost:8000/api'
 
 type AppScreen = 'splash' | 'walkthrough' | 'pin' | 'dashboard' | 'sales' | 'products' | 'inventory' | 'users' | 'settings' | 'customers' | 'transactions'
 

@@ -196,7 +196,7 @@ const initialState = {
 }
 
 // API Base URL
-const API_BASE_URL = 'http://localhost:8001/api'
+const API_BASE_URL = 'http://localhost:8000/api'
 
 // Create the store with persistence for view mode
 export const useInventoryStore = create<InventoryState>()(

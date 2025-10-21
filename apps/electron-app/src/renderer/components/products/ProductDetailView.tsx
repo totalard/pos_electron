@@ -41,7 +41,7 @@ export function ProductDetailView({ product, onEdit, onClose }: ProductDetailVie
   
   // Get first image or placeholder
   const imageUrl = product.image_paths && product.image_paths.length > 0
-    ? `http://localhost:8001/uploads/${product.image_paths[0]}`
+    ? `http://localhost:8000/uploads/${product.image_paths[0]}`
     : null
 
   return (

@@ -137,7 +137,7 @@ export function POSProductList({
       <div className="flex-1 overflow-y-auto">
         {products.map((product) => {
           const imageUrl = product.image_paths && product.image_paths.length > 0
-            ? `http://localhost:8001/uploads/${product.image_paths[0]}`
+            ? `http://localhost:8000/uploads/${product.image_paths[0]}`
             : null
           
           const isOutOfStock = product.track_inventory && 

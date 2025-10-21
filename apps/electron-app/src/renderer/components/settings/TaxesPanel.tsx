@@ -89,7 +89,7 @@ export function TaxesPanel() {
   const loadTaxRules = async () => {
     try {
       setIsLoading(true)
-      const response = await fetch('http://localhost:8001/api/tax-rules/')
+      const response = await fetch('http://localhost:8000/api/tax-rules/')
       const data = await response.json()
       setTaxRules(data)
     } catch (error) {
@@ -104,8 +104,8 @@ export function TaxesPanel() {
     setIsSaving(true)
     try {
       const url = editingRule
-        ? `http://localhost:8001/api/tax-rules/${editingRule.id}`
-        : 'http://localhost:8001/api/tax-rules/'
+        ? `http://localhost:8000/api/tax-rules/${editingRule.id}`
+        : 'http://localhost:8000/api/tax-rules/'
 
       const response = await fetch(url, {
         method: editingRule ? 'PUT' : 'POST',
@@ -149,7 +149,7 @@ export function TaxesPanel() {
     if (!deleteConfirm.rule) return
 
     try {
-      await fetch(`http://localhost:8001/api/tax-rules/${deleteConfirm.rule.id}`, { method: 'DELETE' })
+      await fetch(`http://localhost:8000/api/tax-rules/${deleteConfirm.rule.id}`, { method: 'DELETE' })
       await loadTaxRules()
       setToast({ show: true, message: 'Tax rule deleted successfully', type: 'success' })
     } catch (error) {
@@ -162,7 +162,7 @@ export function TaxesPanel() {
 
   const handleToggle = async (id: number) => {
     try {
-      await fetch(`http://localhost:8001/api/tax-rules/${id}/toggle`, { method: 'POST' })
+      await fetch(`http://localhost:8000/api/tax-rules/${id}/toggle`, { method: 'POST' })
       await loadTaxRules()
     } catch (error) {
       console.error('Failed to toggle tax rule:', error)
@@ -248,7 +248,7 @@ export function TaxesPanel() {
 
   const fetchTaxPreview = async (ruleId: number, amount: number) => {
     try {
-      const response = await fetch(`http://localhost:8001/api/tax-rules/${ruleId}/preview?amount=${amount}`, {
+      const response = await fetch(`http://localhost:8000/api/tax-rules/${ruleId}/preview?amount=${amount}`, {
         method: 'POST'
       })
       if (response.ok) {

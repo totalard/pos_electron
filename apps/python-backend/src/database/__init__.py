@@ -9,6 +9,7 @@ from .migrations import (
     migrate_user_roles,
     update_role_column_constraints
 )
+from .schema_sync_service import get_sync_service
 
 __all__ = [
     "TORTOISE_ORM",
@@ -18,6 +19,7 @@ __all__ = [
     "run_all_migrations",
     "check_migrations_needed",
     "migrate_user_roles",
-    "update_role_column_constraints"
+    "update_role_column_constraints",
+    "get_sync_service"
 ]
 
