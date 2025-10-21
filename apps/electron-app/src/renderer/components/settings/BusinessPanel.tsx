@@ -318,9 +318,14 @@ export function BusinessPanel() {
               onChange={(value) => {
                 const selected = currencies.find(c => c.code === value)
                 if (selected) {
-                  handleCurrencyChange('code', selected.code)
-                  handleCurrencyChange('symbol', selected.symbol)
-                  handleCurrencyChange('decimalPlaces', selected.decimals)
+                  updateBusinessSettings({
+                    currencyConfig: {
+                      ...business.currencyConfig,
+                      code: selected.code,
+                      symbol: selected.symbol,
+                      decimalPlaces: selected.decimals
+                    }
+                  })
                 }
               }}
               searchable

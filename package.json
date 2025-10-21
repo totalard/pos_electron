@@ -4,7 +4,7 @@
   "private": true,
   "description": "POS Electron Application Monorepo",
   "scripts": {
-    "dev": "concurrently --kill-others-on-fail --kill-signal SIGTERM --names \"backend,frontend\" --prefix-colors \"blue,green\" \"pnpm --filter python-backend dev\" \"pnpm --filter electron-app dev\"",
+    "dev": "concurrently --kill-others-on-fail --kill-signal SIGTERM --names \"backend,frontend\" --prefix-colors \"blue,green\" \"cd apps/python-backend && . venv/bin/activate && python3 -m uvicorn src.main:app --reload --host 0.0.0.0 --port 8000\" \"pnpm --filter electron-app dev\"",
     "build": "turbo run build",
     "lint": "turbo run lint",
     "type-check": "turbo run type-check",
