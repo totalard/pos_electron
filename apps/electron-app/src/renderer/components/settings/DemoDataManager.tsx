@@ -43,7 +43,7 @@ export function DemoDataManager() {
       const result = await response.json()
       setMessage({
         type: 'success',
-        text: `Demo data generated successfully! Created ${result.data.products} products, ${result.data.customers} customers, and ${result.data.transactions} transactions.`
+        text: `Demo data generated successfully! Created ${result.data.products} products, ${result.data.customers} customers, ${result.data.discounts} discounts, ${result.data.sessions} sessions, and ${result.data.sales} sales.`
       })
       
       // Refresh stats
@@ -137,7 +137,13 @@ export function DemoDataManager() {
           <h4 className={`text-sm font-medium mb-3 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
             Current Data Status
           </h4>
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-4 gap-4">
+            <div>
+              <p className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>Categories</p>
+              <p className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                {stats.categories || 0}
+              </p>
+            </div>
             <div>
               <p className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>Products</p>
               <p className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
@@ -151,9 +157,29 @@ export function DemoDataManager() {
               </p>
             </div>
             <div>
-              <p className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>Transactions</p>
+              <p className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>Discounts</p>
               <p className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                {stats.transactions}
+                {stats.discounts || 0}
+              </p>
+            </div>
+          </div>
+          <div className="grid grid-cols-3 gap-4 mt-4">
+            <div>
+              <p className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>POS Sessions</p>
+              <p className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                {stats.sessions || 0}
+              </p>
+            </div>
+            <div>
+              <p className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>Sales</p>
+              <p className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                {stats.sales || 0}
+              </p>
+            </div>
+            <div>
+              <p className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>Stock Transactions</p>
+              <p className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                {stats.transactions || 0}
               </p>
             </div>
           </div>
@@ -188,13 +214,16 @@ export function DemoDataManager() {
           What will be generated:
         </h4>
         <ul className={`text-sm space-y-1 ${theme === 'dark' ? 'text-blue-200' : 'text-blue-800'}`}>
+          <li>• <strong>Product Categories</strong> - Hierarchical category structure</li>
           <li>• <strong>10 Simple Products</strong> - Electronics, food, home items with stock levels</li>
           <li>• <strong>2 Variation Products</strong> - T-shirts and shoes with multiple sizes/colors</li>
           <li>• <strong>2 Bundle Products</strong> - Office bundle and snack pack</li>
           <li>• <strong>4 Service Products</strong> - Repair and consultation services</li>
           <li>• <strong>10 Customers</strong> - With contact information</li>
+          <li>• <strong>5 Discounts</strong> - Percentage, fixed amount, and promotional discounts</li>
+          <li>• <strong>2 POS Sessions</strong> - One closed session and one active session</li>
+          <li>• <strong>15 Sales Transactions</strong> - Historical sales with various payment methods</li>
           <li>• <strong>Stock Transactions</strong> - Purchase, sale, and adjustment records</li>
-          <li>• <strong>Product Categories</strong> - Hierarchical category structure</li>
         </ul>
       </div>
 

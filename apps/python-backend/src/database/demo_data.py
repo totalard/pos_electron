@@ -30,8 +30,16 @@ from .models import (
     StockAdjustmentLine,
     User,
     Sale,
+    SaleStatus,
+    PaymentMethod,
     CashTransaction,
-    Expense
+    Expense,
+    Discount,
+    DiscountUsage,
+    DiscountType,
+    DiscountStatus,
+    POSSession,
+    SessionStatus
 )
 
 
@@ -243,8 +251,8 @@ async def create_demo_variation_products(category_map: Dict[str, ProductCategory
         # Create variations
         for var_data in prod_data["variations"]:
             await ProductVariation.create(
-                product=product,
-                name=var_data["name"],
+                parent_product=product,
+                variation_name=var_data["name"],
                 sku=var_data["sku"],
                 barcode=var_data.get("barcode"),
                 price_adjustment=Decimal(str(var_data["price_adj"])),
@@ -439,6 +447,287 @@ async def create_demo_stock_adjustments(products: List[Product]) -> List[StockAd
     return adjustments
 
 
+async def create_demo_discounts() -> List[Discount]:
+    """Create demo discounts."""
+    print("Creating demo discounts...")
+    discounts = []
+    
+    # Get admin user
+    user = await User.first()
+    if not user:
+        print("No user found, skipping discounts")
+        return discounts
+    
+    # Percentage discount
+    discount1 = await Discount.create(
+        code="SAVE10",
+        name="10% Off Everything",
+        description="Get 10% off your entire purchase",
+        discount_type=DiscountType.PERCENTAGE,
+        value=Decimal("10.00"),
+        max_discount_amount=Decimal("50.00"),
+        status=DiscountStatus.ACTIVE,
+        is_active=True,
+        auto_apply=False,
+        can_stack=False,
+        priority=1,
+        created_by=user
+    )
+    discounts.append(discount1)
+    
+    # Fixed amount discount
+    discount2 = await Discount.create(
+        code="SAVE20",
+        name="$20 Off Orders Over $100",
+        description="Get $20 off when you spend $100 or more",
+        discount_type=DiscountType.FIXED_AMOUNT,
+        value=Decimal("20.00"),
+        min_purchase_amount=Decimal("100.00"),
+        status=DiscountStatus.ACTIVE,
+        is_active=True,
+        auto_apply=True,
+        can_stack=False,
+        priority=2,
+        created_by=user
+    )
+    discounts.append(discount2)
+    
+    # Buy X Get Y discount
+    discount3 = await Discount.create(
+        code="BUY2GET1",
+        name="Buy 2 Get 1 Free",
+        description="Buy 2 items, get 1 free",
+        discount_type=DiscountType.BUY_X_GET_Y,
+        value=Decimal("100.00"),  # 100% off the free item
+        buy_quantity=2,
+        get_quantity=1,
+        status=DiscountStatus.ACTIVE,
+        is_active=True,
+        auto_apply=False,
+        can_stack=False,
+        priority=3,
+        created_by=user
+    )
+    discounts.append(discount3)
+    
+    # Seasonal discount
+    discount4 = await Discount.create(
+        code="SUMMER25",
+        name="Summer Sale - 25% Off",
+        description="Summer special - 25% off all items",
+        discount_type=DiscountType.PERCENTAGE,
+        value=Decimal("25.00"),
+        max_discount_amount=Decimal("100.00"),
+        valid_from=datetime.now() - timedelta(days=7),
+        valid_until=datetime.now() + timedelta(days=30),
+        status=DiscountStatus.ACTIVE,
+        is_active=True,
+        auto_apply=False,
+        can_stack=False,
+        priority=4,
+        created_by=user
+    )
+    discounts.append(discount4)
+    
+    # First purchase discount
+    discount5 = await Discount.create(
+        code="WELCOME15",
+        name="Welcome Discount - 15% Off",
+        description="First-time customer discount",
+        discount_type=DiscountType.PERCENTAGE,
+        value=Decimal("15.00"),
+        first_purchase_only=True,
+        status=DiscountStatus.ACTIVE,
+        is_active=True,
+        auto_apply=False,
+        can_stack=False,
+        priority=5,
+        created_by=user
+    )
+    discounts.append(discount5)
+    
+    print(f"Created {len(discounts)} discounts")
+    return discounts
+
+
+async def create_demo_pos_sessions(user: User) -> List[POSSession]:
+    """Create demo POS sessions."""
+    print("Creating demo POS sessions...")
+    sessions = []
+    
+    # Create a closed session from yesterday
+    yesterday = datetime.now() - timedelta(days=1)
+    session1 = await POSSession.create(
+        session_number=f"SES-{yesterday.strftime('%Y%m%d')}-001",
+        user=user,
+        status=SessionStatus.CLOSED,
+        opening_cash=Decimal("200.00"),
+        opening_denominations={
+            "bills": {"100": 1, "50": 2},
+            "coins": {}
+        },
+        closing_cash=Decimal("450.00"),
+        closing_denominations={
+            "bills": {"100": 2, "50": 5},
+            "coins": {"1": 10, "0.25": 20}
+        },
+        expected_cash=Decimal("445.00"),
+        cash_variance=Decimal("5.00"),
+        total_sales=Decimal("350.00"),
+        total_cash_in=Decimal("0.00"),
+        total_cash_out=Decimal("105.00"),
+        payment_summary={
+            "cash": 250.00,
+            "card": 100.00
+        },
+        opened_at=yesterday,
+        closed_at=yesterday + timedelta(hours=8),
+        opening_notes="Starting shift",
+        closing_notes="End of shift - slight overage"
+    )
+    sessions.append(session1)
+    
+    # Create an active session for today
+    today = datetime.now()
+    session2 = await POSSession.create(
+        session_number=f"SES-{today.strftime('%Y%m%d')}-001",
+        user=user,
+        status=SessionStatus.ACTIVE,
+        opening_cash=Decimal("200.00"),
+        opening_denominations={
+            "bills": {"100": 2},
+            "coins": {}
+        },
+        total_sales=Decimal("0.00"),
+        total_cash_in=Decimal("0.00"),
+        total_cash_out=Decimal("0.00"),
+        payment_summary={},
+        opened_at=today,
+        opening_notes="Starting new shift"
+    )
+    sessions.append(session2)
+    
+    print(f"Created {len(sessions)} POS sessions")
+    return sessions
+
+
+async def create_demo_sales(
+    products: List[Product],
+    customers: List[Customer],
+    sessions: List[POSSession],
+    discounts: List[Discount]
+) -> List[Sale]:
+    """Create demo sales transactions."""
+    print("Creating demo sales...")
+    sales = []
+    
+    # Get admin user
+    user = await User.first()
+    if not user:
+        print("No user found, skipping sales")
+        return sales
+    
+    # Get closed session for historical sales
+    closed_session = next((s for s in sessions if s.status == SessionStatus.CLOSED), None)
+    if not closed_session:
+        print("No closed session found, skipping sales")
+        return sales
+    
+    # Create 15 demo sales
+    for i in range(15):
+        # Randomly select customer (70% chance of having a customer)
+        customer = random.choice(customers) if random.random() < 0.7 else None
+        
+        # Randomly select 1-4 products
+        num_items = random.randint(1, 4)
+        sale_products = random.sample([p for p in products if p.product_type == ProductType.SIMPLE], min(num_items, 10))
+        
+        # Build items list and calculate totals
+        items = []
+        subtotal = Decimal("0.00")
+        
+        for product in sale_products:
+            quantity = random.randint(1, 3)
+            price = product.base_price
+            item_total = price * quantity
+            
+            items.append({
+                "product_id": product.id,
+                "product_name": product.name,
+                "sku": product.sku,
+                "quantity": quantity,
+                "unit_price": float(price),
+                "total": float(item_total)
+            })
+            subtotal += item_total
+        
+        # Apply discount (30% chance)
+        discount_amount = Decimal("0.00")
+        if random.random() < 0.3 and discounts:
+            discount = random.choice(discounts)
+            if discount.discount_type == DiscountType.PERCENTAGE:
+                discount_amount = subtotal * (discount.value / Decimal("100.00"))
+                if discount.max_discount_amount:
+                    discount_amount = min(discount_amount, discount.max_discount_amount)
+            elif discount.discount_type == DiscountType.FIXED_AMOUNT:
+                if not discount.min_purchase_amount or subtotal >= discount.min_purchase_amount:
+                    discount_amount = discount.value
+        
+        # Calculate tax (8% tax rate)
+        tax_rate = Decimal("0.08")
+        tax_amount = (subtotal - discount_amount) * tax_rate
+        
+        # Calculate total
+        total_amount = subtotal - discount_amount + tax_amount
+        
+        # Random payment method
+        payment_method = random.choice([PaymentMethod.CASH, PaymentMethod.CARD, PaymentMethod.MOBILE])
+        
+        # Calculate change for cash payments
+        if payment_method == PaymentMethod.CASH:
+            amount_paid = total_amount + Decimal(str(random.randint(0, 20)))
+            change_given = amount_paid - total_amount
+        else:
+            amount_paid = total_amount
+            change_given = Decimal("0.00")
+        
+        # Create sale
+        sale_date = closed_session.opened_at + timedelta(hours=random.randint(0, 7), minutes=random.randint(0, 59))
+        sale = await Sale.create(
+            invoice_number=f"INV-{sale_date.strftime('%Y%m%d')}-{str(i+1).zfill(4)}",
+            session=closed_session,
+            customer=customer,
+            subtotal=subtotal,
+            tax_amount=tax_amount,
+            discount_amount=discount_amount,
+            total_amount=total_amount,
+            payment_method=payment_method,
+            amount_paid=amount_paid,
+            change_given=change_given,
+            status=SaleStatus.COMPLETED,
+            items=items,
+            sold_by=user,
+            sale_date=sale_date
+        )
+        sales.append(sale)
+        
+        # Create discount usage if discount was applied
+        if discount_amount > Decimal("0.00") and discounts:
+            await DiscountUsage.create(
+                discount=discount,
+                sale=sale,
+                customer=customer,
+                discount_amount=discount_amount,
+                original_amount=subtotal,
+                final_amount=total_amount,
+                applied_by=user,
+                usage_date=sale_date
+            )
+    
+    print(f"Created {len(sales)} sales")
+    return sales
+
+
 async def generate_all_demo_data():
     """Generate all demo data."""
     print("\n" + "="*60)
@@ -446,6 +735,11 @@ async def generate_all_demo_data():
     print("="*60 + "\n")
     
     try:
+        # Get admin user
+        user = await User.first()
+        if not user:
+            raise Exception("No user found. Please create a user first.")
+        
         # Create categories
         category_map = await create_demo_categories()
         
@@ -459,6 +753,15 @@ async def generate_all_demo_data():
         
         # Create customers
         customers = await create_demo_customers()
+        
+        # Create discounts
+        discounts = await create_demo_discounts()
+        
+        # Create POS sessions
+        sessions = await create_demo_pos_sessions(user)
+        
+        # Create sales (depends on products, customers, sessions, discounts)
+        sales = await create_demo_sales(all_products, customers, sessions, discounts)
         
         # Create stock transactions
         transactions = await create_demo_stock_transactions(all_products)
@@ -476,6 +779,9 @@ async def generate_all_demo_data():
         print(f"  - Bundle: {len(bundle_products)}")
         print(f"  - Service: {len(service_products)}")
         print(f"Customers: {len(customers)}")
+        print(f"Discounts: {len(discounts)}")
+        print(f"POS Sessions: {len(sessions)}")
+        print(f"Sales: {len(sales)}")
         print(f"Stock Transactions: {len(transactions)}")
         print(f"Stock Adjustments: {len(adjustments)}")
         print("="*60 + "\n")
@@ -484,6 +790,9 @@ async def generate_all_demo_data():
             "categories": len(category_map),
             "products": len(all_products),
             "customers": len(customers),
+            "discounts": len(discounts),
+            "sessions": len(sessions),
+            "sales": len(sales),
             "transactions": len(transactions),
             "adjustments": len(adjustments)
         }
@@ -499,18 +808,31 @@ async def clear_demo_data():
     
     try:
         # Delete in reverse order of dependencies
-        # First delete transaction-related data
+        # First delete discount usages (depends on sales, discounts, customers)
+        await DiscountUsage.all().delete()
+        
+        # Delete transaction-related data
         await Expense.all().delete()
         await CashTransaction.all().delete()
+        
+        # Delete sales (depends on sessions, customers, products)
         await Sale.all().delete()
+        
+        # Delete POS sessions (depends on users)
+        await POSSession.all().delete()
+        
+        # Delete customer transactions
         await CustomerTransaction.all().delete()
         
-        # Then delete inventory data
+        # Delete inventory data
         await StockAdjustmentLine.all().delete()
         await StockAdjustment.all().delete()
         await StockTransaction.all().delete()
         
-        # Then delete product-related data
+        # Delete discounts (depends on users)
+        await Discount.all().delete()
+        
+        # Delete product-related data
         await ProductBundle.all().delete()
         await ProductVariation.all().delete()
         await Product.all().delete()

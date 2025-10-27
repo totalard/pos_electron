@@ -9,7 +9,7 @@ from ..database.demo_data import generate_all_demo_data, clear_demo_data
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/demo", tags=["demo"])
+router = APIRouter()
 
 
 class DemoDataResponse(BaseModel):
@@ -80,18 +80,34 @@ async def get_demo_status():
     """
     Check if demo data exists.
     """
-    from ..database.models import Product, Customer, StockTransaction
+    from ..database.models import (
+        Product, 
+        Customer, 
+        StockTransaction,
+        Discount,
+        Sale,
+        POSSession,
+        ProductCategory
+    )
     
     try:
         product_count = await Product.all().count()
         customer_count = await Customer.all().count()
         transaction_count = await StockTransaction.all().count()
+        discount_count = await Discount.all().count()
+        sale_count = await Sale.all().count()
+        session_count = await POSSession.all().count()
+        category_count = await ProductCategory.all().count()
         
         return {
             "has_demo_data": product_count > 0,
             "products": product_count,
             "customers": customer_count,
-            "transactions": transaction_count
+            "transactions": transaction_count,
+            "discounts": discount_count,
+            "sales": sale_count,
+            "sessions": session_count,
+            "categories": category_count
         }
     except Exception as e:
         logger.error(f"Failed to check demo status: {e}")
