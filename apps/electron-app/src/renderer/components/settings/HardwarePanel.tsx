@@ -1,5 +1,7 @@
+import { useState } from 'react'
 import { useAppStore, useSettingsStore } from '../../stores'
 import { FormSection, TouchSelect, Toggle, TextInput } from '../forms'
+import { HardwareDeviceManager } from './HardwareDeviceManager'
 
 /**
  * Comprehensive Hardware Configuration Panel
@@ -15,18 +17,57 @@ import { FormSection, TouchSelect, Toggle, TextInput } from '../forms'
 export function HardwarePanel() {
   const { theme } = useAppStore()
   const { hardware, updateHardwareSettings } = useSettingsStore()
+  const [activeView, setActiveView] = useState<'manager' | 'config'>('manager')
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Header */}
-      <div className="mb-6">
-        <h2 className={`text-2xl font-bold mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-          Hardware Configuration
-        </h2>
-        <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-          Configure peripheral devices and hardware connections
-        </p>
+    <div className="space-y-6">
+      {/* View Selector */}
+      <div className={`flex space-x-2 p-2 rounded-lg ${theme === 'dark' ? 'bg-gray-800' : 'bg-gray-100'}`}>
+        <button
+          onClick={() => setActiveView('manager')}
+          className={`flex-1 px-4 py-3 rounded-lg font-semibold transition-colors ${
+            activeView === 'manager'
+              ? theme === 'dark'
+                ? 'bg-blue-600 text-white'
+                : 'bg-blue-500 text-white'
+              : theme === 'dark'
+              ? 'text-gray-400 hover:text-white'
+              : 'text-gray-600 hover:text-gray-900'
+          }`}
+        >
+          Device Manager
+        </button>
+        <button
+          onClick={() => setActiveView('config')}
+          className={`flex-1 px-4 py-3 rounded-lg font-semibold transition-colors ${
+            activeView === 'config'
+              ? theme === 'dark'
+                ? 'bg-blue-600 text-white'
+                : 'bg-blue-500 text-white'
+              : theme === 'dark'
+              ? 'text-gray-400 hover:text-white'
+              : 'text-gray-600 hover:text-gray-900'
+          }`}
+        >
+          Configuration
+        </button>
       </div>
+
+      {/* Device Manager View */}
+      {activeView === 'manager' && <HardwareDeviceManager />}
+
+      {/* Configuration View */}
+      {activeView === 'config' && (
+        <div className="p-6 space-y-6">
+          {/* Header */}
+          <div className="mb-6">
+            <h2 className={`text-2xl font-bold mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+              Hardware Configuration
+            </h2>
+            <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+              Configure peripheral devices and hardware connections
+            </p>
+          </div>
 
       {/* Receipt Printer Configuration */}
       <FormSection
@@ -512,6 +553,8 @@ export function HardwarePanel() {
           )}
         </div>
       </FormSection>
+        </div>
+      )}
     </div>
   )
 }

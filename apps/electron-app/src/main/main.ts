@@ -2,10 +2,14 @@ import { app, BrowserWindow, ipcMain } from 'electron'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { net } from 'electron'
+import { getHardwareManager } from './services/HardwareManager'
+import type { PrinterConfig } from './services/PrinterService'
+import type { ScannerConfig } from './services/ScannerService'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 let mainWindow: BrowserWindow | null = null
+let hardwareManager = getHardwareManager()
 
 const createWindow = () => {
   // Create the browser window in fullscreen mode without decorations
@@ -58,6 +62,13 @@ const createWindow = () => {
   mainWindow.on('closed', () => {
     mainWindow = null
   })
+
+  // Forward hardware events to renderer
+  hardwareManager.on('hardware-event', (event) => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('hardware-event', event)
+    }
+  })
 }
 
 // Handle network status check
@@ -94,6 +105,174 @@ ipcMain.handle('check-network-status', async () => {
   })
 })
 
+// ===== HARDWARE IPC HANDLERS =====
+
+// Initialize hardware manager
+ipcMain.handle('hardware:initialize', async () => {
+  try {
+    hardwareManager.initialize()
+    return { success: true }
+  } catch (error) {
+    console.error('Hardware initialization error:', error)
+    return { success: false, error: String(error) }
+  }
+})
+
+// Scan all devices
+ipcMain.handle('hardware:scan-devices', async () => {
+  try {
+    const devices = await hardwareManager.scanAllDevices()
+    return { success: true, data: devices }
+  } catch (error) {
+    console.error('Device scan error:', error)
+    return { success: false, error: String(error) }
+  }
+})
+
+// Get all devices
+ipcMain.handle('hardware:get-devices', async () => {
+  try {
+    const devices = hardwareManager.getAllDevices()
+    return { success: true, data: devices }
+  } catch (error) {
+    console.error('Get devices error:', error)
+    return { success: false, error: String(error) }
+  }
+})
+
+// Get devices by type
+ipcMain.handle('hardware:get-devices-by-type', async (_event, type: string) => {
+  try {
+    const devices = hardwareManager.getDevicesByType(type as any)
+    return { success: true, data: devices }
+  } catch (error) {
+    console.error('Get devices by type error:', error)
+    return { success: false, error: String(error) }
+  }
+})
+
+// Printer handlers
+ipcMain.handle('printer:scan', async () => {
+  try {
+    const printers = hardwareManager.getPrinters()
+    return { success: true, data: printers }
+  } catch (error) {
+    console.error('Printer scan error:', error)
+    return { success: false, error: String(error) }
+  }
+})
+
+ipcMain.handle('printer:connect', async (_event, config: PrinterConfig) => {
+  try {
+    const result = await hardwareManager.connectPrinter(config)
+    return { success: result }
+  } catch (error) {
+    console.error('Printer connect error:', error)
+    return { success: false, error: String(error) }
+  }
+})
+
+ipcMain.handle('printer:disconnect', async () => {
+  try {
+    hardwareManager.disconnectPrinter()
+    return { success: true }
+  } catch (error) {
+    console.error('Printer disconnect error:', error)
+    return { success: false, error: String(error) }
+  }
+})
+
+ipcMain.handle('printer:print', async (_event, data: string) => {
+  try {
+    const result = await hardwareManager.print(Buffer.from(data))
+    return { success: result }
+  } catch (error) {
+    console.error('Print error:', error)
+    return { success: false, error: String(error) }
+  }
+})
+
+ipcMain.handle('printer:test', async () => {
+  try {
+    const result = await hardwareManager.testPrinter()
+    return { success: result }
+  } catch (error) {
+    console.error('Printer test error:', error)
+    return { success: false, error: String(error) }
+  }
+})
+
+ipcMain.handle('printer:status', async () => {
+  try {
+    const status = await hardwareManager.getPrinterStatus()
+    return { success: true, data: status }
+  } catch (error) {
+    console.error('Printer status error:', error)
+    return { success: false, error: String(error) }
+  }
+})
+
+ipcMain.handle('printer:get-active', async () => {
+  try {
+    const printer = hardwareManager.getActivePrinter()
+    return { success: true, data: printer }
+  } catch (error) {
+    console.error('Get active printer error:', error)
+    return { success: false, error: String(error) }
+  }
+})
+
+// Scanner handlers
+ipcMain.handle('scanner:scan', async () => {
+  try {
+    const scanners = hardwareManager.getScanners()
+    return { success: true, data: scanners }
+  } catch (error) {
+    console.error('Scanner scan error:', error)
+    return { success: false, error: String(error) }
+  }
+})
+
+ipcMain.handle('scanner:connect', async (_event, config: ScannerConfig) => {
+  try {
+    const result = hardwareManager.connectScanner(config)
+    return { success: result }
+  } catch (error) {
+    console.error('Scanner connect error:', error)
+    return { success: false, error: String(error) }
+  }
+})
+
+ipcMain.handle('scanner:disconnect', async () => {
+  try {
+    hardwareManager.disconnectScanner()
+    return { success: true }
+  } catch (error) {
+    console.error('Scanner disconnect error:', error)
+    return { success: false, error: String(error) }
+  }
+})
+
+ipcMain.handle('scanner:test', async () => {
+  try {
+    const result = hardwareManager.testScanner()
+    return { success: result }
+  } catch (error) {
+    console.error('Scanner test error:', error)
+    return { success: false, error: String(error) }
+  }
+})
+
+ipcMain.handle('scanner:get-active', async () => {
+  try {
+    const scanner = hardwareManager.getActiveScanner()
+    return { success: true, data: scanner }
+  } catch (error) {
+    console.error('Get active scanner error:', error)
+    return { success: false, error: String(error) }
+  }
+})
+
 // This method will be called when Electron has finished initialization
 app.whenReady().then(() => {
   createWindow()
@@ -115,6 +294,7 @@ app.on('window-all-closed', () => {
 
 // Handle any additional app events here
 app.on('before-quit', () => {
-  // Cleanup before quitting
+  // Cleanup hardware manager before quitting
+  hardwareManager.shutdown()
 })
 

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAppStore, usePOSStore, useProductStore, useSettingsStore, useSessionStore, usePinStore } from '../stores'
+import { useHardwareStore } from '../stores/hardwareStore'
 import { POSHeader, POSFooter, POSProductGrid, POSProductList, POSCategorySidebar, POSCart, POSSearchBar, POSActionButton, CheckoutModal, DiscountDialog, ItemDiscountDialog, CashManagementDialog, EmailReceiptDialog, SessionCreationSidebar, SessionClosureDialog, CustomerSelector, POSStatusFooter, TransactionNotesDialog, PriceOverrideDialog, QuantityAdjustDialog, ParkedTransactionsDialog, SessionInfoSidebar, PinConfirmDialog } from './pos'
 import { TableSelector, OrderTypeSelector, ProductCustomizationDialog, GuestCountSelector, AdditionalChargesSelector, AddressBookManager } from './restaurant'
 import { ConfirmDialog, ResizablePanel } from './common'
@@ -137,6 +138,26 @@ export function SaleScreen({ onBack }: SaleScreenProps) {
       setViewMode('list')
     }
   }, [business.mode])
+
+  // Initialize hardware system
+  const { recentScans, initialize: initializeHardware, isInitialized: hardwareInitialized } = useHardwareStore()
+  
+  useEffect(() => {
+    if (!hardwareInitialized) {
+      initializeHardware()
+    }
+  }, [hardwareInitialized, initializeHardware])
+
+  // Listen for hardware barcode scans
+  useEffect(() => {
+    if (recentScans.length > 0) {
+      const latestScan = recentScans[0]
+      // Process the scan if it's recent (within last 2 seconds)
+      if (Date.now() - latestScan.timestamp < 2000) {
+        handleBarcodeScan(latestScan.barcode)
+      }
+    }
+  }, [recentScans])
 
   // Filter products based on category and search
   const filteredProducts = products.filter(product => {

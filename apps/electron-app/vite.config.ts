@@ -16,7 +16,7 @@ export default defineConfig({
           build: {
             outDir: 'dist/main',
             rollupOptions: {
-              external: ['electron']
+              external: ['electron', 'serialport', 'usb', 'node-hid', 'escpos', 'escpos-usb']
             }
           }
         }
