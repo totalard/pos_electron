@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { useAppStore, useInventoryStore } from '../../stores'
 import { Input, LoadingSpinner, Button } from '../common'
 import { TouchSelect } from '../forms'
+import { AdjustmentDetailModal } from './AdjustmentDetailModal'
+import { QuickAdjustmentModal } from './QuickAdjustmentModal'
 import type { StockAdjustment } from '../../stores/inventoryStore'
 
 export function StockAdjustmentsList() {
@@ -16,10 +18,39 @@ export function StockAdjustmentsList() {
   } = useInventoryStore()
 
   const [selectedAdjustment, setSelectedAdjustment] = useState<StockAdjustment | null>(null)
+  const [showQuickAdjustment, setShowQuickAdjustment] = useState(false)
 
   useEffect(() => {
     fetchAdjustments()
-  }, [adjustmentFilters, fetchAdjustments])
+  }, [adjustmentFilters])
+
+  const handleQuickAdjustmentSuccess = () => {
+    fetchAdjustments()
+    setShowQuickAdjustment(false)
+  }
+
+  const handleExportCSV = () => {
+    const headers = ['ID', 'Date', 'Reason', 'Status', 'Items', 'Total Variance', 'Performed By', 'Notes']
+    const rows = adjustments.map(adj => [
+      adj.id,
+      new Date(adj.adjustment_date).toLocaleString(),
+      adj.reason,
+      adj.is_completed ? 'Completed' : 'Pending',
+      adj.lines?.length || 0,
+      adj.lines?.reduce((sum, line) => sum + Math.abs(line.difference), 0) || 0,
+      adj.performed_by_name || 'Unknown',
+      adj.notes || ''
+    ])
+
+    const csv = [headers, ...rows].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n')
+    const blob = new Blob([csv], { type: 'text/csv' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `stock-adjustments-${new Date().toISOString().split('T')[0]}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
 
   const statusOptions = [
     { value: null, label: 'All Status' },
@@ -82,18 +113,44 @@ export function StockAdjustmentsList() {
           />
 
           {/* Clear Filters */}
-          <Button
-            variant="ghost"
-            size="md"
-            onClick={clearAdjustmentFilters}
-            icon={
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            }
-          >
-            Clear Filters
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="md"
+              onClick={clearAdjustmentFilters}
+              icon={
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              }
+            >
+              Clear Filters
+            </Button>
+            <Button
+              variant="secondary"
+              size="md"
+              onClick={handleExportCSV}
+              icon={
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+              }
+            >
+              Export CSV
+            </Button>
+            <Button
+              variant="primary"
+              size="md"
+              onClick={() => setShowQuickAdjustment(true)}
+              icon={
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+              }
+            >
+              Quick Adjust
+            </Button>
+          </div>
         </div>
 
         {/* Date Range */}
@@ -123,24 +180,53 @@ export function StockAdjustmentsList() {
       {/* Adjustments List */}
       {!isLoading && adjustments.length === 0 && (
         <div className={`
-          p-12 rounded-xl text-center
+          p-12 rounded-xl text-center relative overflow-hidden
           ${theme === 'dark'
-            ? 'bg-gray-800/50 border border-gray-700'
-            : 'bg-white border border-gray-200'
+            ? 'bg-gradient-to-br from-gray-800/50 to-gray-900/50 border border-gray-700'
+            : 'bg-gradient-to-br from-purple-50 to-pink-50 border border-purple-200'
           }
         `}>
-          <svg className="w-16 h-16 mx-auto mb-4 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-          </svg>
-          <h3 className={`text-xl font-semibold mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-            No Adjustments Found
-          </h3>
-          <p className={`${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-            {adjustmentFilters.search || adjustmentFilters.isCompleted !== null
-              ? 'Try adjusting your filters'
-              : 'Create your first stock adjustment to get started'
-            }
-          </p>
+          {/* Decorative background elements */}
+          <div className={`absolute top-0 right-0 w-40 h-40 rounded-full opacity-10 ${theme === 'dark' ? 'bg-purple-500' : 'bg-purple-300'}`}></div>
+          <div className={`absolute bottom-0 left-0 w-32 h-32 rounded-full opacity-10 ${theme === 'dark' ? 'bg-pink-500' : 'bg-pink-300'}`}></div>
+          
+          <div className="relative z-10">
+            <div className="mb-4 inline-block">
+              <div className="text-6xl animate-pulse">⚡</div>
+            </div>
+            <h3 className={`text-2xl font-bold mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+              {adjustmentFilters.search || adjustmentFilters.isCompleted !== null
+                ? 'No Adjustments Match Your Search'
+                : 'No Stock Adjustments Yet'}
+            </h3>
+            <p className={`mb-2 text-lg ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+              {adjustmentFilters.search || adjustmentFilters.isCompleted !== null
+                ? '🔍 Try adjusting your filters to find what you\'re looking for'
+                : '🎯 Perfect your inventory with quick adjustments!'}
+            </p>
+            <p className={`mb-6 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+              {adjustmentFilters.search || adjustmentFilters.isCompleted !== null
+                ? ''
+                : 'Make physical count adjustments, correct discrepancies, and manage inventory variances with ease.'}
+            </p>
+            {!adjustmentFilters.search && adjustmentFilters.isCompleted === null && (
+              <div className="space-y-3">
+                <Button
+                  variant="primary"
+                  size="md"
+                  onClick={() => setShowQuickAdjustment(true)}
+                >
+                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                  Create Your First Adjustment
+                </Button>
+                <p className={`text-sm ${theme === 'dark' ? 'text-gray-500' : 'text-gray-500'}`}>
+                  💡 Tip: Use quick adjustments for fast physical count corrections
+                </p>
+              </div>
+            )}
+          </div>
         </div>
       )}
 
@@ -215,14 +301,11 @@ export function StockAdjustmentsList() {
                         variant="ghost"
                         size="sm"
                         onClick={() => handleViewDetails(adjustment)}
-                        icon={
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                          </svg>
-                        }
                       >
-                        View
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
                       </Button>
                     </td>
                   </tr>
@@ -233,140 +316,19 @@ export function StockAdjustmentsList() {
         </div>
       )}
 
-      {/* Detail Modal */}
+      {/* Modals */}
       {selectedAdjustment && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className={`
-            w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-xl shadow-2xl
-            ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}
-          `}>
-            <div className="p-6">
-              {/* Header */}
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <h2 className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                    Adjustment Details
-                  </h2>
-                  <p className={`text-sm mt-1 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-                    {formatDate(selectedAdjustment.adjustment_date)}
-                  </p>
-                </div>
-                <button
-                  onClick={handleCloseDetails}
-                  className={`p-2 rounded-lg transition-colors ${
-                    theme === 'dark'
-                      ? 'hover:bg-gray-700 text-gray-400'
-                      : 'hover:bg-gray-100 text-gray-600'
-                  }`}
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
+        <AdjustmentDetailModal
+          adjustment={selectedAdjustment}
+          onClose={handleCloseDetails}
+        />
+      )}
 
-              {/* Info */}
-              <div className={`
-                grid grid-cols-2 gap-4 p-4 rounded-lg mb-6
-                ${theme === 'dark' ? 'bg-gray-700/50' : 'bg-gray-50'}
-              `}>
-                <div>
-                  <p className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>Reason</p>
-                  <p className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                    {selectedAdjustment.reason}
-                  </p>
-                </div>
-                <div>
-                  <p className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>Status</p>
-                  <span className={`
-                    inline-block px-2 py-1 rounded-full text-xs font-medium
-                    ${selectedAdjustment.is_completed
-                      ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                      : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
-                    }
-                  `}>
-                    {selectedAdjustment.is_completed ? 'Completed' : 'Pending'}
-                  </span>
-                </div>
-                {selectedAdjustment.notes && (
-                  <div className="col-span-2">
-                    <p className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>Notes</p>
-                    <p className={`${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
-                      {selectedAdjustment.notes}
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              {/* Line Items */}
-              {selectedAdjustment.lines && selectedAdjustment.lines.length > 0 && (
-                <div>
-                  <h3 className={`text-lg font-semibold mb-3 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                    Adjustment Lines
-                  </h3>
-                  <div className={`
-                    rounded-lg overflow-hidden
-                    ${theme === 'dark' ? 'bg-gray-700/30' : 'bg-gray-50'}
-                  `}>
-                    <table className="w-full">
-                      <thead className={`${theme === 'dark' ? 'bg-gray-700/50' : 'bg-gray-100'}`}>
-                        <tr>
-                          <th className={`px-4 py-2 text-left text-xs font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
-                            Product
-                          </th>
-                          <th className={`px-4 py-2 text-right text-xs font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
-                            Expected
-                          </th>
-                          <th className={`px-4 py-2 text-right text-xs font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
-                            Actual
-                          </th>
-                          <th className={`px-4 py-2 text-right text-xs font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
-                            Difference
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody className={`divide-y ${theme === 'dark' ? 'divide-gray-700' : 'divide-gray-200'}`}>
-                        {selectedAdjustment.lines.map((line) => (
-                          <tr key={line.id}>
-                            <td className={`px-4 py-2 text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-900'}`}>
-                              {line.product_name || `Product #${line.product_id}`}
-                            </td>
-                            <td className={`px-4 py-2 text-sm text-right ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-                              {line.expected_quantity}
-                            </td>
-                            <td className={`px-4 py-2 text-sm text-right ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-                              {line.actual_quantity}
-                            </td>
-                            <td className={`px-4 py-2 text-sm text-right font-medium ${
-                              line.difference > 0
-                                ? 'text-green-600 dark:text-green-400'
-                                : line.difference < 0
-                                ? 'text-red-600 dark:text-red-400'
-                                : theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
-                            }`}>
-                              {line.difference > 0 ? '+' : ''}{line.difference}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
-
-              {/* Actions */}
-              <div className="flex justify-end mt-6">
-                <Button
-                  variant="primary"
-                  size="md"
-                  onClick={handleCloseDetails}
-                >
-                  Close
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
+      {showQuickAdjustment && (
+        <QuickAdjustmentModal
+          onClose={() => setShowQuickAdjustment(false)}
+          onSuccess={handleQuickAdjustmentSuccess}
+        />
       )}
     </div>
   )

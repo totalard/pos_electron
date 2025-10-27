@@ -3,6 +3,10 @@ import { useAppStore, useInventoryStore } from '../../stores'
 import { Input, LoadingSpinner, Button } from '../common'
 import { TouchSelect } from '../forms'
 import { useCurrency } from '../../hooks/useCurrency'
+import { TransactionDetailModal } from './TransactionDetailModal'
+import { NewTransactionModal } from './NewTransactionModal'
+import { TransactionAnalytics } from './TransactionAnalytics'
+import type { StockTransaction } from '../../stores/inventoryStore'
 
 export function EnhancedStockTransactionsList() {
   const { theme } = useAppStore()
@@ -17,12 +21,43 @@ export function EnhancedStockTransactionsList() {
   const { formatCurrency } = useCurrency()
 
   const [selectedTransactions, setSelectedTransactions] = useState<Set<number>>(new Set())
-  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list')
+  const [viewMode, setViewMode] = useState<'list' | 'grid' | 'analytics'>('list')
   const [groupBy, setGroupBy] = useState<'none' | 'type' | 'date' | 'product'>('none')
+  const [selectedTransaction, setSelectedTransaction] = useState<StockTransaction | null>(null)
+  const [showNewTransaction, setShowNewTransaction] = useState(false)
 
   useEffect(() => {
     fetchTransactions()
-  }, [transactionFilters, fetchTransactions])
+  }, [transactionFilters])
+
+  const handleTransactionSuccess = () => {
+    fetchTransactions()
+    setShowNewTransaction(false)
+  }
+
+  const handleExportCSV = () => {
+    const headers = ['ID', 'Type', 'Product', 'Quantity', 'Unit Cost', 'Total Cost', 'Reference', 'Date', 'Notes']
+    const rows = transactions.map(t => [
+      t.id,
+      t.transaction_type,
+      t.product_name || 'Unknown',
+      t.quantity,
+      t.unit_cost || '',
+      t.total_cost || '',
+      t.reference_number || '',
+      new Date(t.created_at).toLocaleString(),
+      t.notes || ''
+    ])
+
+    const csv = [headers, ...rows].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n')
+    const blob = new Blob([csv], { type: 'text/csv' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `stock-transactions-${new Date().toISOString().split('T')[0]}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
 
   const transactionTypeOptions = [
     { value: null, label: 'All Types' },
@@ -160,6 +195,7 @@ export function EnhancedStockTransactionsList() {
                   ? theme === 'dark' ? 'bg-primary-600 text-white' : 'bg-primary-500 text-white'
                   : theme === 'dark' ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900'
               }`}
+              title="List View"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
@@ -172,9 +208,23 @@ export function EnhancedStockTransactionsList() {
                   ? theme === 'dark' ? 'bg-primary-600 text-white' : 'bg-primary-500 text-white'
                   : theme === 'dark' ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900'
               }`}
+              title="Grid View"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+              </svg>
+            </button>
+            <button
+              onClick={() => setViewMode('analytics')}
+              className={`px-3 py-2 rounded-md transition-colors ${
+                viewMode === 'analytics'
+                  ? theme === 'dark' ? 'bg-primary-600 text-white' : 'bg-primary-500 text-white'
+                  : theme === 'dark' ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900'
+              }`}
+              title="Analytics View"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
               </svg>
             </button>
           </div>
@@ -250,17 +300,17 @@ export function EnhancedStockTransactionsList() {
           </Button>
 
           <div className="flex items-center gap-2">
-            <Button variant="secondary" size="sm">
+            <Button variant="primary" size="sm" onClick={() => setShowNewTransaction(true)}>
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              New Transaction
+            </Button>
+            <Button variant="secondary" size="sm" onClick={handleExportCSV}>
               <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
               </svg>
-              Export
-            </Button>
-            <Button variant="secondary" size="sm">
-              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-              </svg>
-              Advanced Filters
+              Export CSV
             </Button>
           </div>
         </div>
@@ -312,29 +362,63 @@ export function EnhancedStockTransactionsList() {
       {/* Empty State */}
       {!isLoading && transactions.length === 0 && (
         <div className={`
-          p-12 rounded-xl text-center
+          p-12 rounded-xl text-center relative overflow-hidden
           ${theme === 'dark'
-            ? 'bg-gray-800/50 border border-gray-700'
-            : 'bg-white border border-gray-200'
+            ? 'bg-gradient-to-br from-gray-800/50 to-gray-900/50 border border-gray-700'
+            : 'bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200'
           }
         `}>
-          <svg className="w-16 h-16 mx-auto mb-4 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-          </svg>
-          <h3 className={`text-xl font-semibold mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-            No Transactions Found
-          </h3>
-          <p className={`${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-            {transactionFilters.search || transactionFilters.transactionType
-              ? 'Try adjusting your filters'
-              : 'No stock transactions recorded yet'
-            }
-          </p>
+          {/* Decorative background elements */}
+          <div className={`absolute top-0 right-0 w-40 h-40 rounded-full opacity-10 ${theme === 'dark' ? 'bg-blue-500' : 'bg-blue-300'}`}></div>
+          <div className={`absolute bottom-0 left-0 w-32 h-32 rounded-full opacity-10 ${theme === 'dark' ? 'bg-indigo-500' : 'bg-indigo-300'}`}></div>
+          
+          <div className="relative z-10">
+            <div className="mb-4 inline-block">
+              <div className="text-6xl animate-bounce">📊</div>
+            </div>
+            <h3 className={`text-2xl font-bold mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+              {transactionFilters.search || transactionFilters.transactionType
+                ? 'No Transactions Match Your Search'
+                : 'Your Transaction Log is Empty'}
+            </h3>
+            <p className={`mb-2 text-lg ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+              {transactionFilters.search || transactionFilters.transactionType
+                ? '🔍 Try adjusting your filters to find what you\'re looking for'
+                : '✨ Start tracking your stock movements today!'}
+            </p>
+            <p className={`mb-6 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+              {transactionFilters.search || transactionFilters.transactionType
+                ? ''
+                : 'Record purchases, sales, returns, damages, and transfers to maintain a complete audit trail of your inventory.'}
+            </p>
+            {!transactionFilters.search && !transactionFilters.transactionType && (
+              <div className="space-y-3">
+                <Button
+                  variant="primary"
+                  size="md"
+                  onClick={() => setShowNewTransaction(true)}
+                >
+                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  Create Your First Transaction
+                </Button>
+                <p className={`text-sm ${theme === 'dark' ? 'text-gray-500' : 'text-gray-500'}`}>
+                  💡 Tip: You can record purchases, sales, returns, damages, and transfers
+                </p>
+              </div>
+            )}
+          </div>
         </div>
       )}
 
+      {/* Analytics View */}
+      {!isLoading && transactions.length > 0 && viewMode === 'analytics' && (
+        <TransactionAnalytics transactions={transactions} />
+      )}
+
       {/* Transactions Display */}
-      {!isLoading && transactions.length > 0 && (
+      {!isLoading && transactions.length > 0 && viewMode !== 'analytics' && (
         <div className="space-y-4">
           {Object.entries(groupedTransactions()).map(([groupName, groupTransactions]) => (
             <div key={groupName}>
@@ -382,6 +466,9 @@ export function EnhancedStockTransactionsList() {
                           <th className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
                             Reference
                           </th>
+                          <th className={`px-4 py-3 text-center text-xs font-medium uppercase tracking-wider ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                            Actions
+                          </th>
                         </tr>
                       </thead>
                       <tbody className={`divide-y ${theme === 'dark' ? 'divide-gray-700' : 'divide-gray-200'}`}>
@@ -424,6 +511,18 @@ export function EnhancedStockTransactionsList() {
                             </td>
                             <td className={`px-4 py-3 text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
                               {transaction.reference_number || '-'}
+                            </td>
+                            <td className="px-4 py-3 text-center">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setSelectedTransaction(transaction)}
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                </svg>
+                              </Button>
                             </td>
                           </tr>
                         ))}
@@ -474,6 +573,16 @@ export function EnhancedStockTransactionsList() {
                             {new Date(transaction.created_at).toLocaleDateString()}
                           </span>
                         </div>
+                        <button
+                          onClick={() => setSelectedTransaction(transaction)}
+                          className={`mt-2 w-full py-2 rounded-lg text-sm font-medium transition-colors ${
+                            theme === 'dark'
+                              ? 'bg-gray-700 hover:bg-gray-600 text-white'
+                              : 'bg-gray-100 hover:bg-gray-200 text-gray-900'
+                          }`}
+                        >
+                          View Details
+                        </button>
                       </div>
                     </div>
                   ))}
@@ -482,6 +591,21 @@ export function EnhancedStockTransactionsList() {
             </div>
           ))}
         </div>
+      )}
+
+      {/* Modals */}
+      {selectedTransaction && (
+        <TransactionDetailModal
+          transaction={selectedTransaction}
+          onClose={() => setSelectedTransaction(null)}
+        />
+      )}
+
+      {showNewTransaction && (
+        <NewTransactionModal
+          onClose={() => setShowNewTransaction(false)}
+          onSuccess={handleTransactionSuccess}
+        />
       )}
     </div>
   )

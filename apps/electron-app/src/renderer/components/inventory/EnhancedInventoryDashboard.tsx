@@ -15,7 +15,7 @@ interface AdvancedStats {
 
 export function EnhancedInventoryDashboard() {
   const { theme } = useAppStore()
-  const { stats, lowStockProducts, settings, transactions } = useInventoryStore()
+  const { stats, lowStockProducts, settings, transactions, setViewMode } = useInventoryStore()
   const { formatCurrency } = useCurrency()
   const [advancedStats, setAdvancedStats] = useState<AdvancedStats>({
     stockTurnoverRate: 0,
@@ -150,7 +150,7 @@ export function EnhancedInventoryDashboard() {
 
         {/* Quick Stats */}
         <div className="col-span-1 lg:col-span-2 grid grid-cols-2 gap-4">
-          <div className={`rounded-xl p-4 ${theme === 'dark' ? 'bg-gray-800/50 border border-gray-700' : 'bg-white border border-gray-200'}`}>
+          <button onClick={() => setViewMode('transactions')} className={`rounded-xl p-4 text-left transition-all hover:scale-105 cursor-pointer ${theme === 'dark' ? 'bg-gray-800/50 border border-gray-700 hover:border-gray-600' : 'bg-white border border-gray-200 hover:shadow-lg'}`}>
             <p className={`text-xs font-medium mb-1 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
               Stock Turnover
             </p>
@@ -160,8 +160,8 @@ export function EnhancedInventoryDashboard() {
             <p className={`text-xs mt-1 ${theme === 'dark' ? 'text-gray-500' : 'text-gray-500'}`}>
               Per month
             </p>
-          </div>
-          <div className={`rounded-xl p-4 ${theme === 'dark' ? 'bg-gray-800/50 border border-gray-700' : 'bg-white border border-gray-200'}`}>
+          </button>
+          <button onClick={() => setViewMode('reports')} className={`rounded-xl p-4 text-left transition-all hover:scale-105 cursor-pointer ${theme === 'dark' ? 'bg-gray-800/50 border border-gray-700 hover:border-gray-600' : 'bg-white border border-gray-200 hover:shadow-lg'}`}>
             <p className={`text-xs font-medium mb-1 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
               Avg. Stock Age
             </p>
@@ -171,8 +171,8 @@ export function EnhancedInventoryDashboard() {
             <p className={`text-xs mt-1 ${theme === 'dark' ? 'text-gray-500' : 'text-gray-500'}`}>
               Days
             </p>
-          </div>
-          <div className={`rounded-xl p-4 ${theme === 'dark' ? 'bg-gray-800/50 border border-gray-700' : 'bg-white border border-gray-200'}`}>
+          </button>
+          <button onClick={() => setViewMode('transactions')} className={`rounded-xl p-4 text-left transition-all hover:scale-105 cursor-pointer ${theme === 'dark' ? 'bg-gray-800/50 border border-gray-700 hover:border-gray-600' : 'bg-white border border-gray-200 hover:shadow-lg'}`}>
             <p className={`text-xs font-medium mb-1 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
               Fast Moving
             </p>
@@ -182,8 +182,8 @@ export function EnhancedInventoryDashboard() {
             <p className={`text-xs mt-1 ${theme === 'dark' ? 'text-gray-500' : 'text-gray-500'}`}>
               Products
             </p>
-          </div>
-          <div className={`rounded-xl p-4 ${theme === 'dark' ? 'bg-gray-800/50 border border-gray-700' : 'bg-white border border-gray-200'}`}>
+          </button>
+          <button onClick={() => setViewMode('adjustments')} className={`rounded-xl p-4 text-left transition-all hover:scale-105 cursor-pointer ${theme === 'dark' ? 'bg-gray-800/50 border border-gray-700 hover:border-gray-600' : 'bg-white border border-gray-200 hover:shadow-lg'}`}>
             <p className={`text-xs font-medium mb-1 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
               Dead Stock
             </p>
@@ -193,7 +193,7 @@ export function EnhancedInventoryDashboard() {
             <p className={`text-xs mt-1 ${theme === 'dark' ? 'text-gray-500' : 'text-gray-500'}`}>
               Products
             </p>
-          </div>
+          </button>
         </div>
       </div>
 
@@ -206,7 +206,8 @@ export function EnhancedInventoryDashboard() {
             change: '+12%',
             trend: 'up',
             icon: '📦',
-            color: 'blue'
+            color: 'blue',
+            action: () => setViewMode('reports')
           },
           {
             title: 'Stock Value',
@@ -214,7 +215,8 @@ export function EnhancedInventoryDashboard() {
             change: '+8.3%',
             trend: 'up',
             icon: '💰',
-            color: 'green'
+            color: 'green',
+            action: () => setViewMode('reports')
           },
           {
             title: 'Low Stock Items',
@@ -222,7 +224,8 @@ export function EnhancedInventoryDashboard() {
             change: stats.lowStockCount > 0 ? 'Action needed' : 'All good',
             trend: stats.lowStockCount > 0 ? 'down' : 'neutral',
             icon: '⚠️',
-            color: 'yellow'
+            color: 'yellow',
+            action: () => setViewMode('adjustments')
           },
           {
             title: 'Out of Stock',
@@ -230,13 +233,15 @@ export function EnhancedInventoryDashboard() {
             change: stats.outOfStockCount > 0 ? 'Critical' : 'None',
             trend: stats.outOfStockCount > 0 ? 'down' : 'neutral',
             icon: '🚫',
-            color: 'red'
+            color: 'red',
+            action: () => setViewMode('adjustments')
           }
         ].map((stat, index) => (
-          <div
+          <button
             key={index}
-            className={`relative overflow-hidden rounded-xl p-5 transition-all duration-200 hover:scale-105 ${
-              theme === 'dark' ? 'bg-gray-800/50 border border-gray-700' : 'bg-white border border-gray-200 hover:shadow-lg'
+            onClick={stat.action}
+            className={`relative overflow-hidden rounded-xl p-5 transition-all duration-200 hover:scale-105 cursor-pointer text-left ${
+              theme === 'dark' ? 'bg-gray-800/50 border border-gray-700 hover:border-gray-600' : 'bg-white border border-gray-200 hover:shadow-lg hover:border-gray-300'
             }`}
           >
             <div className="flex items-start justify-between mb-3">
@@ -257,7 +262,7 @@ export function EnhancedInventoryDashboard() {
             <p className={`text-3xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
               {stat.value}
             </p>
-          </div>
+          </button>
         ))}
       </div>
 
