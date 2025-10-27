@@ -105,6 +105,7 @@ export interface POSState {
   updateCartItemNote: (itemId: string, note: string) => void
   addCartItemModifier: (itemId: string, modifier: CartItemModifier) => void
   removeCartItemModifier: (itemId: string, modifierId: string) => void
+  reorderCartItems: (fromIndex: number, toIndex: number) => void
   clearCart: () => void
   
   // Actions - Transaction Discount
@@ -329,6 +330,22 @@ export const usePOSStore = create<POSState>()(
         const activeTransaction = get().getActiveTransaction()
         if (!activeTransaction) return
         
+        // Check if an identical item already exists in the cart
+        const existingItem = activeTransaction.items.find(item => 
+          item.product.id === product.id &&
+          item.variationId === variationId &&
+          !item.customization && // Only merge if no customization
+          (!item.modifiers || item.modifiers.length === 0) && // Only merge if no modifiers
+          !item.note // Only merge if no note
+        )
+        
+        if (existingItem) {
+          // Increment quantity of existing item instead of adding new one
+          get().updateCartItemQuantity(existingItem.id, existingItem.quantity + quantity)
+          return
+        }
+        
+        // Create new cart item if no match found
         const itemId = generateId()
         const variation = variationId 
           ? product.variations?.find(v => v.id === variationId)
@@ -503,6 +520,28 @@ export const usePOSStore = create<POSState>()(
               : t
           )
         }))
+      },
+      
+      reorderCartItems: (fromIndex: number, toIndex: number) => {
+        const activeTransaction = get().getActiveTransaction()
+        if (!activeTransaction) return
+        
+        set(state => {
+          const transaction = state.transactions.find(t => t.id === activeTransaction.id)
+          if (!transaction) return state
+          
+          const items = [...transaction.items]
+          const [movedItem] = items.splice(fromIndex, 1)
+          items.splice(toIndex, 0, movedItem)
+          
+          return {
+            transactions: state.transactions.map(t =>
+              t.id === activeTransaction.id
+                ? { ...t, items, updatedAt: new Date() }
+                : t
+            )
+          }
+        })
       },
       
       clearCart: () => {

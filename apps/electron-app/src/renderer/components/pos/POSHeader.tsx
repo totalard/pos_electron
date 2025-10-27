@@ -74,37 +74,44 @@ export function POSHeader({
         : 'bg-white border-gray-200'
       }
     `}>
-      {/* Top Bar - User Info, Session Info, Actions */}
+      {/* Top Bar - Logo, Session Info, User Info, Actions */}
       <div className={`
         flex items-center justify-between px-4 py-2 border-b
         ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'}
       `}>
-        {/* Left: User Info */}
-        {currentUser && (
-          <>
-            <Avatar
-              name={currentUser.full_name}
-              color={getAvatarColor()}
-              size="sm"
-            />
+        {/* Left: Creative Logo */}
+        <div className="flex items-center gap-3">
+          <div className={`
+            flex items-center gap-2 px-3 py-1.5 rounded-lg
+            ${theme === 'dark' 
+              ? 'bg-gradient-to-r from-blue-600/20 to-purple-600/20 border border-blue-500/30' 
+              : 'bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200'
+            }
+          `}>
+            <svg className="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+            </svg>
             <div className="flex flex-col">
               <span className={`
-                text-sm font-semibold
-                ${theme === 'dark' ? 'text-white' : 'text-gray-900'}
+                text-sm font-bold tracking-tight leading-none
+                ${theme === 'dark' 
+                  ? 'bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent' 
+                  : 'bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent'
+                }
               `}>
-                {currentUser.full_name}
+                MIDLOGIC
               </span>
               <span className={`
-                text-xs
+                text-[10px] font-semibold tracking-wider
                 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}
               `}>
-                {currentUser.role === 'admin' ? 'Administrator' : 'User'}
+                POS SYSTEM
               </span>
             </div>
-          </>
-        )}
+          </div>
+        </div>
 
-        {/* Right: Session Info, Theme Toggle */}
+        {/* Right: Session Info, User Info, Theme Toggle, Actions */}
         <div className="flex items-center gap-4 ml-auto">
           {/* Session Info - Clickable */}
           {activeSession && (
@@ -135,6 +142,31 @@ export function POSHeader({
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
             </button>
+          )}
+
+          {/* User Info - Right Aligned */}
+          {currentUser && (
+            <div className="flex items-center gap-2">
+              <div className="flex flex-col items-end">
+                <span className={`
+                  text-sm font-semibold
+                  ${theme === 'dark' ? 'text-white' : 'text-gray-900'}
+                `}>
+                  {currentUser.full_name}
+                </span>
+                <span className={`
+                  text-xs
+                  ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}
+                `}>
+                  {currentUser.role === 'admin' ? 'Administrator' : 'User'}
+                </span>
+              </div>
+              <Avatar
+                name={currentUser.full_name}
+                color={getAvatarColor()}
+                size="sm"
+              />
+            </div>
           )}
 
           {/* Theme Toggle */}

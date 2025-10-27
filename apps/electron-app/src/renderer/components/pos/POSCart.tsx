@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useAppStore, usePOSStore, useSettingsStore } from '../../stores'
 import { IconButton, CurrencyDisplay } from '../common'
 import { SwipeableCartItem } from './SwipeableCartItem'
+import { ItemNoteDialog } from './ItemNoteDialog'
 import { RestaurantInfoBar } from '../restaurant'
 
 /**
@@ -26,6 +27,8 @@ export interface POSCartProps {
   onManageCharges?: () => void
   /** Handler for delivery address */
   onManageDeliveryAddress?: () => void
+  /** Handler for customizing cart item */
+  onCustomizeItem?: (itemId: string) => void
 }
 
 /**
@@ -56,7 +59,8 @@ export function POSCart({
   onChangeTable,
   onChangeGuestCount,
   onManageCharges,
-  onManageDeliveryAddress
+  onManageDeliveryAddress,
+  onCustomizeItem
 }: POSCartProps) {
   const { theme } = useAppStore()
   const { business } = useSettingsStore()
@@ -64,7 +68,9 @@ export function POSCart({
     getCartItems,
     getActiveTransaction,
     updateCartItemQuantity,
+    updateCartItemNote,
     removeFromCart,
+    reorderCartItems,
     clearCustomer,
     setSelectedCartItem,
     setShowDiscountDialog
@@ -73,10 +79,51 @@ export function POSCart({
   const cartItems = getCartItems()
   const transaction = getActiveTransaction()
 
+  const [showNoteDialog, setShowNoteDialog] = useState(false)
+  const [selectedItemForNote, setSelectedItemForNote] = useState<string | null>(null)
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null)
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null)
+
   const handleItemDiscountClick = (itemId: string) => {
     setSelectedCartItem(itemId)
     setShowDiscountDialog(true)
   }
+
+  const handleItemNoteClick = (itemId: string) => {
+    setSelectedItemForNote(itemId)
+    setShowNoteDialog(true)
+  }
+
+  const handleNoteSave = (note: string) => {
+    if (selectedItemForNote) {
+      updateCartItemNote(selectedItemForNote, note)
+    }
+  }
+
+  const handleDragStart = (index: number) => {
+    setDraggedIndex(index)
+  }
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault()
+    if (draggedIndex !== null && draggedIndex !== index) {
+      setDragOverIndex(index)
+    }
+  }
+
+  const handleDragEnd = () => {
+    if (draggedIndex !== null && dragOverIndex !== null && draggedIndex !== dragOverIndex) {
+      reorderCartItems(draggedIndex, dragOverIndex)
+    }
+    setDraggedIndex(null)
+    setDragOverIndex(null)
+  }
+
+  const handleDragLeave = () => {
+    setDragOverIndex(null)
+  }
+
+  const selectedItem = cartItems.find(item => item.id === selectedItemForNote)
 
   return (
     <div className="flex flex-col h-full">
@@ -175,18 +222,48 @@ export function POSCart({
           </div>
         ) : (
           <div>
-            {cartItems.map((item) => (
-              <SwipeableCartItem
+            {cartItems.map((item, index) => (
+              <div
                 key={item.id}
-                item={item}
-                onRemove={removeFromCart}
-                onQuantityChange={updateCartItemQuantity}
-                onDiscountClick={handleItemDiscountClick}
-              />
+                draggable
+                onDragStart={() => handleDragStart(index)}
+                onDragOver={(e) => handleDragOver(e, index)}
+                onDragEnd={handleDragEnd}
+                onDragLeave={handleDragLeave}
+                className={`
+                  transition-all duration-200
+                  ${draggedIndex === index ? 'opacity-50' : ''}
+                  ${dragOverIndex === index ? 'border-t-2 border-primary-500' : ''}
+                `}
+              >
+                <SwipeableCartItem
+                  item={item}
+                  onRemove={removeFromCart}
+                  onQuantityChange={updateCartItemQuantity}
+                  onDiscountClick={handleItemDiscountClick}
+                  onNoteClick={handleItemNoteClick}
+                  onCustomizeClick={onCustomizeItem}
+                  showCustomization={business.mode === 'restaurant'}
+                />
+              </div>
             ))}
           </div>
         )}
       </div>
+
+      {/* Item Note Dialog */}
+      {selectedItem && (
+        <ItemNoteDialog
+          isOpen={showNoteDialog}
+          onClose={() => {
+            setShowNoteDialog(false)
+            setSelectedItemForNote(null)
+          }}
+          onSave={handleNoteSave}
+          currentNote={selectedItem.note}
+          productName={selectedItem.product.name}
+        />
+      )}
 
       {/* Cart Summary & Checkout */}
       {cartItems.length > 0 && transaction && (

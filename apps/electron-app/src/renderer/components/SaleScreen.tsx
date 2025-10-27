@@ -376,6 +376,22 @@ export function SaleScreen({ onBack }: SaleScreenProps) {
   const handleProductCustomization = (customization: ProductCustomization, note?: string) => {
     if (selectedCartItemForCustomization) {
       updateCartItemCustomization(selectedCartItemForCustomization, customization)
+      if (note) {
+        const { updateCartItemNote } = usePOSStore.getState()
+        updateCartItemNote(selectedCartItemForCustomization, note)
+      }
+    }
+  }
+
+  const handleCartItemCustomize = (itemId: string) => {
+    setSelectedCartItemForCustomization(itemId)
+    const activeTransaction = transactions.find(t => t.id === activeTransactionId)
+    if (activeTransaction) {
+      const item = activeTransaction.items.find(i => i.id === itemId)
+      if (item) {
+        setSelectedProductForCustomization(item.product)
+        setShowProductCustomization(true)
+      }
     }
   }
 
@@ -676,6 +692,7 @@ export function SaleScreen({ onBack }: SaleScreenProps) {
         onChangeGuestCount={() => setShowGuestCountSelector(true)}
         onManageCharges={() => setShowAdditionalChargesSelector(true)}
         onManageDeliveryAddress={() => setShowAddressBookManager(true)}
+        onCustomizeItem={handleCartItemCustomize}
       />
     </div>
   )
@@ -878,6 +895,16 @@ export function SaleScreen({ onBack }: SaleScreenProps) {
               }}
               onSave={handleProductCustomization}
               productName={selectedProductForCustomization.name}
+              initialCustomization={
+                selectedCartItemForCustomization
+                  ? transactions.find(t => t.id === activeTransactionId)?.items.find(i => i.id === selectedCartItemForCustomization)?.customization
+                  : undefined
+              }
+              initialNote={
+                selectedCartItemForCustomization
+                  ? transactions.find(t => t.id === activeTransactionId)?.items.find(i => i.id === selectedCartItemForCustomization)?.note
+                  : undefined
+              }
             />
           )}
         </>

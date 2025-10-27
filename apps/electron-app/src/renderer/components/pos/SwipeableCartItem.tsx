@@ -8,13 +8,19 @@ interface SwipeableCartItemProps {
   onRemove: (itemId: string) => void
   onQuantityChange: (itemId: string, quantity: number) => void
   onDiscountClick?: (itemId: string) => void
+  onNoteClick?: (itemId: string) => void
+  onCustomizeClick?: (itemId: string) => void
+  showCustomization?: boolean
 }
 
 export function SwipeableCartItem({ 
   item, 
   onRemove, 
   onQuantityChange,
-  onDiscountClick 
+  onDiscountClick,
+  onNoteClick,
+  onCustomizeClick,
+  showCustomization = false
 }: SwipeableCartItemProps) {
   const { theme } = useAppStore()
   const [swipeOffset, setSwipeOffset] = useState(0)
@@ -189,9 +195,59 @@ export function SwipeableCartItem({
                 📝 {item.note}
               </p>
             )}
+            {item.customization && (
+              <div className={`
+                text-[10px] mt-0.5 flex flex-wrap gap-1
+                ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}
+              `}>
+                {item.customization.spicyLevel && item.customization.spicyLevel !== 'none' && (
+                  <span className="px-1.5 py-0.5 rounded bg-red-500/20 text-red-500">🌶️ {item.customization.spicyLevel}</span>
+                )}
+                {item.customization.saltLevel && item.customization.saltLevel !== 'none' && (
+                  <span className="px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-500">🧂 {item.customization.saltLevel}</span>
+                )}
+                {item.customization.cookingPreference && (
+                  <span className="px-1.5 py-0.5 rounded bg-green-500/20 text-green-500">👨‍🍳 {item.customization.cookingPreference}</span>
+                )}
+              </div>
+            )}
           </div>
 
           <div className="flex items-center gap-1 flex-shrink-0">
+            {/* Customize Button (Restaurant Mode) */}
+            {showCustomization && onCustomizeClick && (
+              <button
+                onClick={() => onCustomizeClick(item.id)}
+                className={`p-1 rounded transition-colors ${
+                  item.customization 
+                    ? theme === 'dark' ? 'bg-green-600/30 hover:bg-green-600/50 text-green-400' : 'bg-green-100 hover:bg-green-200 text-green-600'
+                    : theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
+                }`}
+                title={item.customization ? 'Edit customization' : 'Customize product'}
+              >
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                </svg>
+              </button>
+            )}
+
+            {/* Note Button */}
+            {onNoteClick && (
+              <button
+                onClick={() => onNoteClick(item.id)}
+                className={`p-1 rounded transition-colors ${
+                  item.note 
+                    ? theme === 'dark' ? 'bg-blue-600/30 hover:bg-blue-600/50 text-blue-400' : 'bg-blue-100 hover:bg-blue-200 text-blue-600'
+                    : theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
+                }`}
+                title={item.note ? 'Edit note' : 'Add note'}
+              >
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+              </button>
+            )}
+
             {/* Discount Button */}
             {onDiscountClick && (
               <button

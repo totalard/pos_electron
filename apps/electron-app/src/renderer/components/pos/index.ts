@@ -43,6 +43,7 @@ export type { POSActionButtonProps, POSActionButtonVariant } from './POSActionBu
 export { CheckoutModal } from './CheckoutModal'
 export { DiscountDialog } from './DiscountDialog'
 export { ItemDiscountDialog } from './ItemDiscountDialog'
+export { ItemNoteDialog } from './ItemNoteDialog'
 export { CashManagementDialog } from './CashManagementDialog'
 export { EmailReceiptDialog } from './EmailReceiptDialog'
 export { SwipeableCartItem } from './SwipeableCartItem'
