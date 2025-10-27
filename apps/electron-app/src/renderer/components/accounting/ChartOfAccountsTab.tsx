@@ -2,7 +2,9 @@ import { useState, useEffect } from 'react'
 import { useAppStore } from '../../stores'
 import { useCurrency } from '../../hooks/useCurrency'
 import { accountingAPI } from '../../services/accountingAPI'
-import type { Account, AccountCreate, AccountType } from '../../types/accounting'
+import { AccountFormSidebar } from './AccountFormSidebar'
+import { AccountDetailSidebar } from './AccountDetailSidebar'
+import type { Account, AccountType } from '../../types/accounting'
 
 export function ChartOfAccountsTab() {
   const { theme } = useAppStore()
@@ -10,9 +12,12 @@ export function ChartOfAccountsTab() {
   const [accounts, setAccounts] = useState<Account[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [showCreateModal, setShowCreateModal] = useState(false)
-  const [filterType, setFilterType] = useState<string>('all')
   const [searchQuery, setSearchQuery] = useState('')
+  const [filterType, setFilterType] = useState('all')
+  const [showFormSidebar, setShowFormSidebar] = useState(false)
+  const [showDetailSidebar, setShowDetailSidebar] = useState(false)
+  const [selectedAccount, setSelectedAccount] = useState<Account | null>(null)
+  const [editingAccount, setEditingAccount] = useState<Account | null>(null)
 
   useEffect(() => {
     loadAccounts()
@@ -72,7 +77,10 @@ export function ChartOfAccountsTab() {
           </p>
         </div>
         <button
-          onClick={() => setShowCreateModal(true)}
+          onClick={() => {
+            setEditingAccount(null)
+            setShowFormSidebar(true)
+          }}
           className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors flex items-center gap-2"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -203,6 +211,10 @@ export function ChartOfAccountsTab() {
                     filteredAccounts.map((account) => (
                       <tr
                         key={account.id}
+                        onClick={() => {
+                          setSelectedAccount(account)
+                          setShowDetailSidebar(true)
+                        }}
                         className={`hover:bg-opacity-50 cursor-pointer ${
                           theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-50'
                         }`}
@@ -258,195 +270,34 @@ export function ChartOfAccountsTab() {
         </>
       )}
 
-      {/* Create Account Modal */}
-      {showCreateModal && (
-        <CreateAccountModal
-          onClose={() => setShowCreateModal(false)}
-          onSuccess={() => {
-            setShowCreateModal(false)
-            loadAccounts()
-          }}
-        />
-      )}
-    </div>
-  )
-}
+      {/* Form Sidebar */}
+      <AccountFormSidebar
+        isOpen={showFormSidebar}
+        onClose={() => {
+          setShowFormSidebar(false)
+          setEditingAccount(null)
+        }}
+        onSuccess={() => {
+          setShowFormSidebar(false)
+          setEditingAccount(null)
+          loadAccounts()
+        }}
+        account={editingAccount}
+      />
 
-function CreateAccountModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: () => void }) {
-  const { theme } = useAppStore()
-  const [formData, setFormData] = useState<AccountCreate>({
-    account_code: '',
-    account_name: '',
-    account_type: 'asset',
-    description: '',
-    current_balance: 0,
-    is_active: true
-  })
-  const [submitting, setSubmitting] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    try {
-      setSubmitting(true)
-      setError(null)
-      await accountingAPI.createAccount(formData)
-      onSuccess()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create account')
-    } finally {
-      setSubmitting(false)
-    }
-  }
-
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className={`rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto ${
-        theme === 'dark' ? 'bg-gray-800' : 'bg-white'
-      }`}>
-        <div className="p-6">
-          <h3 className={`text-xl font-bold mb-4 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-            Create New Account
-          </h3>
-
-          {error && (
-            <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-              {error}
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
-                  Account Code *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={formData.account_code}
-                  onChange={(e) => setFormData({ ...formData, account_code: e.target.value })}
-                  className={`w-full px-3 py-2 rounded border ${
-                    theme === 'dark'
-                      ? 'bg-gray-700 border-gray-600 text-white'
-                      : 'bg-white border-gray-300 text-gray-900'
-                  }`}
-                  placeholder="e.g., 1000"
-                />
-              </div>
-
-              <div>
-                <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
-                  Account Type *
-                </label>
-                <select
-                  required
-                  value={formData.account_type}
-                  onChange={(e) => setFormData({ ...formData, account_type: e.target.value as AccountType })}
-                  className={`w-full px-3 py-2 rounded border ${
-                    theme === 'dark'
-                      ? 'bg-gray-700 border-gray-600 text-white'
-                      : 'bg-white border-gray-300 text-gray-900'
-                  }`}
-                >
-                  <option value="asset">Asset</option>
-                  <option value="liability">Liability</option>
-                  <option value="equity">Equity</option>
-                  <option value="income">Income</option>
-                  <option value="expense">Expense</option>
-                </select>
-              </div>
-            </div>
-
-            <div>
-              <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
-                Account Name *
-              </label>
-              <input
-                type="text"
-                required
-                value={formData.account_name}
-                onChange={(e) => setFormData({ ...formData, account_name: e.target.value })}
-                className={`w-full px-3 py-2 rounded border ${
-                  theme === 'dark'
-                    ? 'bg-gray-700 border-gray-600 text-white'
-                    : 'bg-white border-gray-300 text-gray-900'
-                }`}
-                placeholder="e.g., Petty Cash"
-              />
-            </div>
-
-            <div>
-              <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
-                Description
-              </label>
-              <textarea
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                rows={3}
-                className={`w-full px-3 py-2 rounded border ${
-                  theme === 'dark'
-                    ? 'bg-gray-700 border-gray-600 text-white'
-                    : 'bg-white border-gray-300 text-gray-900'
-                }`}
-                placeholder="Optional description"
-              />
-            </div>
-
-            <div>
-              <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
-                Opening Balance
-              </label>
-              <input
-                type="number"
-                step="0.01"
-                value={formData.current_balance}
-                onChange={(e) => setFormData({ ...formData, current_balance: parseFloat(e.target.value) || 0 })}
-                className={`w-full px-3 py-2 rounded border ${
-                  theme === 'dark'
-                    ? 'bg-gray-700 border-gray-600 text-white'
-                    : 'bg-white border-gray-300 text-gray-900'
-                }`}
-              />
-            </div>
-
-            <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                id="is_active"
-                checked={formData.is_active}
-                onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
-                className="w-4 h-4 text-teal-600 rounded"
-              />
-              <label htmlFor="is_active" className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
-                Active
-              </label>
-            </div>
-
-            <div className="flex gap-3 pt-4">
-              <button
-                type="button"
-                onClick={onClose}
-                disabled={submitting}
-                className={`flex-1 px-4 py-2 rounded-lg border ${
-                  theme === 'dark'
-                    ? 'border-gray-600 text-gray-300 hover:bg-gray-700'
-                    : 'border-gray-300 text-gray-700 hover:bg-gray-50'
-                }`}
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={submitting}
-                className="flex-1 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 disabled:opacity-50"
-              >
-                {submitting ? 'Creating...' : 'Create Account'}
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
+      {/* Detail Sidebar */}
+      <AccountDetailSidebar
+        isOpen={showDetailSidebar}
+        onClose={() => {
+          setShowDetailSidebar(false)
+          setSelectedAccount(null)
+        }}
+        account={selectedAccount}
+        onEdit={(account) => {
+          setEditingAccount(account)
+          setShowFormSidebar(true)
+        }}
+      />
     </div>
   )
 }

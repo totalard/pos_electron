@@ -3,6 +3,9 @@ import { useAppStore } from '../../stores'
 import { PageHeader } from '../layout'
 import { ChartOfAccountsTab } from './ChartOfAccountsTab'
 import { JournalEntriesTab } from './JournalEntriesTab'
+import { ReportsTab } from './ReportsTab'
+import { PurchasesTab } from './PurchasesTab'
+import { YearEndTab } from './YearEndTab'
 
 interface AccountingScreenProps {
   onBack: () => void
@@ -63,100 +66,6 @@ export function AccountingScreen({ onBack }: AccountingScreenProps) {
         {activeTab === 'reports' && <ReportsTab />}
         {activeTab === 'purchases' && <PurchasesTab />}
         {activeTab === 'yearend' && <YearEndTab />}
-      </div>
-    </div>
-  )
-}
-
-function ReportsTab() {
-  const { theme } = useAppStore()
-  
-  const reports = [
-    { name: 'Income Statement', description: 'Profit & Loss report', icon: '💰' },
-    { name: 'Balance Sheet', description: 'Assets, Liabilities, Equity', icon: '⚖️' },
-    { name: 'Trial Balance', description: 'Verify debits equal credits', icon: '✅' },
-    { name: 'Cash Flow', description: 'Cash in and out tracking', icon: '💵' }
-  ]
-  
-  return (
-    <div className="space-y-4">
-      <h2 className={`text-xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-        Financial Reports
-      </h2>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {reports.map((report) => (
-          <button
-            key={report.name}
-            className={`
-              p-6 rounded-lg border text-left transition-all hover:scale-105
-              ${theme === 'dark' 
-                ? 'bg-gray-800 border-gray-700 hover:bg-gray-750' 
-                : 'bg-white border-gray-200 hover:shadow-lg'
-              }
-            `}
-          >
-            <div className="text-3xl mb-2">{report.icon}</div>
-            <h3 className={`text-lg font-semibold mb-1 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-              {report.name}
-            </h3>
-            <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-              {report.description}
-            </p>
-          </button>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-function PurchasesTab() {
-  const { theme } = useAppStore()
-  
-  return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h2 className={`text-xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-          Purchase Orders
-        </h2>
-        <button className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700">
-          + New Purchase
-        </button>
-      </div>
-      
-      <div className={`rounded-lg border p-4 ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
-        <p className={theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}>
-          Purchase orders with barcode scanning support will be displayed here.
-        </p>
-      </div>
-    </div>
-  )
-}
-
-function YearEndTab() {
-  const { theme } = useAppStore()
-  
-  return (
-    <div className="space-y-4">
-      <h2 className={`text-xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-        Year-End Closing
-      </h2>
-      
-      <div className={`rounded-lg border p-6 ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
-        <div className="space-y-4">
-          <div>
-            <h3 className={`text-lg font-semibold mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-              Year-End Wizard
-            </h3>
-            <p className={`text-sm mb-4 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-              Close the fiscal year and transfer balances to the new year.
-            </p>
-          </div>
-          
-          <button className="px-6 py-3 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-medium">
-            Start Year-End Closing
-          </button>
-        </div>
       </div>
     </div>
   )
