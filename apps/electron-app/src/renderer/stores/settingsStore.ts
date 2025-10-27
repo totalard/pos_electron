@@ -9,7 +9,6 @@ export type BusinessMode = 'restaurant' | 'retail'
 export type SettingsSection =
   | 'general'
   | 'business'
-  | 'denominations'
   | 'taxes'
   | 'payments'
   | 'hardware'

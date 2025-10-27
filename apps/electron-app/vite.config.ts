@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import electron from 'vite-plugin-electron/simple'
+import renderer from 'vite-plugin-electron-renderer'
 import tailwindcss from '@tailwindcss/vite'
 import path from 'node:path'
 
@@ -29,7 +30,9 @@ export default defineConfig({
         }
       },
       renderer: {}
-    })
+    }),
+    // Enable HMR for Electron renderer process
+    renderer()
   ],
   resolve: {
     alias: {
@@ -42,6 +45,13 @@ export default defineConfig({
       input: {
         index: path.resolve(__dirname, 'index.html')
       }
+    }
+  },
+  server: {
+    // Ensure HMR works properly
+    strictPort: true,
+    hmr: {
+      overlay: true
     }
   }
 })
