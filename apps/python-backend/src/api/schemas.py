@@ -1350,3 +1350,233 @@ class DiscountDashboardStats(BaseModel):
     recent_usages: List[DiscountUsageResponse]
     discount_by_type: dict
     usage_trend: List[dict]
+
+
+# ============================================================================
+# Accounting Schemas
+# ============================================================================
+
+class AccountCreate(BaseModel):
+    """Schema for creating an account"""
+    account_code: str
+    account_name: str
+    account_type: str
+    account_subtype: Optional[str] = None
+    description: Optional[str] = None
+    current_balance: float = 0.0
+    is_active: bool = True
+    parent_account_id: Optional[int] = None
+
+
+class AccountUpdate(BaseModel):
+    """Schema for updating an account"""
+    account_name: Optional[str] = None
+    description: Optional[str] = None
+    is_active: Optional[bool] = None
+
+
+class AccountResponse(BaseModel):
+    """Schema for account response"""
+    id: int
+    account_code: str
+    account_name: str
+    account_type: str
+    account_subtype: Optional[str] = None
+    description: Optional[str] = None
+    current_balance: float
+    is_active: bool
+    is_system: bool
+    parent_account_id: Optional[int] = None
+    parent_account_name: Optional[str] = None
+    created_by_id: Optional[int] = None
+    created_by_name: Optional[str] = None
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class JournalEntryLineCreate(BaseModel):
+    """Schema for creating journal entry line"""
+    account_id: int
+    description: Optional[str] = None
+    debit_amount: float = 0.0
+    credit_amount: float = 0.0
+
+
+class JournalEntryLineResponse(BaseModel):
+    """Schema for journal entry line response"""
+    id: int
+    account_id: int
+    account_code: Optional[str] = None
+    account_name: Optional[str] = None
+    description: Optional[str] = None
+    debit_amount: float
+    credit_amount: float
+    line_number: int
+
+    class Config:
+        from_attributes = True
+
+
+class JournalEntryCreate(BaseModel):
+    """Schema for creating journal entry"""
+    entry_date: datetime
+    entry_type: str
+    description: str
+    reference_type: Optional[str] = None
+    reference_id: Optional[int] = None
+    reference_number: Optional[str] = None
+    notes: Optional[str] = None
+    lines: List[JournalEntryLineCreate]
+    auto_post: bool = False
+
+
+class JournalEntryResponse(BaseModel):
+    """Schema for journal entry response"""
+    id: int
+    entry_number: str
+    entry_date: datetime
+    entry_type: str
+    description: str
+    reference_type: Optional[str] = None
+    reference_id: Optional[int] = None
+    reference_number: Optional[str] = None
+    status: str
+    posted_at: Optional[datetime] = None
+    total_debit: float
+    total_credit: float
+    created_by_id: Optional[int] = None
+    created_by_name: Optional[str] = None
+    posted_by_id: Optional[int] = None
+    posted_by_name: Optional[str] = None
+    notes: Optional[str] = None
+    lines: List[JournalEntryLineResponse] = []
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class AccountBalanceResponse(BaseModel):
+    """Schema for account balance response"""
+    account_id: int
+    account_code: str
+    account_name: str
+    account_type: str
+    current_balance: float
+    total_debit: float
+    total_credit: float
+    transaction_count: int
+
+
+class TrialBalanceResponse(BaseModel):
+    """Schema for trial balance report"""
+    as_of_date: datetime
+    accounts: List[AccountBalanceResponse]
+    total_debit: float
+    total_credit: float
+    is_balanced: bool
+
+
+class FinancialReportResponse(BaseModel):
+    """Schema for financial reports"""
+    report_type: str
+    start_date: datetime
+    end_date: datetime
+    total_income: float
+    total_expenses: float
+    net_profit: float
+    income_items: List[dict] = []
+    expense_items: List[dict] = []
+
+
+class FiscalYearCreate(BaseModel):
+    """Schema for creating fiscal year"""
+    year_name: str
+    start_date: datetime
+    end_date: datetime
+    opening_balance: float = 0.0
+
+
+class FiscalYearResponse(BaseModel):
+    """Schema for fiscal year response"""
+    id: int
+    year_name: str
+    start_date: datetime
+    end_date: datetime
+    status: str
+    opening_balance: float
+    closing_balance: float
+    total_income: float
+    total_expenses: float
+    net_profit_loss: float
+    closed_at: Optional[datetime] = None
+    closed_by_id: Optional[int] = None
+    closed_by_name: Optional[str] = None
+    closing_notes: Optional[str] = None
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+# ============================================================================
+# Purchase Schemas
+# ============================================================================
+
+class PurchaseCreate(BaseModel):
+    """Schema for creating a purchase"""
+    vendor_name: str
+    vendor_contact: Optional[str] = None
+    vendor_address: Optional[str] = None
+    purchase_date: datetime
+    expected_delivery_date: Optional[datetime] = None
+    subtotal: float
+    tax_amount: float = 0.0
+    shipping_cost: float = 0.0
+    total_amount: float
+    payment_method: Optional[str] = None
+    items: List[dict]
+    invoice_number: Optional[str] = None
+    notes: Optional[str] = None
+
+
+class PurchaseUpdate(BaseModel):
+    """Schema for updating a purchase"""
+    vendor_name: Optional[str] = None
+    vendor_contact: Optional[str] = None
+    expected_delivery_date: Optional[datetime] = None
+    notes: Optional[str] = None
+
+
+class PurchaseResponse(BaseModel):
+    """Schema for purchase response"""
+    id: int
+    purchase_number: str
+    vendor_name: str
+    vendor_contact: Optional[str] = None
+    vendor_address: Optional[str] = None
+    purchase_date: datetime
+    expected_delivery_date: Optional[datetime] = None
+    actual_delivery_date: Optional[datetime] = None
+    subtotal: float
+    tax_amount: float
+    shipping_cost: float
+    total_amount: float
+    payment_method: Optional[str] = None
+    payment_status: str
+    amount_paid: float
+    status: str
+    items: List[dict]
+    invoice_number: Optional[str] = None
+    notes: Optional[str] = None
+    created_by_id: Optional[int] = None
+    received_by_id: Optional[int] = None
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True

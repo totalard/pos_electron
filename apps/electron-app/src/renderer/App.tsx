@@ -10,13 +10,14 @@ import { CustomerManagementScreen } from './components/customers'
 import { InventoryScreen } from './components/inventory'
 import { TransactionManagementScreen } from './components/transactions/TransactionManagementScreen'
 import { RestaurantManagementScreen } from './components/restaurant'
+import { AccountingScreen } from './components/accounting/AccountingScreen'
 import { Walkthrough, defaultWalkthroughSteps } from './components/walkthrough'
 import { ErrorModal } from './components/common/ErrorModal'
 import { LockScreen } from './components/LockScreen'
 
 const API_BASE_URL = 'http://localhost:8000/api'
 
-type AppScreen = 'splash' | 'walkthrough' | 'pin' | 'dashboard' | 'sales' | 'products' | 'inventory' | 'users' | 'settings' | 'customers' | 'transactions' | 'restaurant'
+type AppScreen = 'splash' | 'walkthrough' | 'pin' | 'dashboard' | 'sales' | 'products' | 'inventory' | 'users' | 'settings' | 'customers' | 'transactions' | 'restaurant' | 'accounting'
 
 function App() {
   const [currentScreen, setCurrentScreen] = useState<AppScreen>('splash')
@@ -53,7 +54,7 @@ function App() {
   }
 
   // Handle navigation from dashboard with role-based access control
-  const handleNavigate = (screen: 'sales' | 'products' | 'inventory' | 'users' | 'settings' | 'customers' | 'transactions' | 'restaurant') => {
+  const handleNavigate = (screen: 'sales' | 'products' | 'inventory' | 'users' | 'settings' | 'customers' | 'transactions' | 'restaurant' | 'accounting') => {
     // Restrict admin-only screens
     if ((screen === 'users' || screen === 'settings') && currentUser?.role !== 'admin') {
       console.warn(`Access denied: ${screen} is only available to admin users`)
@@ -166,6 +167,10 @@ function App() {
 
       {currentScreen === 'restaurant' && (
         <RestaurantManagementScreen onBack={handleBackToDashboard} />
+      )}
+
+      {currentScreen === 'accounting' && (
+        <AccountingScreen onBack={handleBackToDashboard} />
       )}
 
       {currentScreen === 'users' && (

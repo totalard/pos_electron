@@ -14,6 +14,8 @@ from .transactions import router as transactions_router
 from .discounts import router as discounts_router
 from .pos_sessions import router as pos_sessions_router
 from .dashboard import router as dashboard_router
+from .accounting import router as accounting_router
+from .purchases import router as purchases_router
 
 # Create main API router
 router = APIRouter()
@@ -31,3 +33,5 @@ router.include_router(discounts_router, prefix="/discounts", tags=["discounts"])
 router.include_router(pos_sessions_router, tags=["pos-sessions"])
 router.include_router(dashboard_router, tags=["dashboard"])
 router.include_router(demo_router, prefix="/demo", tags=["demo"])
+router.include_router(accounting_router, prefix="/accounting", tags=["accounting"])
+router.include_router(purchases_router, prefix="/purchases", tags=["purchases"])
