@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { useAppStore } from '../../stores'
 import { PageHeader } from '../layout'
+import { ChartOfAccountsTab } from './ChartOfAccountsTab'
+import { JournalEntriesTab } from './JournalEntriesTab'
 
 interface AccountingScreenProps {
   onBack: () => void
@@ -61,52 +63,6 @@ export function AccountingScreen({ onBack }: AccountingScreenProps) {
         {activeTab === 'reports' && <ReportsTab />}
         {activeTab === 'purchases' && <PurchasesTab />}
         {activeTab === 'yearend' && <YearEndTab />}
-      </div>
-    </div>
-  )
-}
-
-function ChartOfAccountsTab() {
-  const { theme } = useAppStore()
-  
-  return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h2 className={`text-xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-          Chart of Accounts
-        </h2>
-        <button className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700">
-          + Add Account
-        </button>
-      </div>
-      
-      <div className={`rounded-lg border p-4 ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
-        <p className={theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}>
-          Chart of accounts will be displayed here. Connect to backend API to load accounts.
-        </p>
-      </div>
-    </div>
-  )
-}
-
-function JournalEntriesTab() {
-  const { theme } = useAppStore()
-  
-  return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h2 className={`text-xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-          Journal Entries
-        </h2>
-        <button className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700">
-          + New Entry
-        </button>
-      </div>
-      
-      <div className={`rounded-lg border p-4 ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
-        <p className={theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}>
-          Journal entries will be displayed here. Connect to backend API to load entries.
-        </p>
       </div>
     </div>
   )
