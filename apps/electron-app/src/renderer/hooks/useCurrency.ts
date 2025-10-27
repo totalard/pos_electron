@@ -14,6 +14,11 @@ export function useCurrency() {
   const { business } = useSettingsStore()
   const { currencyConfig } = business
 
+  // Ensure currencyConfig exists with defaults
+  if (!currencyConfig) {
+    console.warn('currencyConfig is undefined, using defaults')
+  }
+
   /**
    * Format a number as currency based on configured settings
    * @param amount - The numeric amount to format
@@ -26,25 +31,27 @@ export function useCurrency() {
   ): string => {
     const {
       showSymbol = true,
-      showCode = currencyConfig.showCurrencyCode,
-      useIndianNumbering = currencyConfig.regionSpecific.india.enabled &&
-        currencyConfig.regionSpecific.india.useIndianNumbering
+      showCode = currencyConfig?.showCurrencyCode ?? false,
+      useIndianNumbering = currencyConfig?.regionSpecific?.india?.enabled &&
+        currencyConfig?.regionSpecific?.india?.useIndianNumbering
     } = options
 
     // Convert to number if string, handle null/undefined
     const numericAmount = typeof amount === 'string' ? parseFloat(amount) : amount
     if (isNaN(numericAmount) || numericAmount === null || numericAmount === undefined) {
-      return showSymbol ? `${currencyConfig.symbol}0${currencyConfig.decimalSeparator}00` : '0.00'
+      const symbol = currencyConfig?.symbol ?? '$'
+      const decSep = currencyConfig?.decimalSeparator ?? '.'
+      return showSymbol ? `${symbol}0${decSep}00` : '0.00'
     }
 
     // Handle decimal places based on region-specific settings
-    let decimalPlaces = currencyConfig.decimalPlaces
+    let decimalPlaces = currencyConfig?.decimalPlaces ?? 2
     
     // For Indian currency, check if paisa should be shown
     if (
-      currencyConfig.code === 'INR' &&
-      currencyConfig.regionSpecific.india.enabled &&
-      !currencyConfig.regionSpecific.india.showPaisa
+      currencyConfig?.code === 'INR' &&
+      currencyConfig?.regionSpecific?.india?.enabled &&
+      !currencyConfig?.regionSpecific?.india?.showPaisa
     ) {
       decimalPlaces = 0
     }
@@ -56,35 +63,39 @@ export function useCurrency() {
     // Apply thousand separator based on numbering system
     let formattedInteger: string
     
-    if (useIndianNumbering && currencyConfig.code === 'INR') {
+    if (useIndianNumbering && currencyConfig?.code === 'INR') {
       // Indian numbering system: 1,23,45,678.00
       formattedInteger = formatIndianNumbering(integerPart)
     } else {
       // Western numbering system: 1,234,567.00
+      const thousandSep = currencyConfig?.thousandSeparator ?? ','
       formattedInteger = integerPart.replace(
         /\B(?=(\d{3})+(?!\d))/g,
-        currencyConfig.thousandSeparator
+        thousandSep
       )
     }
 
     // Combine integer and decimal parts
+    const decSep = currencyConfig?.decimalSeparator ?? '.'
     const formattedValue = decimalPart
-      ? `${formattedInteger}${currencyConfig.decimalSeparator}${decimalPart}`
+      ? `${formattedInteger}${decSep}${decimalPart}`
       : formattedInteger
 
     // Build final string with symbol and code
     let result = formattedValue
 
     if (showSymbol) {
-      if (currencyConfig.symbolPosition === 'before') {
-        result = `${currencyConfig.symbol}${result}`
+      const symbol = currencyConfig?.symbol ?? '$'
+      if (currencyConfig?.symbolPosition === 'before') {
+        result = `${symbol}${result}`
       } else {
-        result = `${result}${currencyConfig.symbol}`
+        result = `${result}${symbol}`
       }
     }
 
     if (showCode) {
-      result = `${result} ${currencyConfig.code}`
+      const code = currencyConfig?.code ?? 'USD'
+      result = `${result} ${code}`
     }
 
     return result
@@ -96,7 +107,7 @@ export function useCurrency() {
    * @returns Formatted string with Indian separators
    */
   const formatIndianNumbering = (integerStr: string): string => {
-    const { thousandSeparator } = currencyConfig
+    const thousandSeparator = currencyConfig?.thousandSeparator ?? ','
     
     // For numbers less than 1000, no separator needed
     if (integerStr.length <= 3) {
@@ -123,16 +134,20 @@ export function useCurrency() {
    */
   const parseCurrency = (formattedAmount: string): number => {
     // Remove currency symbol and code
+    const symbol = currencyConfig?.symbol ?? '$'
+    const code = currencyConfig?.code ?? 'USD'
     let cleaned = formattedAmount
-      .replace(currencyConfig.symbol, '')
-      .replace(currencyConfig.code, '')
+      .replace(symbol, '')
+      .replace(code, '')
       .trim()
 
     // Replace thousand separators
-    cleaned = cleaned.replace(new RegExp(`\\${currencyConfig.thousandSeparator}`, 'g'), '')
+    const thousandSep = currencyConfig?.thousandSeparator ?? ','
+    cleaned = cleaned.replace(new RegExp(`\\${thousandSep}`, 'g'), '')
 
     // Replace decimal separator with standard dot
-    cleaned = cleaned.replace(currencyConfig.decimalSeparator, '.')
+    const decSep = currencyConfig?.decimalSeparator ?? '.'
+    cleaned = cleaned.replace(decSep, '.')
 
     return parseFloat(cleaned) || 0
   }
@@ -141,14 +156,14 @@ export function useCurrency() {
    * Get currency symbol
    */
   const getCurrencySymbol = (): string => {
-    return currencyConfig.symbol
+    return currencyConfig?.symbol ?? '$'
   }
 
   /**
    * Get currency code
    */
   const getCurrencyCode = (): string => {
-    return currencyConfig.code
+    return currencyConfig?.code ?? 'USD'
   }
 
   /**
@@ -156,13 +171,13 @@ export function useCurrency() {
    */
   const getDecimalPlaces = (): number => {
     if (
-      currencyConfig.code === 'INR' &&
-      currencyConfig.regionSpecific.india.enabled &&
-      !currencyConfig.regionSpecific.india.showPaisa
+      currencyConfig?.code === 'INR' &&
+      currencyConfig?.regionSpecific?.india?.enabled &&
+      !currencyConfig?.regionSpecific?.india?.showPaisa
     ) {
       return 0
     }
-    return currencyConfig.decimalPlaces
+    return currencyConfig?.decimalPlaces ?? 2
   }
 
   return {

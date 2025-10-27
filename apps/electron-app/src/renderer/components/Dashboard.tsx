@@ -103,7 +103,8 @@ export function Dashboard({ onNavigate, onLock, onLogout }: DashboardProps) {
 
   return (
     <div className={`
-      h-screen w-screen overflow-y-auto p-4
+      flex flex-col
+      h-screen w-screen overflow-hidden
       ${theme === 'dark'
         ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900'
         : 'bg-gradient-to-br from-gray-50 via-white to-gray-100'
@@ -111,14 +112,14 @@ export function Dashboard({ onNavigate, onLock, onLogout }: DashboardProps) {
     `}>
       {/* Header */}
       <header className={`
-        border-b
+        w-full border-b flex-shrink-0
         ${theme === 'dark'
-          ? 'bg-gray-800/50 border-gray-700'
-          : 'bg-white/80 border-gray-200'
+          ? 'bg-gray-800 border-gray-700'
+          : 'bg-white border-gray-200'
         }
-        backdrop-blur-sm rounded-t-xl
+        backdrop-blur-sm
       `}>
-        <div className="px-6 py-4">
+        <div className="w-full max-w-[2000px] mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             {/* Logo and Title */}
             <div className="flex items-center gap-4">
@@ -219,10 +220,7 @@ export function Dashboard({ onNavigate, onLock, onLogout }: DashboardProps) {
       </header>
 
       {/* Main Content */}
-      <main className={`
-        px-6 py-8 rounded-b-xl
-        ${theme === 'dark' ? 'bg-gray-800/30' : 'bg-white/50'}
-      `}>
+      <main className="flex-1 overflow-y-auto p-4 w-full max-w-[2000px] mx-auto">
         {/* Menu Grid - Touch-safe with minimum 44x44px targets */}
         <Grid cols={1} gap="lg" responsive={{ md: 2, lg: 3, xl: 6 }}>
           {availableMenuItems.map((item) => (

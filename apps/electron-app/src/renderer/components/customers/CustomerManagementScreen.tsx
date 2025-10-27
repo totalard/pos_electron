@@ -121,13 +121,14 @@ export function CustomerManagementScreen({ onBack }: CustomerManagementScreenPro
 
   return (
     <div className={`
-      min-h-screen
+      flex flex-col
+      h-screen
       ${theme === 'dark'
         ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900'
         : 'bg-gradient-to-br from-gray-50 via-white to-gray-100'
       }
     `}>
-      <PageContainer>
+      <PageContainer className="flex-1 overflow-y-auto">
         {/* Header */}
         <PageHeader
           title="Customer Management"

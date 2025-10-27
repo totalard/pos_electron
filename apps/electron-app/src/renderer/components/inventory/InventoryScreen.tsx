@@ -146,7 +146,7 @@ export function InventoryScreen({ onBack }: InventoryScreenProps) {
       />
 
       {/* Main Content */}
-      <PageContainer>
+      <PageContainer className="flex-1 overflow-y-auto">
         {/* Error Message */}
         {error && (
           <ErrorMessage message={error} className="mb-4" />

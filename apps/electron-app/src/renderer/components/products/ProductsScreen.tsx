@@ -196,7 +196,7 @@ export function ProductsScreen({ onBack }: ProductsScreenProps) {
       />
 
       {/* Main Content */}
-      <PageContainer>
+      <PageContainer className="flex-1 overflow-y-auto">
         {/* Error Message */}
         {error && (
           <ErrorMessage message={error} className="mb-4" />
@@ -208,7 +208,7 @@ export function ProductsScreen({ onBack }: ProductsScreenProps) {
         </div>
 
         {/* Single Pane Layout */}
-        <div className="h-full flex flex-col">
+        <div className="flex flex-col">
           {/* Search and Filters */}
           <div className={`
             p-4 border-b space-y-3
@@ -280,7 +280,7 @@ export function ProductsScreen({ onBack }: ProductsScreenProps) {
           </div>
 
           {/* Product List/Grid - Full Width */}
-          <div className="flex-1 overflow-y-auto p-4">
+          <div className="p-4">
             {isLoading && (
               <div className="flex items-center justify-center py-20">
                 <LoadingSpinner size="md" />

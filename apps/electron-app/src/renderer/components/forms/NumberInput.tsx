@@ -80,7 +80,8 @@ export const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(({
   const handleIncrement = () => {
     if (disabled) return
     
-    let newValue = value + step
+    const currentValue = value ?? 0
+    let newValue = currentValue + step
     if (max !== undefined && newValue > max) {
       newValue = max
     }
@@ -91,7 +92,8 @@ export const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(({
   const handleDecrement = () => {
     if (disabled) return
     
-    let newValue = value - step
+    const currentValue = value ?? 0
+    let newValue = currentValue - step
     if (min !== undefined && newValue < min) {
       newValue = min
     }
@@ -140,10 +142,11 @@ export const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(({
     }
   }
 
-  const canDecrement = min === undefined || value > min
-  const canIncrement = max === undefined || value < max
+  const safeValue = value ?? 0
+  const canDecrement = min === undefined || safeValue > min
+  const canIncrement = max === undefined || safeValue < max
 
-  const displayValue = formatDisplay ? formatDisplay(value) : value.toString()
+  const displayValue = formatDisplay ? formatDisplay(safeValue) : safeValue.toString()
 
   const inputClasses = `
     px-4 py-3 rounded-lg text-base text-center

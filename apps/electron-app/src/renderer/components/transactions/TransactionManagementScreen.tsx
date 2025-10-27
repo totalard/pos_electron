@@ -150,13 +150,14 @@ export function TransactionManagementScreen({ onBack }: TransactionManagementScr
 
   return (
     <div className={`
-      min-h-screen
+      flex flex-col
+      h-screen
       ${theme === 'dark'
         ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900'
         : 'bg-gradient-to-br from-gray-50 via-white to-gray-100'
       }
     `}>
-      <PageContainer>
+      <PageContainer className="flex-1 overflow-y-auto">
         <PageHeader
           title="Transaction Management"
           subtitle="View and manage all transactions"
