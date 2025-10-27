@@ -193,7 +193,7 @@ export class PrinterService extends EventEmitter {
   }
 
   /**
-   * Scan USB printers
+   * Scan USB printers (matches test-usb-printer.js reference script)
    */
   private scanUSBPrinters(): DeviceInfo[] {
     const devices = usb.getDeviceList()
@@ -203,12 +203,16 @@ export class PrinterService extends EventEmitter {
       const descriptor = device.deviceDescriptor
       const vendorId = descriptor.idVendor
       const productId = descriptor.idProduct
-
-      // Check if it's a known printer
+      
+      // Check if it's a known printer vendor
       const knownPrinter = KNOWN_PRINTER_IDS.find((p) => p.vendorId === vendorId)
       
-      if (knownPrinter) {
-        const name = knownPrinter.name
+      // Also check device class (7 = printer class)
+      const isPrinterClass = descriptor.bDeviceClass === 7
+      
+      // Accept device if it's a known printer OR has printer class
+      if (knownPrinter || isPrinterClass) {
+        const name = knownPrinter ? knownPrinter.name : `USB Printer (${vendorId.toString(16)}:${productId.toString(16)})`
 
         printers.push({
           id: `usb-printer-${vendorId}-${productId}`,
@@ -218,12 +222,14 @@ export class PrinterService extends EventEmitter {
           status: DeviceStatus.READY,
           vendorId,
           productId,
-          manufacturer: knownPrinter.name,
-          path: `USB:${vendorId.toString(16)}:${productId.toString(16)}`
+          manufacturer: knownPrinter ? knownPrinter.name : 'Unknown',
+          path: `USB:${vendorId.toString(16)}:${productId.toString(16)}`,
+          useEscPos: true // Default to ESC/POS mode
         })
       }
     })
 
+    console.log(`[PrinterService] Found ${printers.length} USB printers`)
     return printers
   }
 
@@ -498,60 +504,118 @@ export class PrinterService extends EventEmitter {
 
   /**
    * Print data to USB device
+   * Implementation matches the proven reference script approach
    */
   private async printToUSB(data: Buffer): Promise<void> {
     if (!this.usbDevice) {
       throw new Error('No USB device connected')
     }
 
-    try {
-      const device = this.usbDevice
+    return new Promise((resolve, reject) => {
+      console.log('\n📄 Attempting to print...')
+      
+      try {
+        const device = this.usbDevice
 
-      // Get the first interface
-      const iface = device.interface(0)
-
-      // Claim the interface if not already claimed
-      if (!iface.isKernelDriverActive()) {
+        // Step 1: Open the device (should already be open, but verify)
+        console.log('1. Verifying USB device is open...')
         try {
-          iface.claim()
+          // Device should already be open from connect(), but check
+          if (!device.interfaces || device.interfaces.length === 0) {
+            console.log('   Device not fully opened, attempting to open...')
+            device.open()
+          }
+          console.log('   ✓ Device is open')
         } catch (error) {
-          console.warn('Could not claim interface:', error)
+          console.log('   ⚠ Device open check:', error)
         }
-      } else {
-        // Detach kernel driver if active (Linux)
+
+        // Step 2: Get the first interface
+        console.log('2. Getting interface...')
+        const iface = device.interface(0)
+        console.log(`   ✓ Interface 0 obtained (${iface.endpoints.length} endpoints)`)
+
+        // Step 3: Claim the interface
+        console.log('3. Claiming interface...')
         try {
-          iface.detachKernelDriver()
+          // Check if kernel driver is active (Linux)
+          if (iface.isKernelDriverActive()) {
+            console.log('   ⚠ Kernel driver is active, attempting to detach...')
+            try {
+              iface.detachKernelDriver()
+              console.log('   ✓ Kernel driver detached')
+            } catch (error) {
+              console.log('   ⚠ Could not detach kernel driver:', error)
+              console.log('   ℹ This is normal on some systems. Continuing...')
+            }
+          }
+          
           iface.claim()
+          console.log('   ✓ Interface claimed')
         } catch (error) {
-          console.warn('Could not detach kernel driver:', error)
+          console.log('   ⚠ Could not claim interface:', error)
+          console.log('   ℹ Attempting to continue anyway...')
         }
-      }
 
-      // Find the OUT endpoint (for writing data to the printer)
-      const endpoints = iface.endpoints
-      const outEndpoint = endpoints.find(
-        (ep) => ep.direction === 'out'
-      ) as usb.OutEndpoint | undefined
+        // Step 4: Find the OUT endpoint
+        console.log('4. Finding OUT endpoint...')
+        const endpoints = iface.endpoints
+        console.log('   Available endpoints:')
+        endpoints.forEach((ep, i) => {
+          console.log(`   - Endpoint ${i}: direction=${ep.direction}, type=${ep.transferType}`)
+        })
+        
+        const outEndpoint = endpoints.find(
+          (ep) => ep.direction === 'out'
+        ) as usb.OutEndpoint | undefined
+        
+        if (!outEndpoint) {
+          throw new Error('No OUT endpoint found on USB device')
+        }
+        
+        console.log('   ✓ OUT endpoint found')
 
-      if (!outEndpoint) {
-        throw new Error('No OUT endpoint found on USB device')
-      }
-
-      // Write data to the printer
-      return new Promise((resolve, reject) => {
+        // Step 5: Send data to printer
+        console.log(`5. Sending ${data.length} bytes to printer...`)
         outEndpoint.transfer(data, (error) => {
           if (error) {
-            reject(new Error(`USB transfer failed: ${error.message}`))
+            console.log('   ❌ Transfer failed:', error.message)
+            
+            // Try to release interface
+            try {
+              iface.release(true, () => {
+                reject(new Error(`USB transfer failed: ${error.message}`))
+              })
+            } catch (e) {
+              reject(new Error(`USB transfer failed: ${error.message}`))
+            }
           } else {
-            console.log(`Successfully sent ${data.length} bytes to printer`)
-            resolve()
+            console.log('   ✓ Data sent successfully!')
+            console.log('6. Releasing interface...')
+            
+            // Release interface and close device
+            try {
+              iface.release(true, (releaseError) => {
+                if (releaseError) {
+                  console.log('   ⚠ Error releasing interface:', releaseError.message)
+                } else {
+                  console.log('   ✓ Interface released')
+                }
+                
+                console.log('\n✅ Print job completed successfully!\n')
+                resolve()
+              })
+            } catch (e) {
+              console.log('   ⚠ Error during cleanup:', e)
+              resolve()
+            }
           }
         })
-      })
-    } catch (error) {
-      console.error('USB print error:', error)
-      throw new Error(`USB printing failed: ${error instanceof Error ? error.message : String(error)}`)
-    }
+      } catch (error) {
+        console.log('\n❌ Error during print operation:', error)
+        reject(error)
+      }
+    })
   }
 
   /**
@@ -588,15 +652,21 @@ export class PrinterService extends EventEmitter {
   }
 
   /**
-   * Test print
+   * Test print - matches reference script implementation
    */
   async testPrint(useEscPos: boolean = true): Promise<boolean> {
     if (!this.activePrinter) {
       throw new Error('No printer connected')
     }
 
+    console.log('\n📝 Generating test receipt...')
+    
     if (useEscPos) {
-      // Use custom ESC/POS builder (escpos library is broken)
+      // Use custom ESC/POS builder - matches reference script exactly
+      const now = new Date()
+      const dateStr = now.toLocaleDateString()
+      const timeStr = now.toLocaleTimeString()
+      
       const testData = new EscPosBuilder()
         .init()
         .align('center')
@@ -606,23 +676,36 @@ export class PrinterService extends EventEmitter {
         .feed(1)
         .size(1, 1)
         .bold(false)
-        .text('ESC/POS Mode')
-        .feed(1)
+        .text('ESC/POS USB Printer Test')
+        .feed(2)
         .align('left')
-        .text('Printer is working correctly!')
+        .text('================================')
         .feed(1)
-        .text(`Date: ${new Date().toLocaleString()}`)
+        .text(`Date: ${dateStr}`)
         .feed(1)
-        .text('This is a test receipt.')
+        .text(`Time: ${timeStr}`)
         .feed(1)
+        .text('================================')
+        .feed(2)
+        .text('If you can read this message,')
+        .feed(1)
+        .text('your USB printer is working')
+        .feed(1)
+        .text('correctly with ESC/POS!')
+        .feed(2)
         .align('center')
         .text('--------------------------------')
         .feed(1)
-        .text('Thank you!')
+        .bold(true)
+        .text('SUCCESS!')
+        .bold(false)
+        .feed(1)
+        .text('--------------------------------')
         .feed(3)
         .cut()
         .build()
 
+      console.log(`   ✓ Generated ${testData.length} bytes of ESC/POS data`)
       return await this.print(testData)
     } else {
       // Standard mode - use plain text for regular printers
@@ -644,6 +727,7 @@ This is a test receipt.
 
 
 `
+      console.log(`   ✓ Generated ${testText.length} bytes of text data`)
       return await this.print(testText)
     }
   }

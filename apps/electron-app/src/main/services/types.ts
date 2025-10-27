@@ -64,15 +64,22 @@ export interface HardwareEvent {
   error?: string
 }
 
-// Known POS printer vendor/product IDs
+// Known POS printer vendor/product IDs (matches test-usb-printer.js reference script)
 export const KNOWN_PRINTER_IDS = [
-  { vendorId: 0x04b8, name: 'Epson' }, // Epson
-  { vendorId: 0x0519, name: 'Star Micronics' }, // Star Micronics
-  { vendorId: 0x0fe6, name: 'ICS Advent' }, // ICS Advent
-  { vendorId: 0x154f, name: 'Wincor Nixdorf' }, // Wincor Nixdorf
-  { vendorId: 0x0483, name: 'STMicroelectronics' }, // Generic POS
-  { vendorId: 0x1504, name: 'Bixolon' }, // Bixolon
-  { vendorId: 0x0dd4, name: 'Custom Engineering' }, // Custom
+  { vendorId: 0x04b8, name: 'Epson' },
+  { vendorId: 0x0519, name: 'Star Micronics' },
+  { vendorId: 0x154f, name: 'Wincor Nixdorf' },
+  { vendorId: 0x0483, name: 'STMicroelectronics' },
+  { vendorId: 0x0416, name: 'Winbond' },
+  { vendorId: 0x1504, name: 'Bixolon' },
+  { vendorId: 0x0dd4, name: 'Custom Engineering' },
+  { vendorId: 0x1fc9, name: 'NXP Semiconductors' },
+  { vendorId: 0x0525, name: 'Netchip Technology' },
+  { vendorId: 0x1a86, name: 'QinHeng Electronics' },
+  { vendorId: 0x067b, name: 'Prolific' },
+  { vendorId: 0x0fe6, name: 'ICS Advent' },
+  { vendorId: 0x20d1, name: 'RONGTA' },
+  { vendorId: 0x6868, name: 'Zjiang' },
 ]
 
 // Known barcode scanner vendor/product IDs
