@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useAppStore, useSettingsStore } from '../../stores'
+import { FormSection, TouchSelect, Toggle, TextInput, TextArea, NumberInput } from '../forms'
 
 /**
  * Enhanced Integration Panel with WCAG AA Contrast Compliance

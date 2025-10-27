@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useAppStore, usePOSStore } from '../../stores'
 import { RightPanel } from '../common'
+import { NumberInput } from '../forms'
 
 interface GuestCountSelectorProps {
   isOpen: boolean
@@ -56,27 +57,16 @@ export function GuestCountSelector({ isOpen, onClose }: GuestCountSelectorProps)
         </div>
 
         {/* Custom Input */}
-        <div>
-          <label className={`block text-sm font-medium mb-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
-            Custom Guest Count
-          </label>
-          <input
-            type="number"
-            min="1"
-            max="999"
-            value={guestCount}
-            onChange={(e) => setGuestCount(Math.max(1, parseInt(e.target.value) || 1))}
-            className={`
-              w-full px-4 py-3 rounded-lg border-2 text-center text-2xl font-bold
-              transition-colors
-              ${theme === 'dark'
-                ? 'bg-gray-800 border-gray-600 text-white focus:border-blue-500'
-                : 'bg-white border-gray-300 text-gray-900 focus:border-blue-500'
-              }
-              focus:outline-none focus:ring-2 focus:ring-blue-500/20
-            `}
-          />
-        </div>
+        <NumberInput
+          label="Custom Guest Count"
+          value={guestCount}
+          onChange={(value) => setGuestCount(Math.max(1, value))}
+          min={1}
+          max={999}
+          step={1}
+          showButtons
+          fullWidth
+        />
 
         {/* Quick Adjust Buttons */}
         <div className="flex gap-2">

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useAppStore } from '../../stores'
 import { RightPanel, Input, Button, ConfirmDialog, Toast, Toggle } from '../common'
-import { Select } from '../forms'
+import { Select, NumberInput } from '../forms'
 
 interface TaxRule {
   id: number
@@ -439,23 +439,27 @@ export function TaxesPanel() {
 
               {/* Rate or Fixed Amount */}
               {formData.calculation_method === 'percentage' ? (
-                <Input
+                <NumberInput
                   label="Tax Rate (%)"
-                  type="number"
-                  step="0.01"
-                  value={formData.rate.toString()}
-                  onChange={(e) => setFormData({...formData, rate: parseFloat(e.target.value) || 0})}
-                  placeholder="0.00"
+                  value={formData.rate}
+                  onChange={(value) => setFormData({...formData, rate: value})}
+                  step={0.01}
+                  allowDecimal
+                  decimalPlaces={2}
+                  min={0}
+                  showButtons
                   helperText="Tax rate as a percentage"
                 />
               ) : (
-                <Input
+                <NumberInput
                   label="Fixed Tax Amount"
-                  type="number"
-                  step="0.01"
-                  value={formData.fixed_amount?.toString() || '0'}
-                  onChange={(e) => setFormData({...formData, fixed_amount: parseFloat(e.target.value) || 0})}
-                  placeholder="0.00"
+                  value={formData.fixed_amount || 0}
+                  onChange={(value) => setFormData({...formData, fixed_amount: value})}
+                  step={0.01}
+                  allowDecimal
+                  decimalPlaces={2}
+                  min={0}
+                  showButtons
                   helperText="Fixed tax amount per item"
                 />
               )}
@@ -487,12 +491,13 @@ export function TaxesPanel() {
               />
 
               {/* Priority */}
-              <Input
+              <NumberInput
                 label="Priority"
-                type="number"
-                value={formData.priority.toString()}
-                onChange={(e) => setFormData({...formData, priority: parseInt(e.target.value) || 0})}
-                placeholder="0"
+                value={formData.priority}
+                onChange={(value) => setFormData({...formData, priority: value})}
+                min={0}
+                step={1}
+                showButtons
                 helperText="Higher priority taxes are applied first (for compound taxes)"
               />
 
@@ -537,37 +542,45 @@ export function TaxesPanel() {
               </h4>
 
               <div className="grid grid-cols-2 gap-4">
-                <Input
+                <NumberInput
                   label="CGST Rate (%)"
-                  type="number"
-                  step="0.01"
-                  value={formData.cgst_rate.toString()}
-                  onChange={(e) => setFormData({...formData, cgst_rate: parseFloat(e.target.value) || 0})}
-                  placeholder="0.00"
+                  value={formData.cgst_rate}
+                  onChange={(value) => setFormData({...formData, cgst_rate: value})}
+                  step={0.01}
+                  allowDecimal
+                  decimalPlaces={2}
+                  min={0}
+                  showButtons
                 />
-                <Input
+                <NumberInput
                   label="SGST Rate (%)"
-                  type="number"
-                  step="0.01"
-                  value={formData.sgst_rate.toString()}
-                  onChange={(e) => setFormData({...formData, sgst_rate: parseFloat(e.target.value) || 0})}
-                  placeholder="0.00"
+                  value={formData.sgst_rate}
+                  onChange={(value) => setFormData({...formData, sgst_rate: value})}
+                  step={0.01}
+                  allowDecimal
+                  decimalPlaces={2}
+                  min={0}
+                  showButtons
                 />
-                <Input
+                <NumberInput
                   label="IGST Rate (%)"
-                  type="number"
-                  step="0.01"
-                  value={formData.igst_rate.toString()}
-                  onChange={(e) => setFormData({...formData, igst_rate: parseFloat(e.target.value) || 0})}
-                  placeholder="0.00"
+                  value={formData.igst_rate}
+                  onChange={(value) => setFormData({...formData, igst_rate: value})}
+                  step={0.01}
+                  allowDecimal
+                  decimalPlaces={2}
+                  min={0}
+                  showButtons
                 />
-                <Input
+                <NumberInput
                   label="CESS Rate (%)"
-                  type="number"
-                  step="0.01"
-                  value={formData.cess_rate.toString()}
-                  onChange={(e) => setFormData({...formData, cess_rate: parseFloat(e.target.value) || 0})}
-                  placeholder="0.00"
+                  value={formData.cess_rate}
+                  onChange={(value) => setFormData({...formData, cess_rate: value})}
+                  step={0.01}
+                  allowDecimal
+                  decimalPlaces={2}
+                  min={0}
+                  showButtons
                 />
                 <Input
                   label="HSN Code"
@@ -594,22 +607,26 @@ export function TaxesPanel() {
             <div className="space-y-4">
               {/* Amount Range */}
               <div className="grid grid-cols-2 gap-4">
-                <Input
+                <NumberInput
                   label="Minimum Amount"
-                  type="number"
-                  step="0.01"
-                  value={formData.min_amount?.toString() || ''}
-                  onChange={(e) => setFormData({...formData, min_amount: e.target.value ? parseFloat(e.target.value) : undefined})}
-                  placeholder="No minimum"
+                  value={formData.min_amount || 0}
+                  onChange={(value) => setFormData({...formData, min_amount: value || undefined})}
+                  step={0.01}
+                  allowDecimal
+                  decimalPlaces={2}
+                  min={0}
+                  showButtons
                   helperText="Minimum transaction amount"
                 />
-                <Input
+                <NumberInput
                   label="Maximum Amount"
-                  type="number"
-                  step="0.01"
-                  value={formData.max_amount?.toString() || ''}
-                  onChange={(e) => setFormData({...formData, max_amount: e.target.value ? parseFloat(e.target.value) : undefined})}
-                  placeholder="No maximum"
+                  value={formData.max_amount || 0}
+                  onChange={(value) => setFormData({...formData, max_amount: value || undefined})}
+                  step={0.01}
+                  allowDecimal
+                  decimalPlaces={2}
+                  min={0}
+                  showButtons
                   helperText="Maximum transaction amount"
                 />
               </div>
@@ -653,13 +670,16 @@ export function TaxesPanel() {
 
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
-                  <Input
+                  <NumberInput
                     label="Preview Amount"
-                    type="number"
-                    step="0.01"
-                    value={previewAmount.toString()}
-                    onChange={(e) => setPreviewAmount(parseFloat(e.target.value) || 100)}
-                    className="flex-1"
+                    value={previewAmount}
+                    onChange={(value) => setPreviewAmount(value || 100)}
+                    step={0.01}
+                    allowDecimal
+                    decimalPlaces={2}
+                    min={0}
+                    showButtons
+                    fullWidth
                   />
                 </div>
 

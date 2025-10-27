@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useAppStore, useSettingsStore } from '../../stores'
 import { RightPanel } from '../common'
+import { NumberInput } from '../forms'
 import type { Floor, Table } from '../../types/restaurant'
 
 interface FloorTableEditorProps {
@@ -581,23 +582,15 @@ function TableDialog({ isOpen, onClose, onSave, table }: TableDialogProps) {
           />
         </div>
 
-        <div>
-          <label className={`block text-sm font-medium mb-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
-            Capacity *
-          </label>
-          <input
-            type="number"
-            value={capacity}
-            onChange={(e) => setCapacity(parseInt(e.target.value) || 1)}
-            className={`w-full px-4 py-2 rounded-lg border ${
-              theme === 'dark'
-                ? 'bg-gray-700 border-gray-600 text-white'
-                : 'bg-white border-gray-300 text-gray-900'
-            }`}
-            min="1"
-            required
-          />
-        </div>
+        <NumberInput
+          label="Capacity *"
+          value={capacity}
+          onChange={(value) => setCapacity(value)}
+          min={1}
+          step={1}
+          showButtons
+          fullWidth
+        />
 
         <div>
           <label className={`block text-sm font-medium mb-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>

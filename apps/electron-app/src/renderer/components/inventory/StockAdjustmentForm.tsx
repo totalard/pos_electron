@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useAppStore, useInventoryStore, useProductStore } from '../../stores'
 import { Button, Input } from '../common'
-import { TouchSelect } from '../forms'
+import { TouchSelect, NumberInput } from '../forms'
 
 interface StockAdjustmentFormProps {
   onClose: () => void
@@ -146,13 +146,14 @@ export function StockAdjustmentForm({ onClose }: StockAdjustmentFormProps) {
             searchable
             placeholder="Select Product"
           />
-          <Input
-            type="number"
+          <NumberInput
             label="Actual Quantity"
-            placeholder="0"
-            value={actualQuantity}
-            onChange={(e) => setActualQuantity(e.target.value)}
-            min="0"
+            value={parseInt(actualQuantity) || 0}
+            onChange={(value) => setActualQuantity(value.toString())}
+            min={0}
+            step={1}
+            showButtons
+            fullWidth
           />
           <Input
             type="text"

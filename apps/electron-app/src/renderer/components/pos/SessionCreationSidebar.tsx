@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useAppStore, usePinStore, useSessionStore } from '../../stores'
 import { posSessionAPI } from '../../services/api'
 import { Button, Input, Sidebar } from '../common'
+import { NumberInput } from '../forms'
 
 interface SessionCreationSidebarProps {
   isOpen: boolean
@@ -181,19 +182,14 @@ export function SessionCreationSidebar({ isOpen, onSessionCreated, onCancel }: S
                   }
                 `}
               >
-                <label className={`
-                  block text-sm font-medium mb-2
-                  ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}
-                `}>
-                  {bill.label}
-                </label>
-                <Input
-                  type="number"
-                  min="0"
+                <NumberInput
+                  label={bill.label}
                   value={bill.count}
-                  onChange={(e) => updateDenomination('bills', index, parseInt(e.target.value) || 0)}
-                  placeholder="0"
-                  className="text-center"
+                  onChange={(value) => updateDenomination('bills', index, value)}
+                  min={0}
+                  step={1}
+                  showButtons
+                  fullWidth
                 />
                 <p className={`
                   mt-2 text-sm text-right font-medium
@@ -237,19 +233,14 @@ export function SessionCreationSidebar({ isOpen, onSessionCreated, onCancel }: S
                   }
                 `}
               >
-                <label className={`
-                  block text-sm font-medium mb-2
-                  ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}
-                `}>
-                  {coin.label}
-                </label>
-                <Input
-                  type="number"
-                  min="0"
+                <NumberInput
+                  label={coin.label}
                   value={coin.count}
-                  onChange={(e) => updateDenomination('coins', index, parseInt(e.target.value) || 0)}
-                  placeholder="0"
-                  className="text-center"
+                  onChange={(value) => updateDenomination('coins', index, value)}
+                  min={0}
+                  step={1}
+                  showButtons
+                  fullWidth
                 />
                 <p className={`
                   mt-2 text-sm text-right font-medium

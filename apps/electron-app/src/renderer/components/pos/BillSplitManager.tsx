@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useAppStore, usePOSStore } from '../../stores'
 import { Modal, Button, CurrencyDisplay } from '../common'
+import { NumberInput } from '../forms'
 import type { PaymentSplit } from '../../types/payment'
 
 interface BillSplitManagerProps {
@@ -232,22 +233,15 @@ export function BillSplitManager({ isOpen, onClose }: BillSplitManagerProps) {
             `}>
               {splitType === 'equal' && (
                 <div className="space-y-3">
-                  <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
-                    Number of People
-                  </label>
-                  <input
-                    type="number"
-                    min="2"
-                    max="10"
+                  <NumberInput
+                    label="Number of People"
                     value={splitCount}
-                    onChange={(e) => setSplitCount(parseInt(e.target.value) || 2)}
-                    className={`
-                      w-full px-4 py-2 rounded-lg border
-                      ${theme === 'dark'
-                        ? 'bg-gray-800 border-gray-600 text-white'
-                        : 'bg-white border-gray-300 text-gray-900'
-                      }
-                    `}
+                    onChange={(value) => setSplitCount(value)}
+                    min={2}
+                    max={10}
+                    step={1}
+                    showButtons
+                    fullWidth
                   />
                   <Button onClick={handleAddEqualSplit} variant="primary" className="w-full">
                     Split Equally
@@ -272,38 +266,29 @@ export function BillSplitManager({ isOpen, onClose }: BillSplitManagerProps) {
                   />
 
                   {splitType === 'amount' && (
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={customAmount}
-                      onChange={(e) => setCustomAmount(e.target.value)}
-                      placeholder="Enter amount"
-                      className={`
-                        w-full px-4 py-2 rounded-lg border
-                        ${theme === 'dark'
-                          ? 'bg-gray-800 border-gray-600 text-white'
-                          : 'bg-white border-gray-300 text-gray-900'
-                        }
-                      `}
+                    <NumberInput
+                      label="Amount"
+                      value={parseFloat(customAmount) || 0}
+                      onChange={(value) => setCustomAmount(value.toString())}
+                      step={0.01}
+                      allowDecimal
+                      decimalPlaces={2}
+                      min={0}
+                      showButtons
+                      fullWidth
                     />
                   )}
 
                   {splitType === 'percentage' && (
-                    <input
-                      type="number"
-                      step="1"
-                      min="0"
-                      max="100"
-                      value={customPercentage}
-                      onChange={(e) => setCustomPercentage(e.target.value)}
-                      placeholder="Enter percentage (0-100)"
-                      className={`
-                        w-full px-4 py-2 rounded-lg border
-                        ${theme === 'dark'
-                          ? 'bg-gray-800 border-gray-600 text-white'
-                          : 'bg-white border-gray-300 text-gray-900'
-                        }
-                      `}
+                    <NumberInput
+                      label="Percentage"
+                      value={parseInt(customPercentage) || 0}
+                      onChange={(value) => setCustomPercentage(value.toString())}
+                      step={1}
+                      min={0}
+                      max={100}
+                      showButtons
+                      fullWidth
                     />
                   )}
 

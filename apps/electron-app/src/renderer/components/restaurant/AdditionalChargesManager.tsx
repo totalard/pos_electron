@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useAppStore, useSettingsStore } from '../../stores'
 import { RightPanel } from '../common'
+import { NumberInput } from '../forms'
 import type { AdditionalCharge, ChargeType, OrderType } from '../../types/restaurant'
 
 interface AdditionalChargesManagerProps {
@@ -385,24 +386,17 @@ function ChargeDialog({ isOpen, onClose, onSave, charge }: ChargeDialogProps) {
         </div>
 
         <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className={`block text-sm font-medium mb-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
-              Amount *
-            </label>
-            <input
-              type="number"
-              value={amount}
-              onChange={(e) => setAmount(parseFloat(e.target.value) || 0)}
-              className={`w-full px-4 py-2 rounded-lg border ${
-                theme === 'dark'
-                  ? 'bg-gray-700 border-gray-600 text-white'
-                  : 'bg-white border-gray-300 text-gray-900'
-              }`}
-              min="0"
-              step="0.01"
-              required
-            />
-          </div>
+          <NumberInput
+            label="Amount *"
+            value={amount}
+            onChange={(value) => setAmount(value)}
+            min={0}
+            step={0.01}
+            allowDecimal
+            decimalPlaces={2}
+            showButtons
+            fullWidth
+          />
 
           <div>
             <label className={`block text-sm font-medium mb-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>

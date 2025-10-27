@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useAppStore, usePOSStore } from '../../stores'
 import { Modal, CurrencyDisplay } from '../common'
+import { NumberInput } from '../forms'
 
 interface ItemDiscountDialogProps {
   isOpen: boolean
@@ -136,31 +137,18 @@ export function ItemDiscountDialog({ isOpen, onClose }: ItemDiscountDialogProps)
 
         {/* Discount Value Input */}
         <div>
-          <label className="block text-sm font-medium mb-3">
-            {discountType === 'percentage' ? 'Discount Percentage' : 'Discount Amount'}
-          </label>
-          <div className="relative">
-            <input
-              type="number"
-              value={discountValue}
-              onChange={(e) => setDiscountValue(e.target.value)}
-              placeholder={discountType === 'percentage' ? 'Enter %' : 'Enter ₹'}
-              className={`
-                w-full px-4 py-3 rounded-lg text-lg font-semibold
-                border-2 focus:outline-none focus:ring-2 focus:ring-blue-500
-                ${theme === 'dark'
-                  ? 'bg-gray-800 border-gray-700 text-white'
-                  : 'bg-white border-gray-200 text-gray-900'
-                }
-              `}
-              step={discountType === 'percentage' ? '1' : '0.01'}
-              min="0"
-              max={discountType === 'percentage' ? '100' : baseTotal.toString()}
-            />
-            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg">
-              {discountType === 'percentage' ? '%' : '₹'}
-            </span>
-          </div>
+          <NumberInput
+            label={discountType === 'percentage' ? 'Discount Percentage' : 'Discount Amount'}
+            value={parseFloat(discountValue) || 0}
+            onChange={(value) => setDiscountValue(value.toString())}
+            step={discountType === 'percentage' ? 1 : 0.01}
+            allowDecimal={discountType === 'percentage' ? false : true}
+            decimalPlaces={2}
+            min={0}
+            max={discountType === 'percentage' ? 100 : baseTotal}
+            showButtons
+            fullWidth
+          />
 
           {/* Quick Discount Buttons */}
           <div className="grid grid-cols-6 gap-2 mt-3">

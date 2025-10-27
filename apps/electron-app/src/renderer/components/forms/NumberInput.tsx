@@ -147,7 +147,7 @@ export const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(({
 
   const inputClasses = `
     px-4 py-3 rounded-lg text-base text-center
-    min-h-[44px]
+    min-h-[44px] w-full
     transition-colors duration-200
     ${theme === 'dark'
       ? 'bg-gray-800 border border-gray-600 text-white placeholder-gray-400 focus:border-primary-500'
@@ -157,7 +157,8 @@ export const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(({
     disabled:opacity-50 disabled:cursor-not-allowed
     ${error ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' : ''}
     ${showButtons ? 'rounded-none' : ''}
-    ${fullWidth ? 'flex-1' : ''}
+    ${fullWidth ? 'flex-1' : 'w-auto'}
+    [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none
     ${className}
   `
 
@@ -212,13 +213,11 @@ export const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(({
         
         <input
           ref={ref}
-          type={allowDecimal ? 'number' : 'number'}
+          type="text"
+          inputMode={allowDecimal ? 'decimal' : 'numeric'}
           value={value}
           onChange={handleInputChange}
           onBlur={handleBlur}
-          min={min}
-          max={max}
-          step={step}
           disabled={disabled}
           className={inputClasses}
           {...props}

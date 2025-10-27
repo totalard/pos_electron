@@ -1,6 +1,6 @@
 import { useAppStore, useSettingsStore } from '../../../stores'
 import { Input } from '../../common'
-import { FormSection, Select } from '../../forms'
+import { FormSection, Select, NumberInput } from '../../forms'
 import { PAPER_SIZES } from './ReceiptTemplates'
 
 /**
@@ -97,26 +97,30 @@ export function PaperSizePanel() {
             />
 
             <div className="grid grid-cols-2 gap-4">
-              <Input
-                type="number"
+              <NumberInput
                 label="Paper Width"
-                value={receipts.customPaperWidth.toString()}
-                onChange={(e) => updateReceiptSettings({ customPaperWidth: parseFloat(e.target.value) || 80 })}
-                placeholder="80"
-                helperText={`Width in ${receipts.paperUnit}`}
+                value={receipts.customPaperWidth}
+                onChange={(value) => updateReceiptSettings({ customPaperWidth: value })}
                 min={10}
                 max={1000}
+                step={0.1}
+                allowDecimal
+                decimalPlaces={1}
+                showButtons
+                helperText={`Width in ${receipts.paperUnit}`}
               />
 
-              <Input
-                type="number"
+              <NumberInput
                 label="Paper Height"
-                value={receipts.customPaperHeight.toString()}
-                onChange={(e) => updateReceiptSettings({ customPaperHeight: parseFloat(e.target.value) || 297 })}
-                placeholder="297"
-                helperText={`Height in ${receipts.paperUnit} (0 for continuous)`}
+                value={receipts.customPaperHeight}
+                onChange={(value) => updateReceiptSettings({ customPaperHeight: value })}
                 min={0}
                 max={1000}
+                step={0.1}
+                allowDecimal
+                decimalPlaces={1}
+                showButtons
+                helperText={`Height in ${receipts.paperUnit} (0 for continuous)`}
               />
             </div>
           </>

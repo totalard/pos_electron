@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useAppStore, useSettingsStore } from '../../stores'
-import { FormSection, TouchSelect, Toggle, TextInput, TextArea } from '../forms'
+import { FormSection, TouchSelect, Toggle, TextInput, TextArea, NumberInput } from '../forms'
 import { ReceiptPreview } from './receipt/ReceiptPreview'
 import { TemplatePanel } from './receipt/TemplatePanel'
 import { PaperSizePanel } from './receipt/PaperSizePanel'
@@ -323,56 +323,56 @@ export function ReceiptsPanel() {
                 helperText="Space between lines"
               />
 
-              <TextInput
-                type="number"
+              <NumberInput
                 label="Section Spacing (px)"
-                value={receipts.sectionSpacing.toString()}
-                onChange={(e) => updateReceiptSettings({ sectionSpacing: parseInt(e.target.value) || 10 })}
-                placeholder="10"
-                helperText="Space between receipt sections"
+                value={receipts.sectionSpacing}
+                onChange={(value) => updateReceiptSettings({ sectionSpacing: value })}
                 min={0}
                 max={30}
+                step={1}
+                showButtons
+                helperText="Space between receipt sections"
               />
 
               <div className="grid grid-cols-2 gap-4">
-                <TextInput
-                  type="number"
+                <NumberInput
                   label="Top Margin (mm)"
-                  value={receipts.marginTop.toString()}
-                  onChange={(e) => updateReceiptSettings({ marginTop: parseInt(e.target.value) || 0 })}
-                  placeholder="5"
+                  value={receipts.marginTop}
+                  onChange={(value) => updateReceiptSettings({ marginTop: value })}
                   min={0}
                   max={20}
+                  step={1}
+                  showButtons
                 />
 
-                <TextInput
-                  type="number"
+                <NumberInput
                   label="Bottom Margin (mm)"
-                  value={receipts.marginBottom.toString()}
-                  onChange={(e) => updateReceiptSettings({ marginBottom: parseInt(e.target.value) || 0 })}
-                  placeholder="5"
+                  value={receipts.marginBottom}
+                  onChange={(value) => updateReceiptSettings({ marginBottom: value })}
                   min={0}
                   max={20}
+                  step={1}
+                  showButtons
                 />
 
-                <TextInput
-                  type="number"
+                <NumberInput
                   label="Left Margin (mm)"
-                  value={receipts.marginLeft.toString()}
-                  onChange={(e) => updateReceiptSettings({ marginLeft: parseInt(e.target.value) || 0 })}
-                  placeholder="5"
+                  value={receipts.marginLeft}
+                  onChange={(value) => updateReceiptSettings({ marginLeft: value })}
                   min={0}
                   max={20}
+                  step={1}
+                  showButtons
                 />
 
-                <TextInput
-                  type="number"
+                <NumberInput
                   label="Right Margin (mm)"
-                  value={receipts.marginRight.toString()}
-                  onChange={(e) => updateReceiptSettings({ marginRight: parseInt(e.target.value) || 0 })}
-                  placeholder="5"
+                  value={receipts.marginRight}
+                  onChange={(value) => updateReceiptSettings({ marginRight: value })}
                   min={0}
                   max={20}
+                  step={1}
+                  showButtons
                 />
               </div>
             </div>
@@ -391,15 +391,15 @@ export function ReceiptsPanel() {
                 description="Automatically print receipt when sale is completed"
               />
 
-              <TextInput
-                type="number"
+              <NumberInput
                 label="Number of Copies"
-                value={receipts.numberOfCopies.toString()}
-                onChange={(e) => updateReceiptSettings({ numberOfCopies: parseInt(e.target.value) || 1 })}
-                placeholder="1"
-                helperText="How many receipt copies to print"
+                value={receipts.numberOfCopies}
+                onChange={(value) => updateReceiptSettings({ numberOfCopies: value })}
                 min={1}
                 max={5}
+                step={1}
+                showButtons
+                helperText="How many receipt copies to print"
               />
 
               <Toggle

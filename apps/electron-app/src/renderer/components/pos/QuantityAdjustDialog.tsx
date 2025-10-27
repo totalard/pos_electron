@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useAppStore } from '../../stores'
 import { Modal, Button } from '../common'
+import { NumberInput } from '../forms'
 
 interface QuantityAdjustDialogProps {
   isOpen: boolean
@@ -61,53 +62,15 @@ export function QuantityAdjustDialog({
         </div>
 
         {/* Quantity Input */}
-        <div>
-          <label className={`block text-sm font-medium mb-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
-            New Quantity
-          </label>
-          <div className="flex items-center gap-3">
-            <button
-              onClick={decrement}
-              className={`
-                w-12 h-12 rounded-lg font-bold text-xl
-                ${theme === 'dark'
-                  ? 'bg-gray-700 hover:bg-gray-600 text-white'
-                  : 'bg-gray-200 hover:bg-gray-300 text-gray-900'
-                }
-                transition-colors
-              `}
-            >
-              −
-            </button>
-            <input
-              type="number"
-              value={quantity}
-              onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
-              className={`
-                flex-1 px-4 py-3 rounded-lg border text-center text-2xl font-bold
-                ${theme === 'dark'
-                  ? 'bg-gray-700 border-gray-600 text-white'
-                  : 'bg-white border-gray-300 text-gray-900'
-                }
-                focus:outline-none focus:ring-2 focus:ring-primary-500
-              `}
-              min="1"
-            />
-            <button
-              onClick={increment}
-              className={`
-                w-12 h-12 rounded-lg font-bold text-xl
-                ${theme === 'dark'
-                  ? 'bg-gray-700 hover:bg-gray-600 text-white'
-                  : 'bg-gray-200 hover:bg-gray-300 text-gray-900'
-                }
-                transition-colors
-              `}
-            >
-              +
-            </button>
-          </div>
-        </div>
+        <NumberInput
+          label="New Quantity"
+          value={quantity}
+          onChange={(value) => setQuantity(Math.max(1, value))}
+          min={1}
+          step={1}
+          showButtons
+          fullWidth
+        />
 
         {/* Quick Quantities */}
         <div>

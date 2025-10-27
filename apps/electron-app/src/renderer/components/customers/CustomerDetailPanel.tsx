@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useAppStore, useCustomerStore } from '../../stores'
 import { RightPanel, Input, Button, Badge } from '../common'
-import { FormField } from '../forms'
+import { FormField, NumberInput } from '../forms'
 import { CustomerStatementPanel } from './CustomerStatementPanel'
 import type { Customer, CustomerCreate, CustomerUpdate } from '../../services/api'
 
@@ -264,13 +264,16 @@ export function CustomerDetailPanel({ customer, mode, onClose, onSuccess }: Cust
 
               {mode !== 'add' && (
                 <FormField label="Credit Limit">
-                  <Input
-                    type="number"
-                    step="0.01"
-                    value={formData.credit_limit}
-                    onChange={(e) => setFormData({ ...formData, credit_limit: e.target.value })}
-                    placeholder="0.00"
+                  <NumberInput
+                    value={parseFloat(formData.credit_limit) || 0}
+                    onChange={(value) => setFormData({ ...formData, credit_limit: value.toFixed(2) })}
+                    step={0.01}
+                    allowDecimal
+                    decimalPlaces={2}
+                    min={0}
+                    showButtons
                     disabled={mode === 'view'}
+                    fullWidth
                   />
                 </FormField>
               )}
@@ -335,12 +338,15 @@ export function CustomerDetailPanel({ customer, mode, onClose, onSuccess }: Cust
                   Add Credit
                 </h4>
                 <FormField label="Amount">
-                  <Input
-                    type="number"
-                    step="0.01"
-                    value={creditAmount}
-                    onChange={(e) => setCreditAmount(e.target.value)}
-                    placeholder="0.00"
+                  <NumberInput
+                    value={parseFloat(creditAmount) || 0}
+                    onChange={(value) => setCreditAmount(value.toString())}
+                    step={0.01}
+                    allowDecimal
+                    decimalPlaces={2}
+                    min={0}
+                    showButtons
+                    fullWidth
                   />
                 </FormField>
                 <FormField label="Notes">
@@ -367,12 +373,15 @@ export function CustomerDetailPanel({ customer, mode, onClose, onSuccess }: Cust
                   Record Payment
                 </h4>
                 <FormField label="Amount">
-                  <Input
-                    type="number"
-                    step="0.01"
-                    value={paymentAmount}
-                    onChange={(e) => setPaymentAmount(e.target.value)}
-                    placeholder="0.00"
+                  <NumberInput
+                    value={parseFloat(paymentAmount) || 0}
+                    onChange={(value) => setPaymentAmount(value.toString())}
+                    step={0.01}
+                    allowDecimal
+                    decimalPlaces={2}
+                    min={0}
+                    showButtons
+                    fullWidth
                   />
                 </FormField>
                 <Button
@@ -409,11 +418,14 @@ export function CustomerDetailPanel({ customer, mode, onClose, onSuccess }: Cust
                   Adjust Loyalty Points
                 </h4>
                 <FormField label="Points (positive to add, negative to redeem)">
-                  <Input
-                    type="number"
-                    value={loyaltyPoints}
-                    onChange={(e) => setLoyaltyPoints(e.target.value)}
-                    placeholder="0"
+                  <NumberInput
+                    value={parseInt(loyaltyPoints) || 0}
+                    onChange={(value) => setLoyaltyPoints(value.toString())}
+                    step={1}
+                    min={-9999}
+                    max={9999}
+                    showButtons
+                    fullWidth
                   />
                 </FormField>
                 <FormField label="Notes">

@@ -1,6 +1,6 @@
 import { useAppStore, useSettingsStore } from '../../../stores'
 import { Input } from '../../common'
-import { FormSection, Select } from '../../forms'
+import { FormSection, Select, NumberInput } from '../../forms'
 import { FONT_FAMILIES } from './ReceiptTemplates'
 
 /**
@@ -33,14 +33,14 @@ export function FontConfigPanel() {
             Header Font
           </h4>
           <div className="grid grid-cols-2 gap-4">
-            <Input
-              type="number"
+            <NumberInput
               label="Font Size (px)"
-              value={receipts.headerFontSize.toString()}
-              onChange={(e) => updateReceiptSettings({ headerFontSize: parseInt(e.target.value) || 14 })}
-              placeholder="14"
+              value={receipts.headerFontSize}
+              onChange={(value) => updateReceiptSettings({ headerFontSize: value })}
               min={8}
               max={32}
+              step={1}
+              showButtons
             />
             <Select
               label="Font Weight"
@@ -60,14 +60,14 @@ export function FontConfigPanel() {
             Item Font
           </h4>
           <div className="grid grid-cols-2 gap-4">
-            <Input
-              type="number"
+            <NumberInput
               label="Font Size (px)"
-              value={receipts.itemFontSize.toString()}
-              onChange={(e) => updateReceiptSettings({ itemFontSize: parseInt(e.target.value) || 12 })}
-              placeholder="12"
+              value={receipts.itemFontSize}
+              onChange={(value) => updateReceiptSettings({ itemFontSize: value })}
               min={8}
               max={24}
+              step={1}
+              showButtons
             />
             <Select
               label="Font Weight"
@@ -87,14 +87,14 @@ export function FontConfigPanel() {
             Total Font
           </h4>
           <div className="grid grid-cols-2 gap-4">
-            <Input
-              type="number"
+            <NumberInput
               label="Font Size (px)"
-              value={receipts.totalFontSize.toString()}
-              onChange={(e) => updateReceiptSettings({ totalFontSize: parseInt(e.target.value) || 13 })}
-              placeholder="13"
+              value={receipts.totalFontSize}
+              onChange={(value) => updateReceiptSettings({ totalFontSize: value })}
               min={8}
               max={28}
+              step={1}
+              showButtons
             />
             <Select
               label="Font Weight"
@@ -114,14 +114,14 @@ export function FontConfigPanel() {
             Footer Font
           </h4>
           <div className="grid grid-cols-2 gap-4">
-            <Input
-              type="number"
+            <NumberInput
               label="Font Size (px)"
-              value={receipts.footerFontSize.toString()}
-              onChange={(e) => updateReceiptSettings({ footerFontSize: parseInt(e.target.value) || 11 })}
-              placeholder="11"
+              value={receipts.footerFontSize}
+              onChange={(value) => updateReceiptSettings({ footerFontSize: value })}
               min={8}
               max={20}
+              step={1}
+              showButtons
             />
             <Select
               label="Font Weight"
@@ -141,27 +141,29 @@ export function FontConfigPanel() {
             Advanced Settings
           </h4>
           <div className="grid grid-cols-2 gap-4">
-            <Input
-              type="number"
+            <NumberInput
               label="Character Spacing (px)"
-              value={receipts.characterSpacing.toString()}
-              onChange={(e) => updateReceiptSettings({ characterSpacing: parseFloat(e.target.value) || 0 })}
-              placeholder="0"
-              helperText="Letter spacing for thermal printers"
+              value={receipts.characterSpacing}
+              onChange={(value) => updateReceiptSettings({ characterSpacing: value })}
               min={-2}
               max={5}
               step={0.1}
+              allowDecimal
+              decimalPlaces={1}
+              showButtons
+              helperText="Letter spacing for thermal printers"
             />
-            <Input
-              type="number"
+            <NumberInput
               label="Line Height"
-              value={receipts.lineHeight.toString()}
-              onChange={(e) => updateReceiptSettings({ lineHeight: parseFloat(e.target.value) || 1.2 })}
-              placeholder="1.2"
-              helperText="Multiplier for line spacing"
+              value={receipts.lineHeight}
+              onChange={(value) => updateReceiptSettings({ lineHeight: value })}
               min={0.8}
               max={2.0}
               step={0.1}
+              allowDecimal
+              decimalPlaces={1}
+              showButtons
+              helperText="Multiplier for line spacing"
             />
           </div>
         </div>

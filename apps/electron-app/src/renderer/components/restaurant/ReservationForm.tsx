@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useAppStore, useReservationStore, useSettingsStore } from '../../stores'
 import { RightPanel, Button, Input } from '../common'
+import { NumberInput } from '../forms'
 import type { TableReservation } from '../../types/restaurant'
 
 interface ReservationFormProps {
@@ -221,29 +222,17 @@ export function ReservationForm({ isOpen, onClose, reservation }: ReservationFor
         </div>
 
         {/* Guest Count */}
-        <div>
-          <label className={`block text-sm font-medium mb-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
-            Number of Guests *
-          </label>
-          <input
-            type="number"
-            min="1"
-            max="20"
-            value={formData.guestCount}
-            onChange={(e) => handleChange('guestCount', parseInt(e.target.value) || 1)}
-            className={`
-              w-full px-4 py-2 rounded-lg border transition-colors
-              ${theme === 'dark'
-                ? 'bg-gray-800 border-gray-600 text-white focus:border-blue-500'
-                : 'bg-white border-gray-300 text-gray-900 focus:border-blue-500'
-              }
-              ${errors.guestCount ? 'border-red-500' : ''}
-            `}
-          />
-          {errors.guestCount && (
-            <p className="text-red-500 text-xs mt-1">{errors.guestCount}</p>
-          )}
-        </div>
+        <NumberInput
+          label="Number of Guests *"
+          value={formData.guestCount}
+          onChange={(value) => handleChange('guestCount', value)}
+          min={1}
+          max={20}
+          step={1}
+          showButtons
+          fullWidth
+          error={errors.guestCount}
+        />
 
         {/* Date and Time */}
         <div className="grid grid-cols-2 gap-4">

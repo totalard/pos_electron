@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useAppStore, useSettingsStore, usePinStore } from '../../stores'
 import { Toast, Button, Card, ConfirmDialog, RightPanel, Badge } from '../common'
-import { FormSection } from '../forms'
+import { FormSection, NumberInput } from '../forms'
 import { PinEntryPanel } from '../PinEntryPanel'
 
 /**
@@ -428,66 +428,33 @@ export function BackupPanel() {
         {backup.enableAutoBackup && (
           <div className="space-y-4 mt-4">
             <div>
-              <label className={`block text-sm font-medium mb-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
-                Backup Interval
-              </label>
-              <div className="flex items-center gap-2">
-                <input
-                  type="number"
-                  value={backup.backupInterval}
-                  onChange={(e) => updateBackupSettings({ backupInterval: parseInt(e.target.value) || 24 })}
-                  disabled={isBackingUp}
-                  min="1"
-                  max="168"
-                  className={`
-                    flex-1 px-4 py-3 rounded-lg border min-h-[44px]
-                    transition-colors duration-200
-                    ${theme === 'dark'
-                      ? 'bg-gray-800 border-gray-600 text-white focus:border-blue-500'
-                      : 'bg-white border-gray-300 text-gray-900 focus:border-blue-500'
-                    }
-                    focus:outline-none focus:ring-2 focus:ring-blue-500/20
-                    ${isBackingUp ? 'opacity-50 cursor-not-allowed' : ''}
-                  `}
-                  aria-label="Backup interval in hours"
-                />
-                <span className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-                  hours
-                </span>
-              </div>
-              <p className={`text-xs mt-1 ${theme === 'dark' ? 'text-gray-500' : 'text-gray-500'}`}>
-                How often to create automatic backups (1-168 hours)
-              </p>
+              <NumberInput
+                label="Backup Interval"
+                value={backup.backupInterval}
+                onChange={(value) => updateBackupSettings({ backupInterval: value })}
+                disabled={isBackingUp}
+                min={1}
+                max={168}
+                step={1}
+                showButtons
+                fullWidth
+                helperText="How often to create automatic backups (1-168 hours)"
+              />
             </div>
 
             <div>
-              <label className={`block text-sm font-medium mb-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
-                Retention Period
-              </label>
-              <div className="flex items-center gap-2">
-                <input
-                  type="number"
-                  value={backup.retentionDays}
-                  onChange={(e) => updateBackupSettings({ retentionDays: parseInt(e.target.value) || 30 })}
-                  disabled={isBackingUp}
-                  min="1"
-                  max="365"
-                  className={`
-                    flex-1 px-4 py-3 rounded-lg border min-h-[44px]
-                    transition-colors duration-200
-                    ${theme === 'dark'
-                      ? 'bg-gray-800 border-gray-600 text-white focus:border-blue-500'
-                      : 'bg-white border-gray-300 text-gray-900 focus:border-blue-500'
-                    }
-                    focus:outline-none focus:ring-2 focus:ring-blue-500/20
-                    ${isBackingUp ? 'opacity-50 cursor-not-allowed' : ''}
-                  `}
-                  aria-label="Retention period in days"
-                />
-                <span className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-                  days
-                </span>
-              </div>
+              <NumberInput
+                label="Retention Period"
+                value={backup.retentionDays}
+                onChange={(value) => updateBackupSettings({ retentionDays: value })}
+                disabled={isBackingUp}
+                min={1}
+                max={365}
+                step={1}
+                showButtons
+                fullWidth
+                helperText="How many days to keep backups (1-365 days)"
+              />
               <p className={`text-xs mt-1 ${theme === 'dark' ? 'text-gray-500' : 'text-gray-500'}`}>
                 How long to keep backups before automatic deletion (1-365 days)
               </p>
