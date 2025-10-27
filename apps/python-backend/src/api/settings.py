@@ -12,10 +12,13 @@ Enhanced backup/restore functionality includes:
 - Progress tracking
 - Integrity verification
 """
+import asyncio
 import logging
+import re
 import shutil
 from datetime import datetime
 from pathlib import Path
+from pathlib import Path as PathlibPath
 from typing import Dict, Any
 from fastapi import APIRouter, HTTPException, status
 from tortoise.exceptions import DoesNotExist
@@ -59,6 +62,8 @@ logger = logging.getLogger(__name__)
 _backup_manager: BackupManager = None
 _backup_scheduler: BackupScheduler = None
 _progress_tracker: BackupProgressTracker = None
+_backup_operation_lock: asyncio.Lock = asyncio.Lock()
+_restore_operation_lock: asyncio.Lock = asyncio.Lock()
 
 
 def get_backup_manager() -> BackupManager:
@@ -86,6 +91,33 @@ def get_progress_tracker() -> BackupProgressTracker:
     if _progress_tracker is None:
         _progress_tracker = BackupProgressTracker()
     return _progress_tracker
+
+
+def _sanitize_file_path(file_path: str) -> PathlibPath:
+    """Sanitize and validate file path to prevent path traversal attacks"""
+    try:
+        # Remove any potentially dangerous characters
+        clean_path = re.sub(r'[^a-zA-Z0-9._\-/]', '', file_path)
+        path = PathlibPath(clean_path).resolve()
+        
+        # Ensure path doesn't contain parent directory references
+        if '..' in path.parts:
+            raise ValueError("Path traversal detected")
+        
+        return path
+    except Exception as e:
+        raise ValueError(f"Invalid file path: {e}")
+
+
+def _log_audit_event(operation: str, details: Dict[str, Any], success: bool = True) -> None:
+    """Log audit trail for backup/restore operations"""
+    log_entry = {
+        "timestamp": datetime.now().isoformat(),
+        "operation": operation,
+        "success": success,
+        "details": details
+    }
+    logger.info(f"AUDIT: {operation} - {'SUCCESS' if success else 'FAILED'} - {details}")
 
 
 async def ensure_settings_initialized():
@@ -225,35 +257,70 @@ async def perform_backup(backup_request: BackupRequest):
     Creates a backup of the SQLite database file.
     Use /backup/advanced for enhanced backup options.
     """
-    try:
-        backup_manager = get_backup_manager()
-        
-        # Determine backup location
-        if backup_request.location:
-            backup_manager.backup_dir = Path(backup_request.location)
-            backup_manager.backup_dir.mkdir(parents=True, exist_ok=True)
-        
-        # Create basic backup
-        metadata = backup_manager.create_backup(compression=True, backup_type='full')
-        
-        # Update lastBackupDate setting
-        await Setting.update_setting('backup', 'lastBackupDate', datetime.now().isoformat())
-        
-        logger.info(f"Backup created successfully: {metadata.filename}")
-        
-        return {
-            "success": True,
-            "message": "Backup created successfully",
-            "backup_file": str(backup_manager.backup_dir / metadata.filename),
-            "timestamp": metadata.created_at
-        }
-        
-    except Exception as e:
-        logger.error(f"Failed to create backup: {e}")
+    # Check if another backup is in progress
+    if _backup_operation_lock.locked():
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to create backup: {str(e)}"
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Another backup operation is already in progress"
         )
+    
+    async with _backup_operation_lock:
+        try:
+            backup_manager = get_backup_manager()
+            
+            # Determine backup location with validation
+            if backup_request.location:
+                try:
+                    backup_path = _sanitize_file_path(backup_request.location)
+                    backup_manager.backup_dir = backup_path
+                    backup_manager.backup_dir.mkdir(parents=True, exist_ok=True)
+                except Exception as e:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail=f"Invalid backup location: {str(e)}"
+                    )
+            
+            # Create basic backup
+            metadata = backup_manager.create_backup(compression=True, backup_type='full')
+            
+            # Update lastBackupDate setting
+            await Setting.update_setting('backup', 'lastBackupDate', datetime.now().isoformat())
+            
+            # Log audit event
+            _log_audit_event("backup_create", {
+                "filename": metadata.filename,
+                "size_mb": metadata.size_mb,
+                "backup_type": "full"
+            }, success=True)
+            
+            logger.info(f"Backup created successfully: {metadata.filename}")
+            
+            return {
+                "success": True,
+                "message": "Backup created successfully",
+                "backup_file": str(backup_manager.backup_dir / metadata.filename),
+                "timestamp": metadata.created_at
+            }
+        
+        except ValueError as e:
+            _log_audit_event("backup_create", {"error": str(e)}, success=False)
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=str(e)
+            )
+        except PermissionError as e:
+            _log_audit_event("backup_create", {"error": str(e)}, success=False)
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Permission denied: {str(e)}"
+            )
+        except Exception as e:
+            _log_audit_event("backup_create", {"error": str(e)}, success=False)
+            logger.error(f"Failed to create backup: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to create backup: {str(e)}"
+            )
 
 
 @router.post("/backup/advanced", status_code=status.HTTP_200_OK)
@@ -266,40 +333,76 @@ async def perform_advanced_backup(backup_request: AdvancedBackupRequest):
     - Selective table backup
     - Different backup types
     """
-    try:
-        backup_manager = get_backup_manager()
-        
-        # Determine backup location
-        if backup_request.location:
-            backup_manager.backup_dir = Path(backup_request.location)
-            backup_manager.backup_dir.mkdir(parents=True, exist_ok=True)
-        
-        # Create advanced backup
-        metadata = backup_manager.create_backup(
-            compression=backup_request.compression,
-            encryption=backup_request.encryption,
-            backup_type=backup_request.backup_type,
-            selected_tables=backup_request.selected_tables
-        )
-        
-        # Update lastBackupDate setting
-        await Setting.update_setting('backup', 'lastBackupDate', datetime.now().isoformat())
-        
-        logger.info(f"Advanced backup created: {metadata.filename}")
-        
-        return {
-            "success": True,
-            "message": "Backup created successfully",
-            "backup_file": str(backup_manager.backup_dir / metadata.filename),
-            "metadata": metadata.to_dict()
-        }
-        
-    except Exception as e:
-        logger.error(f"Failed to create advanced backup: {e}")
+    # Check if another backup is in progress
+    if _backup_operation_lock.locked():
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to create backup: {str(e)}"
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Another backup operation is already in progress"
         )
+    
+    async with _backup_operation_lock:
+        try:
+            backup_manager = get_backup_manager()
+            
+            # Determine backup location with validation
+            if backup_request.location:
+                try:
+                    backup_path = _sanitize_file_path(backup_request.location)
+                    backup_manager.backup_dir = backup_path
+                    backup_manager.backup_dir.mkdir(parents=True, exist_ok=True)
+                except Exception as e:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail=f"Invalid backup location: {str(e)}"
+                    )
+            
+            # Create advanced backup
+            metadata = backup_manager.create_backup(
+                compression=backup_request.compression,
+                encryption=backup_request.encryption,
+                backup_type=backup_request.backup_type,
+                selected_tables=backup_request.selected_tables
+            )
+            
+            # Update lastBackupDate setting
+            await Setting.update_setting('backup', 'lastBackupDate', datetime.now().isoformat())
+            
+            # Log audit event
+            _log_audit_event("backup_create_advanced", {
+                "filename": metadata.filename,
+                "size_mb": metadata.size_mb,
+                "backup_type": backup_request.backup_type,
+                "compression": backup_request.compression
+            }, success=True)
+            
+            logger.info(f"Advanced backup created: {metadata.filename}")
+            
+            return {
+                "success": True,
+                "message": "Backup created successfully",
+                "backup_file": str(backup_manager.backup_dir / metadata.filename),
+                "metadata": metadata.to_dict()
+            }
+        
+        except ValueError as e:
+            _log_audit_event("backup_create_advanced", {"error": str(e)}, success=False)
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=str(e)
+            )
+        except PermissionError as e:
+            _log_audit_event("backup_create_advanced", {"error": str(e)}, success=False)
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Permission denied: {str(e)}"
+            )
+        except Exception as e:
+            _log_audit_event("backup_create_advanced", {"error": str(e)}, success=False)
+            logger.error(f"Failed to create advanced backup: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to create backup: {str(e)}"
+            )
 
 
 @router.post("/restore", status_code=status.HTTP_200_OK)
@@ -314,37 +417,76 @@ async def restore_backup(restore_request: RestoreRequest):
     - Automatic pre-restore backup creation
     - Integrity verification
     - Support for compressed backups
+    - Version compatibility check
+    
+    Requires: Admin privileges (implement authentication check)
     """
-    try:
-        backup_file = Path(restore_request.filePath)
+    # Check if another restore is in progress
+    if _restore_operation_lock.locked():
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Another restore operation is already in progress"
+        )
+    
+    # Check if backup is in progress
+    if _backup_operation_lock.locked():
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Cannot restore while backup is in progress"
+        )
+    
+    async with _restore_operation_lock:
+        try:
+            # Sanitize file path
+            try:
+                backup_file = _sanitize_file_path(restore_request.filePath)
+            except ValueError as e:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Invalid file path: {str(e)}"
+                )
         
-        if not backup_file.exists():
+            if not backup_file.exists():
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Backup file not found: {restore_request.filePath}"
+                )
+            
+            backup_manager = get_backup_manager()
+            result = backup_manager.restore_backup(backup_file, verify_checksum=True)
+            
+            # Log audit event
+            _log_audit_event("backup_restore", {
+                "backup_file": str(backup_file),
+                "pre_restore_backup": result.get("pre_restore_backup")
+            }, success=True)
+            
+            logger.info(f"Database restored from: {backup_file}")
+            
+            return result
+        
+        except HTTPException:
+            raise
+        except ValueError as e:
+            _log_audit_event("backup_restore", {"error": str(e), "file": restore_request.filePath}, success=False)
+            logger.error(f"Backup verification failed: {e}")
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Backup file not found: {restore_request.filePath}"
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Backup verification failed: {str(e)}"
             )
-        
-        backup_manager = get_backup_manager()
-        result = backup_manager.restore_backup(backup_file, verify_checksum=True)
-        
-        logger.info(f"Database restored from: {backup_file}")
-        
-        return result
-        
-    except HTTPException:
-        raise
-    except ValueError as e:
-        logger.error(f"Backup verification failed: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Backup verification failed: {str(e)}"
-        )
-    except Exception as e:
-        logger.error(f"Failed to restore backup: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to restore backup: {str(e)}"
-        )
+        except PermissionError as e:
+            _log_audit_event("backup_restore", {"error": str(e)}, success=False)
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Permission denied: {str(e)}"
+            )
+        except Exception as e:
+            _log_audit_event("backup_restore", {"error": str(e)}, success=False)
+            logger.error(f"Failed to restore backup: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to restore backup: {str(e)}"
+            )
 
 
 @router.get("/database-info", status_code=status.HTTP_200_OK)
@@ -417,8 +559,18 @@ async def delete_backup(filename: str):
         filename: Name of backup file to delete
     """
     try:
+        # Validate filename to prevent path traversal
+        if '/' in filename or '\\' in filename or '..' in filename:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid filename"
+            )
+        
         backup_manager = get_backup_manager()
         backup_manager.delete_backup(filename)
+        
+        # Log audit event
+        _log_audit_event("backup_delete", {"filename": filename}, success=True)
         
         return {
             "success": True,
@@ -426,11 +578,13 @@ async def delete_backup(filename: str):
         }
         
     except FileNotFoundError:
+        _log_audit_event("backup_delete", {"error": "not found", "filename": filename}, success=False)
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Backup not found: {filename}"
         )
     except Exception as e:
+        _log_audit_event("backup_delete", {"error": str(e), "filename": filename}, success=False)
         logger.error(f"Failed to delete backup: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

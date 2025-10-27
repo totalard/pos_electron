@@ -15,12 +15,17 @@ import shutil
 import sqlite3
 import hashlib
 import gzip
+import os
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Optional, Any, Tuple
 from dataclasses import dataclass, asdict
 
 logger = logging.getLogger(__name__)
+
+# Application version for backup compatibility
+BACKUP_FORMAT_VERSION = "1.0.0"
+APP_VERSION = "1.0.0"  # Should be imported from app config
 
 
 @dataclass
@@ -39,6 +44,9 @@ class BackupMetadata:
     selected_tables: Optional[List[str]] = None
     status: str = 'success'  # 'success', 'partial', 'failed'
     error_message: Optional[str] = None
+    backup_format_version: str = BACKUP_FORMAT_VERSION
+    app_version: str = APP_VERSION
+    database_integrity_verified: bool = False
     
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary"""
@@ -81,6 +89,67 @@ class BackupManager:
             return size_bytes, size_mb
         return 0, 0.0
     
+    def _check_disk_space(self, required_bytes: int, path: Path = None) -> Tuple[bool, int]:
+        """Check if sufficient disk space is available"""
+        target_path = path or self.backup_dir
+        try:
+            stat = os.statvfs(target_path)
+            available_bytes = stat.f_bavail * stat.f_frsize
+            # Add 10% buffer for safety
+            required_with_buffer = int(required_bytes * 1.1)
+            return available_bytes >= required_with_buffer, available_bytes
+        except Exception as e:
+            logger.warning(f"Could not check disk space: {e}")
+            return True, 0  # Assume sufficient space if check fails
+    
+    def _validate_sqlite_file(self, file_path: Path) -> bool:
+        """Validate that file is a valid SQLite database"""
+        try:
+            # Check SQLite magic bytes
+            with open(file_path, 'rb') as f:
+                header = f.read(16)
+                if not header.startswith(b'SQLite format 3\x00'):
+                    return False
+            
+            # Try to open and query the database
+            conn = sqlite3.connect(file_path)
+            cursor = conn.cursor()
+            cursor.execute("SELECT name FROM sqlite_master WHERE type='table' LIMIT 1")
+            cursor.fetchone()
+            conn.close()
+            return True
+        except Exception as e:
+            logger.error(f"SQLite validation failed: {e}")
+            return False
+    
+    def _check_database_integrity(self, db_path: Path) -> Tuple[bool, Optional[str]]:
+        """Check database integrity using PRAGMA integrity_check"""
+        try:
+            conn = sqlite3.connect(db_path)
+            cursor = conn.cursor()
+            cursor.execute("PRAGMA integrity_check")
+            result = cursor.fetchone()
+            conn.close()
+            
+            if result and result[0] == 'ok':
+                return True, None
+            else:
+                return False, str(result) if result else "Unknown integrity error"
+        except Exception as e:
+            return False, str(e)
+    
+    def _is_version_compatible(self, backup_version: str) -> bool:
+        """Check if backup version is compatible with current app version"""
+        # Simple version check - can be enhanced with semantic versioning
+        try:
+            backup_major = int(backup_version.split('.')[0])
+            app_major = int(APP_VERSION.split('.')[0])
+            # Compatible if major versions match
+            return backup_major == app_major
+        except Exception:
+            # If version parsing fails, assume compatible
+            return True
+    
     def create_backup(
         self,
         compression: bool = True,
@@ -102,10 +171,35 @@ class BackupManager:
             
         Raises:
             FileNotFoundError: If database file doesn't exist
+            ValueError: If validation fails or insufficient disk space
+            PermissionError: If backup directory is not writable
             Exception: If backup creation fails
         """
         if not self.database_path.exists():
             raise FileNotFoundError(f"Database not found: {self.database_path}")
+        
+        # Validate database file
+        if not self._validate_sqlite_file(self.database_path):
+            raise ValueError(f"Invalid SQLite database file: {self.database_path}")
+        
+        # Check database integrity before backup
+        integrity_ok, integrity_error = self._check_database_integrity(self.database_path)
+        if not integrity_ok:
+            logger.warning(f"Database integrity check failed: {integrity_error}")
+            # Continue with backup but mark in metadata
+        
+        # Check disk space
+        db_size_bytes, db_size_mb = self._get_database_size()
+        has_space, available_bytes = self._check_disk_space(db_size_bytes)
+        if not has_space:
+            raise ValueError(
+                f"Insufficient disk space. Required: {db_size_bytes / (1024*1024):.2f} MB, "
+                f"Available: {available_bytes / (1024*1024):.2f} MB"
+            )
+        
+        # Check write permissions
+        if not os.access(self.backup_dir, os.W_OK):
+            raise PermissionError(f"Backup directory is not writable: {self.backup_dir}")
         
         try:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -148,7 +242,10 @@ class BackupManager:
                 encryption_enabled=encryption,
                 backup_type=backup_type,
                 selected_tables=selected_tables,
-                status='success'
+                status='success',
+                backup_format_version=BACKUP_FORMAT_VERSION,
+                app_version=APP_VERSION,
+                database_integrity_verified=integrity_ok
             )
             
             # Save metadata
@@ -158,6 +255,15 @@ class BackupManager:
             return metadata
             
         except Exception as e:
+            # Cleanup temp files on failure
+            try:
+                if 'temp_backup_path' in locals() and temp_backup_path.exists():
+                    temp_backup_path.unlink()
+                if 'final_backup_path' in locals() and final_backup_path.exists():
+                    final_backup_path.unlink()
+            except Exception as cleanup_error:
+                logger.warning(f"Failed to cleanup temp files: {cleanup_error}")
+            
             logger.error(f"Failed to create backup: {e}")
             raise
     
@@ -242,13 +348,18 @@ class BackupManager:
             
         Raises:
             FileNotFoundError: If backup file doesn't exist
-            ValueError: If checksum verification fails
+            ValueError: If validation or verification fails
+            PermissionError: If database file is not writable
             Exception: If restore fails
         """
         backup_file = Path(backup_file)
         
         if not backup_file.exists():
             raise FileNotFoundError(f"Backup file not found: {backup_file}")
+        
+        # Check write permissions on database
+        if not os.access(self.database_path.parent, os.W_OK):
+            raise PermissionError(f"Database directory is not writable: {self.database_path.parent}")
         
         try:
             # Load and verify metadata if available
@@ -261,6 +372,18 @@ class BackupManager:
                         f"Expected: {metadata['checksum']}, "
                         f"Got: {current_checksum}"
                     )
+                
+                # Check version compatibility
+                backup_version = metadata.get('app_version', '1.0.0')
+                if not self._is_version_compatible(backup_version):
+                    raise ValueError(
+                        f"Backup version {backup_version} is not compatible with "
+                        f"current app version {APP_VERSION}"
+                    )
+                
+                # Warn if integrity was not verified during backup
+                if not metadata.get('database_integrity_verified', False):
+                    logger.warning("Backup was created from database with integrity issues")
             
             # Create pre-restore backup
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -269,15 +392,41 @@ class BackupManager:
             
             # Prepare backup file (decompress if needed)
             restore_source = backup_file
+            temp_file_created = False
             if backup_file.suffix == '.gz':
                 restore_source = self.backup_dir / f"temp_restore_{timestamp}.db"
                 self._decompress_backup(backup_file, restore_source)
+                temp_file_created = True
+            
+            # Validate decompressed file is valid SQLite
+            if not self._validate_sqlite_file(restore_source):
+                if temp_file_created and restore_source.exists():
+                    restore_source.unlink()
+                raise ValueError("Backup file is not a valid SQLite database")
+            
+            # Check database integrity of backup
+            integrity_ok, integrity_error = self._check_database_integrity(restore_source)
+            if not integrity_ok:
+                if temp_file_created and restore_source.exists():
+                    restore_source.unlink()
+                raise ValueError(f"Backup database integrity check failed: {integrity_error}")
+            
+            # Check disk space for restore
+            restore_size = restore_source.stat().st_size
+            has_space, available_bytes = self._check_disk_space(restore_size, self.database_path.parent)
+            if not has_space:
+                if temp_file_created and restore_source.exists():
+                    restore_source.unlink()
+                raise ValueError(
+                    f"Insufficient disk space for restore. Required: {restore_size / (1024*1024):.2f} MB, "
+                    f"Available: {available_bytes / (1024*1024):.2f} MB"
+                )
             
             # Restore database
             shutil.copy2(restore_source, self.database_path)
             
             # Cleanup temp file
-            if restore_source != backup_file:
+            if temp_file_created and restore_source.exists():
                 restore_source.unlink()
             
             logger.info(f"Database restored from: {backup_file}")
@@ -291,6 +440,14 @@ class BackupManager:
             }
             
         except Exception as e:
+            # Cleanup temp files on failure
+            try:
+                if 'temp_file_created' in locals() and temp_file_created:
+                    if 'restore_source' in locals() and restore_source.exists():
+                        restore_source.unlink()
+            except Exception as cleanup_error:
+                logger.warning(f"Failed to cleanup temp files: {cleanup_error}")
+            
             logger.error(f"Failed to restore backup: {e}")
             raise
     
