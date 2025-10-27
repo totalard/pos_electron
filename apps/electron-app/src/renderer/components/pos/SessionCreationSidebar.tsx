@@ -1,8 +1,9 @@
 import { useState } from 'react'
-import { useAppStore, usePinStore, useSessionStore } from '../../stores'
+import { useAppStore, usePinStore, useSessionStore, useSettingsStore } from '../../stores'
 import { posSessionAPI } from '../../services/api'
-import { Button, Input, Sidebar } from '../common'
+import { Button, Input, Sidebar, CurrencyDisplay } from '../common'
 import { NumberInput } from '../forms'
+import { useCurrency } from '../../hooks'
 
 interface SessionCreationSidebarProps {
   isOpen: boolean
@@ -16,30 +17,32 @@ interface DenominationInput {
   label: string
 }
 
-const BILL_DENOMINATIONS: DenominationInput[] = [
-  { value: 100, count: 0, label: '$100' },
-  { value: 50, count: 0, label: '$50' },
-  { value: 20, count: 0, label: '$20' },
-  { value: 10, count: 0, label: '$10' },
-  { value: 5, count: 0, label: '$5' },
-  { value: 1, count: 0, label: '$1' }
-]
-
-const COIN_DENOMINATIONS: DenominationInput[] = [
-  { value: 1, count: 0, label: '$1' },
-  { value: 0.25, count: 0, label: '25¢' },
-  { value: 0.10, count: 0, label: '10¢' },
-  { value: 0.05, count: 0, label: '5¢' },
-  { value: 0.01, count: 0, label: '1¢' }
-]
+const getDefaultDenominations = (formatCurrency: (amount: number) => string) => ({
+  bills: [
+    { value: 100, count: 0, label: formatCurrency(100) },
+    { value: 50, count: 0, label: formatCurrency(50) },
+    { value: 20, count: 0, label: formatCurrency(20) },
+    { value: 10, count: 0, label: formatCurrency(10) },
+    { value: 5, count: 0, label: formatCurrency(5) },
+    { value: 1, count: 0, label: formatCurrency(1) }
+  ],
+  coins: [
+    { value: 1, count: 0, label: formatCurrency(1) },
+    { value: 0.25, count: 0, label: formatCurrency(0.25) },
+    { value: 0.10, count: 0, label: formatCurrency(0.10) },
+    { value: 0.05, count: 0, label: formatCurrency(0.05) },
+    { value: 0.01, count: 0, label: formatCurrency(0.01) }
+  ]
+})
 
 export function SessionCreationSidebar({ isOpen, onSessionCreated, onCancel }: SessionCreationSidebarProps) {
   const { theme } = useAppStore()
   const { currentUser } = usePinStore()
   const { setActiveSession } = useSessionStore()
   
-  const [bills, setBills] = useState<DenominationInput[]>(BILL_DENOMINATIONS)
-  const [coins, setCoins] = useState<DenominationInput[]>(COIN_DENOMINATIONS)
+  const { formatCurrency } = useCurrency()
+  const [bills, setBills] = useState<DenominationInput[]>(() => getDefaultDenominations(formatCurrency).bills)
+  const [coins, setCoins] = useState<DenominationInput[]>(() => getDefaultDenominations(formatCurrency).coins)
   const [notes, setNotes] = useState('')
   const [isCreating, setIsCreating] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -191,12 +194,13 @@ export function SessionCreationSidebar({ isOpen, onSessionCreated, onCancel }: S
                   showButtons
                   fullWidth
                 />
-                <p className={`
-                  mt-2 text-sm text-right font-medium
-                  ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}
-                `}>
-                  ${(bill.value * bill.count).toFixed(2)}
-                </p>
+                <div className="mt-2 text-right">
+                  <CurrencyDisplay 
+                    amount={bill.value * bill.count} 
+                    className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}
+                    showSymbol={false}
+                  />
+                </div>
               </div>
             ))}
           </div>
@@ -208,7 +212,7 @@ export function SessionCreationSidebar({ isOpen, onSessionCreated, onCancel }: S
               text-lg font-bold
               ${theme === 'dark' ? 'text-white' : 'text-gray-900'}
             `}>
-              Bills Total: ${billsTotal.toFixed(2)}
+              <CurrencyDisplay amount={billsTotal} />
             </span>
           </div>
         </div>
@@ -242,12 +246,13 @@ export function SessionCreationSidebar({ isOpen, onSessionCreated, onCancel }: S
                   showButtons
                   fullWidth
                 />
-                <p className={`
-                  mt-2 text-sm text-right font-medium
-                  ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}
-                `}>
-                  ${(coin.value * coin.count).toFixed(2)}
-                </p>
+                <div className="mt-2 text-right">
+                  <CurrencyDisplay 
+                    amount={coin.value * coin.count} 
+                    className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}
+                    showSymbol={false}
+                  />
+                </div>
               </div>
             ))}
           </div>
@@ -259,7 +264,7 @@ export function SessionCreationSidebar({ isOpen, onSessionCreated, onCancel }: S
               text-lg font-bold
               ${theme === 'dark' ? 'text-white' : 'text-gray-900'}
             `}>
-              Coins Total: ${coinsTotal.toFixed(2)}
+              <CurrencyDisplay amount={coinsTotal} />
             </span>
           </div>
         </div>
@@ -273,15 +278,14 @@ export function SessionCreationSidebar({ isOpen, onSessionCreated, onCancel }: S
           }
         `}>
           <div className="flex items-center justify-between">
-            <span className={`
-              text-xl font-bold
-              ${theme === 'dark' ? 'text-white' : 'text-gray-900'}
-            `}>
-              Opening Cash Total:
-            </span>
-            <span className="text-3xl font-bold text-primary-500">
-              ${grandTotal.toFixed(2)}
-            </span>
+            <div className="text-right">
+              <div className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                <CurrencyDisplay amount={grandTotal} />
+              </div>
+              <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+                Total Opening Cash
+              </p>
+            </div>
           </div>
         </div>
 
