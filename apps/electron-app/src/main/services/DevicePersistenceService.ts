@@ -39,11 +39,10 @@ export class DevicePersistenceService {
       if (fs.existsSync(this.configPath)) {
         const fileContent = fs.readFileSync(this.configPath, 'utf-8')
         const data = JSON.parse(fileContent) as DevicePersistenceData
-        console.log(`Loaded ${data.devices.length} persisted device configurations`)
         return data
       }
     } catch (error) {
-      console.error('Error loading device configurations:', error)
+      // Error loading device configurations - will use defaults
     }
 
     // Return default data if file doesn't exist or error occurred
@@ -60,9 +59,8 @@ export class DevicePersistenceService {
     try {
       const fileContent = JSON.stringify(this.data, null, 2)
       fs.writeFileSync(this.configPath, fileContent, 'utf-8')
-      console.log(`Saved ${this.data.devices.length} device configurations`)
     } catch (error) {
-      console.error('Error saving device configurations:', error)
+      // Error saving device configurations - changes will not persist
     }
   }
 

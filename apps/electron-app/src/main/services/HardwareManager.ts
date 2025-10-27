@@ -37,7 +37,6 @@ export class HardwareManager extends EventEmitter {
     this.setupEventForwarding()
 
     this.isInitialized = true
-    console.log('Hardware Manager initialized')
   }
 
   /**
@@ -178,27 +177,21 @@ export class HardwareManager extends EventEmitter {
   }
 
   /**
-   * Test printer (matches test-usb-printer.js reference script logic)
+   * Test printer
    */
   async testPrinter(printerId?: string, useEscPos?: boolean): Promise<boolean> {
-    console.log('[HardwareManager] Test printer called', { printerId, useEscPos })
     let justConnected = false
-    
+
     // If a specific printer ID is provided, connect to it first
     if (printerId) {
-      console.log('[HardwareManager] Looking for printer:', printerId)
-      
       // Get all available printers (from both sources)
       const allPrinters = this.getPrinters()
-      console.log('[HardwareManager] Available printers:', allPrinters.length)
-      
+
       const foundPrinter = allPrinters.find(p => p.id === printerId)
       if (!foundPrinter) {
         throw new Error(`Printer with ID ${printerId} not found`)
       }
-      
-      console.log('[HardwareManager] Found printer:', foundPrinter.name)
-      
+
       // Connect to the printer
       const config: PrinterConfig = {
         connection: foundPrinter.connection as 'USB' | 'Network' | 'Serial',
@@ -207,33 +200,28 @@ export class HardwareManager extends EventEmitter {
         port: foundPrinter.port,
         address: foundPrinter.address
       }
-      
+
       const connected = await this.connectPrinter(config)
       if (!connected) {
         throw new Error(`Failed to connect to printer: ${foundPrinter.name}`)
       }
       justConnected = true
-      console.log('[HardwareManager] Connected to printer:', foundPrinter.name)
     }
-    
+
     // Check if we have an active printer (only if we didn't just connect)
     if (!justConnected) {
       const activePrinter = this.getActivePrinter()
-      console.log('[HardwareManager] Active printer:', activePrinter?.name || 'None')
-      
+
       if (!activePrinter) {
         // Try to auto-connect to the first available printer
-        console.log('[HardwareManager] No active printer, auto-connecting to first available...')
         const printers = this.getPrinters()
-        console.log('[HardwareManager] Available printers for auto-connect:', printers.length)
-        
+
         if (printers.length === 0) {
           throw new Error('No printers found. Please scan for devices first.')
         }
-        
+
         const firstPrinter = printers[0]
-        console.log('[HardwareManager] Auto-connecting to:', firstPrinter.name)
-        
+
         const config: PrinterConfig = {
           connection: firstPrinter.connection as 'USB' | 'Network' | 'Serial',
           vendorId: firstPrinter.vendorId,
@@ -241,19 +229,17 @@ export class HardwareManager extends EventEmitter {
           port: firstPrinter.port,
           address: firstPrinter.address
         }
-        
+
         const connected = await this.connectPrinter(config)
         if (!connected) {
           throw new Error(`Failed to connect to printer: ${firstPrinter.name}`)
         }
-        console.log('[HardwareManager] Auto-connected successfully')
       }
     }
-    
+
     const printer = this.getActivePrinter()
     const escPosMode = useEscPos !== undefined ? useEscPos : (printer?.useEscPos ?? true)
-    
-    console.log('[HardwareManager] Starting test print in', escPosMode ? 'ESC/POS' : 'Standard', 'mode')
+
     return await this.printerService.testPrint(escPosMode)
   }
 
@@ -355,7 +341,6 @@ export class HardwareManager extends EventEmitter {
     this.scannerService.destroy()
     this.removeAllListeners()
     this.isInitialized = false
-    console.log('Hardware Manager shut down')
   }
 }
 

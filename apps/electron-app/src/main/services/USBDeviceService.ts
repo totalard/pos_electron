@@ -30,7 +30,6 @@ export class USBDeviceService extends EventEmitter {
     configs.forEach(config => {
       this.manualDeviceTypes.set(config.deviceId, config.type)
     })
-    console.log(`Loaded ${configs.length} persisted device configurations`)
   }
 
   /**
@@ -52,29 +51,20 @@ export class USBDeviceService extends EventEmitter {
       if (typeof (usb as any).on === 'function') {
         // Create handlers
         this.attachHandler = (device: usb.Device) => {
-          console.log('USB device attached:', device)
           this.handleDeviceAttach(device)
         }
 
         this.detachHandler = (device: usb.Device) => {
-          console.log('USB device detached:', device)
           this.handleDeviceDetach(device)
         }
 
         // Listen for device attach/detach events
         (usb as any).on('attach', this.attachHandler);
         (usb as any).on('detach', this.detachHandler)
-        
-        console.log('USB hotplug monitoring enabled')
-      } else {
-        console.log('USB hotplug monitoring not available - using manual scanning only')
       }
     } catch (error) {
-      console.warn('Could not enable USB hotplug monitoring:', error)
-      console.log('USB device monitoring will use manual scanning only')
+      // USB hotplug monitoring not available - will use manual scanning only
     }
-
-    console.log('USB device monitoring started')
   }
 
   /**
@@ -99,10 +89,8 @@ export class USBDeviceService extends EventEmitter {
         this.detachHandler = null
       }
     } catch (error) {
-      console.warn('Error removing USB event listeners:', error)
+      // Ignore errors when removing listeners
     }
-    
-    console.log('USB device monitoring stopped')
   }
 
   /**
@@ -165,7 +153,6 @@ export class USBDeviceService extends EventEmitter {
 
     // Emit event
     this.emit('device-type-changed', device)
-    console.log(`Device ${device.name} manually set to type: ${deviceType}`)
 
     return true
   }
@@ -193,7 +180,6 @@ export class USBDeviceService extends EventEmitter {
     // Persist the setting
     this.persistenceService.saveDeviceConfig(deviceId, device.type, useEscPos)
 
-    console.log(`Device ${device.name} ESC/POS mode set to: ${useEscPos}`)
     return true
   }
 
@@ -225,7 +211,6 @@ export class USBDeviceService extends EventEmitter {
     if (deviceInfo) {
       this.devices.set(deviceInfo.id, deviceInfo)
       this.emit('device-connected', deviceInfo)
-      console.log('Device connected:', deviceInfo.name, deviceInfo.type)
     }
   }
 
@@ -235,11 +220,10 @@ export class USBDeviceService extends EventEmitter {
   private handleDeviceDetach(device: usb.Device): void {
     const deviceId = this.getDeviceId(device)
     const deviceInfo = this.devices.get(deviceId)
-    
+
     if (deviceInfo) {
       this.devices.delete(deviceId)
       this.emit('device-disconnected', deviceInfo)
-      console.log('Device disconnected:', deviceInfo.name, deviceInfo.type)
     }
   }
 
@@ -288,7 +272,6 @@ export class USBDeviceService extends EventEmitter {
 
       return deviceInfo
     } catch (error) {
-      console.error('Error creating device info:', error)
       return null
     }
   }

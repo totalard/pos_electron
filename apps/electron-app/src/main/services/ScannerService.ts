@@ -92,7 +92,6 @@ export class ScannerService extends EventEmitter {
       }
       return false
     } catch (error) {
-      console.error('Error connecting to scanner:', error)
       this.emit('scanner-error', { error: String(error) })
       return false
     }
@@ -133,7 +132,6 @@ export class ScannerService extends EventEmitter {
       })
 
       this.hidDevice.on('error', (error: Error) => {
-        console.error('HID device error:', error)
         this.emit('scanner-error', { error: String(error) })
       })
 
@@ -151,10 +149,8 @@ export class ScannerService extends EventEmitter {
 
       this.activeScanner = scannerInfo
       this.emit('scanner-connected', scannerInfo)
-      console.log('Scanner connected:', scannerInfo.name)
       return true
     } catch (error) {
-      console.error('Error opening HID device:', error)
       throw error
     }
   }
@@ -261,7 +257,6 @@ export class ScannerService extends EventEmitter {
     }
 
     this.emit('scan-data', scanData)
-    console.log('Barcode scanned:', scanData.barcode, 'Type:', scanData.type)
   }
 
   /**
@@ -289,7 +284,7 @@ export class ScannerService extends EventEmitter {
       try {
         this.hidDevice.close()
       } catch (error) {
-        console.error('Error closing HID device:', error)
+        // Ignore close errors
       }
       this.hidDevice = null
     }
@@ -300,7 +295,6 @@ export class ScannerService extends EventEmitter {
     }
 
     this.scanBuffer = ''
-    console.log('Scanner disconnected')
   }
 
   /**
@@ -325,7 +319,6 @@ export class ScannerService extends EventEmitter {
       return false
     }
 
-    console.log('Scanner is ready. Please scan a barcode to test.')
     return true
   }
 

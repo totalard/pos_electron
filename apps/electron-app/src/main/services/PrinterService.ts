@@ -14,7 +14,7 @@ const escpos = require('escpos')
 try {
   escpos.USB = require('escpos-usb')
 } catch (error) {
-  console.warn('escpos-usb not available:', error)
+  // escpos-usb not available - using direct USB implementation
 }
 
 export interface PrinterConfig {
@@ -229,7 +229,6 @@ export class PrinterService extends EventEmitter {
       }
     })
 
-    console.log(`[PrinterService] Found ${printers.length} USB printers`)
     return printers
   }
 
@@ -264,7 +263,7 @@ export class PrinterService extends EventEmitter {
 
       return printers
     } catch (error) {
-      console.error('Error scanning serial printers:', error)
+      this.emit('error', { error: 'Failed to scan serial printers' })
       return []
     }
   }
@@ -283,7 +282,6 @@ export class PrinterService extends EventEmitter {
       }
       return false
     } catch (error) {
-      console.error('Error connecting to printer:', error)
       this.emit('printer-error', { error: String(error) })
       return false
     }
@@ -316,9 +314,7 @@ export class PrinterService extends EventEmitter {
         // Try to open the device
         try {
           device.open()
-          console.log('USB device opened successfully')
         } catch (error) {
-          console.error('Error opening USB device:', error)
           throw new Error(`Failed to open USB device: ${error}`)
         }
 
@@ -334,10 +330,8 @@ export class PrinterService extends EventEmitter {
 
         this.activePrinter = printerInfo
         this.emit('printer-connected', printerInfo)
-        console.log('USB printer connected successfully')
         resolve(true)
       } catch (error) {
-        console.error('Error connecting to USB printer:', error)
         this.usbDevice = null
         reject(error)
       }
@@ -373,12 +367,10 @@ export class PrinterService extends EventEmitter {
 
         this.activePrinter = printerInfo
         this.emit('printer-connected', printerInfo)
-        console.log('Serial printer connected')
         resolve(true)
       })
 
       this.serialPort.on('error', (error) => {
-        console.error('Serial port error:', error)
         this.emit('printer-error', { error: String(error) })
         reject(error)
       })
@@ -391,8 +383,7 @@ export class PrinterService extends EventEmitter {
   private async connectNetwork(config: PrinterConfig): Promise<boolean> {
     // Network printer implementation would go here
     // This would typically use raw TCP sockets to connect to the printer
-    console.log('Network printer connection not yet implemented')
-    return false
+    throw new Error('Network printer connection not yet implemented')
   }
 
   /**
@@ -403,7 +394,7 @@ export class PrinterService extends EventEmitter {
       try {
         this.usbDevice.close()
       } catch (error) {
-        console.error('Error closing USB device:', error)
+        // Ignore close errors
       }
       this.usbDevice = null
     }
@@ -421,8 +412,6 @@ export class PrinterService extends EventEmitter {
       this.emit('printer-disconnected', this.activePrinter)
       this.activePrinter = null
     }
-
-    console.log('Printer disconnected')
   }
 
   /**
@@ -466,7 +455,6 @@ export class PrinterService extends EventEmitter {
       job.status = 'failed'
       job.error = String(error)
       this.emit('print-failed', job)
-      console.error('Print job failed:', error)
     } finally {
       this.isPrinting = false
       // Process next job if any
@@ -504,7 +492,6 @@ export class PrinterService extends EventEmitter {
 
   /**
    * Print data to USB device
-   * Implementation matches the proven reference script approach
    */
   private async printToUSB(data: Buffer): Promise<void> {
     if (!this.usbDevice) {
@@ -512,75 +499,50 @@ export class PrinterService extends EventEmitter {
     }
 
     return new Promise((resolve, reject) => {
-      console.log('\n📄 Attempting to print...')
-      
       try {
         const device = this.usbDevice
 
-        // Step 1: Open the device (should already be open, but verify)
-        console.log('1. Verifying USB device is open...')
+        // Verify device is open
         try {
-          // Device should already be open from connect(), but check
           if (!device.interfaces || device.interfaces.length === 0) {
-            console.log('   Device not fully opened, attempting to open...')
             device.open()
           }
-          console.log('   ✓ Device is open')
         } catch (error) {
-          console.log('   ⚠ Device open check:', error)
+          // Device may already be open
         }
 
-        // Step 2: Get the first interface
-        console.log('2. Getting interface...')
+        // Get the first interface
         const iface = device.interface(0)
-        console.log(`   ✓ Interface 0 obtained (${iface.endpoints.length} endpoints)`)
 
-        // Step 3: Claim the interface
-        console.log('3. Claiming interface...')
+        // Claim the interface
         try {
           // Check if kernel driver is active (Linux)
           if (iface.isKernelDriverActive()) {
-            console.log('   ⚠ Kernel driver is active, attempting to detach...')
             try {
               iface.detachKernelDriver()
-              console.log('   ✓ Kernel driver detached')
             } catch (error) {
-              console.log('   ⚠ Could not detach kernel driver:', error)
-              console.log('   ℹ This is normal on some systems. Continuing...')
+              // Kernel driver detach may fail on some systems
             }
           }
-          
+
           iface.claim()
-          console.log('   ✓ Interface claimed')
         } catch (error) {
-          console.log('   ⚠ Could not claim interface:', error)
-          console.log('   ℹ Attempting to continue anyway...')
+          // Interface claim may fail on some systems
         }
 
-        // Step 4: Find the OUT endpoint
-        console.log('4. Finding OUT endpoint...')
+        // Find the OUT endpoint
         const endpoints = iface.endpoints
-        console.log('   Available endpoints:')
-        endpoints.forEach((ep, i) => {
-          console.log(`   - Endpoint ${i}: direction=${ep.direction}, type=${ep.transferType}`)
-        })
-        
         const outEndpoint = endpoints.find(
           (ep) => ep.direction === 'out'
         ) as usb.OutEndpoint | undefined
-        
+
         if (!outEndpoint) {
           throw new Error('No OUT endpoint found on USB device')
         }
-        
-        console.log('   ✓ OUT endpoint found')
 
-        // Step 5: Send data to printer
-        console.log(`5. Sending ${data.length} bytes to printer...`)
+        // Send data to printer
         outEndpoint.transfer(data, (error) => {
           if (error) {
-            console.log('   ❌ Transfer failed:', error.message)
-            
             // Try to release interface
             try {
               iface.release(true, () => {
@@ -590,29 +552,17 @@ export class PrinterService extends EventEmitter {
               reject(new Error(`USB transfer failed: ${error.message}`))
             }
           } else {
-            console.log('   ✓ Data sent successfully!')
-            console.log('6. Releasing interface...')
-            
-            // Release interface and close device
+            // Release interface
             try {
               iface.release(true, (releaseError) => {
-                if (releaseError) {
-                  console.log('   ⚠ Error releasing interface:', releaseError.message)
-                } else {
-                  console.log('   ✓ Interface released')
-                }
-                
-                console.log('\n✅ Print job completed successfully!\n')
                 resolve()
               })
             } catch (e) {
-              console.log('   ⚠ Error during cleanup:', e)
               resolve()
             }
           }
         })
       } catch (error) {
-        console.log('\n❌ Error during print operation:', error)
         reject(error)
       }
     })
@@ -652,21 +602,19 @@ export class PrinterService extends EventEmitter {
   }
 
   /**
-   * Test print - matches reference script implementation
+   * Test print
    */
   async testPrint(useEscPos: boolean = true): Promise<boolean> {
     if (!this.activePrinter) {
       throw new Error('No printer connected')
     }
 
-    console.log('\n📝 Generating test receipt...')
-    
     if (useEscPos) {
-      // Use custom ESC/POS builder - matches reference script exactly
+      // Use custom ESC/POS builder
       const now = new Date()
       const dateStr = now.toLocaleDateString()
       const timeStr = now.toLocaleTimeString()
-      
+
       const testData = new EscPosBuilder()
         .init()
         .align('center')
@@ -705,7 +653,6 @@ export class PrinterService extends EventEmitter {
         .cut()
         .build()
 
-      console.log(`   ✓ Generated ${testData.length} bytes of ESC/POS data`)
       return await this.print(testData)
     } else {
       // Standard mode - use plain text for regular printers
@@ -727,7 +674,6 @@ This is a test receipt.
 
 
 `
-      console.log(`   ✓ Generated ${testText.length} bytes of text data`)
       return await this.print(testText)
     }
   }
@@ -790,11 +736,9 @@ This is a test receipt.
           .feed(3)
           .cut()
           .flush(() => {
-            console.log('Receipt printed successfully')
             resolve(true)
           })
       } catch (error) {
-        console.error('Receipt print failed:', error)
         reject(error)
       }
     })
