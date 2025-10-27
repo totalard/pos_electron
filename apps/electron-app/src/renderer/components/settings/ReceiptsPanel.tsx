@@ -5,6 +5,7 @@ import { ReceiptPreview } from './receipt/ReceiptPreview'
 import { TemplatePanel } from './receipt/TemplatePanel'
 import { PaperSizePanel } from './receipt/PaperSizePanel'
 import { FontConfigPanel } from './receipt/FontConfigPanel'
+import { ReceiptManagement } from './ReceiptManagement'
 
 /**
  * Comprehensive Receipt Configuration Panel
@@ -17,11 +18,13 @@ import { FontConfigPanel } from './receipt/FontConfigPanel'
  * - Perfect rendering with accurate text wrapping
  * - Receipt Header, Body, Footer customization
  * - Print Behavior settings
+ * - Receipt Template Management (5 types with test print)
  */
 export function ReceiptsPanel() {
   const { theme } = useAppStore()
   const { receipts, updateReceiptSettings } = useSettingsStore()
   const [showPreview, setShowPreview] = useState(true)
+  const [activeTab, setActiveTab] = useState<'basic' | 'templates'>('basic')
 
   return (
     <div className="p-6">
@@ -39,8 +42,49 @@ export function ReceiptsPanel() {
         </div>
       </div>
 
-      {/* Main Layout: Settings + Preview */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Tab Navigation */}
+      <div className="mb-6">
+        <div className={`flex gap-2 p-1 rounded-lg ${theme === 'dark' ? 'bg-gray-800' : 'bg-gray-100'}`}>
+          <button
+            onClick={() => setActiveTab('basic')}
+            className={`flex-1 px-4 py-2 rounded-md transition-colors font-medium ${
+              activeTab === 'basic'
+                ? theme === 'dark'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-blue-500 text-white'
+                : theme === 'dark'
+                  ? 'text-gray-400 hover:text-white'
+                  : 'text-gray-600 hover:text-gray-900'
+            }`}
+            style={{ minHeight: '44px' }}
+          >
+            Basic Configuration
+          </button>
+          <button
+            onClick={() => setActiveTab('templates')}
+            className={`flex-1 px-4 py-2 rounded-md transition-colors font-medium ${
+              activeTab === 'templates'
+                ? theme === 'dark'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-blue-500 text-white'
+                : theme === 'dark'
+                  ? 'text-gray-400 hover:text-white'
+                  : 'text-gray-600 hover:text-gray-900'
+            }`}
+            style={{ minHeight: '44px' }}
+          >
+            📋 Template Management
+          </button>
+        </div>
+      </div>
+
+      {/* Tab Content */}
+      {activeTab === 'templates' ? (
+        <ReceiptManagement />
+      ) : (
+        <>
+          {/* Main Layout: Settings + Preview */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Settings Column */}
         <div className="space-y-6">
           {/* Template Selection */}
@@ -432,7 +476,9 @@ export function ReceiptsPanel() {
             <ReceiptPreview settings={receipts} />
           </div>
         )}
-      </div>
+          </div>
+        </>
+      )}
     </div>
   )
 }

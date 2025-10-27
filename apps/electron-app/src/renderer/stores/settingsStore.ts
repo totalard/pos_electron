@@ -248,6 +248,15 @@ export interface ReceiptSettings {
   printKitchenReceipt: boolean
   printCustomerCopy: boolean
   printMerchantCopy: boolean
+
+  // Receipt Templates (5 types)
+  receiptTemplates: {
+    order_receipt: Record<string, any>
+    invoice: Record<string, any>
+    pos_opening: Record<string, any>
+    pos_closing: Record<string, any>
+    order_park: Record<string, any>
+  }
 }
 
 export interface InventorySettings {
@@ -743,7 +752,16 @@ const initialState = {
     numberOfCopies: 1,
     printKitchenReceipt: false,
     printCustomerCopy: true,
-    printMerchantCopy: false
+    printMerchantCopy: false,
+
+    // Receipt Templates (5 types) - initialized with defaults
+    receiptTemplates: {
+      order_receipt: {},
+      invoice: {},
+      pos_opening: {},
+      pos_closing: {},
+      order_park: {}
+    }
   },
 
   inventory: {

@@ -635,3 +635,148 @@ async def update_expense(expense_id: int, expense_data: ExpenseUpdate):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to update expense: {str(e)}"
         )
+
+
+@router.get("/sales", response_model=List[SaleResponse])
+async def get_sales(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(50, ge=1, le=100),
+    status: Optional[str] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    customer_id: Optional[int] = None,
+    session_id: Optional[int] = None
+):
+    """Get all sales with optional filters"""
+    try:
+        query = Sale.all()
+        
+        if status:
+            query = query.filter(status=status)
+        if customer_id:
+            query = query.filter(customer_id=customer_id)
+        if session_id:
+            query = query.filter(session_id=session_id)
+        if start_date:
+            query = query.filter(sale_date__gte=datetime.fromisoformat(start_date))
+        if end_date:
+            query = query.filter(sale_date__lte=datetime.fromisoformat(end_date))
+        
+        sales = await query.prefetch_related('sold_by', 'customer', 'session').order_by('-sale_date').offset(skip).limit(limit)
+        
+        return [
+            SaleResponse(
+                id=sale.id,
+                invoice_number=sale.invoice_number,
+                session_id=sale.session_id,
+                customer_id=sale.customer_id,
+                customer_name=sale.customer.name if sale.customer else None,
+                subtotal=float(sale.subtotal),
+                tax_amount=float(sale.tax_amount),
+                discount_amount=float(sale.discount_amount),
+                total_amount=float(sale.total_amount),
+                payment_method=sale.payment_method.value,
+                amount_paid=float(sale.amount_paid),
+                change_given=float(sale.change_given),
+                status=sale.status.value,
+                notes=sale.notes,
+                items=sale.items,
+                sold_by_id=sale.sold_by_id,
+                sold_by_name=sale.sold_by.full_name if sale.sold_by else None,
+                sale_date=sale.sale_date,
+                created_at=sale.created_at,
+                updated_at=sale.updated_at
+            )
+            for sale in sales
+        ]
+    
+    except Exception as e:
+        logger.error(f"Failed to fetch sales: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to fetch sales: {str(e)}"
+        )
+
+
+@router.get("/sales/{sale_id}", response_model=SaleResponse)
+async def get_sale(sale_id: int):
+    """Get a specific sale by ID"""
+    try:
+        sale = await Sale.get(id=sale_id).prefetch_related('sold_by', 'customer', 'session')
+        
+        return SaleResponse(
+            id=sale.id,
+            invoice_number=sale.invoice_number,
+            session_id=sale.session_id,
+            customer_id=sale.customer_id,
+            customer_name=sale.customer.name if sale.customer else None,
+            subtotal=float(sale.subtotal),
+            tax_amount=float(sale.tax_amount),
+            discount_amount=float(sale.discount_amount),
+            total_amount=float(sale.total_amount),
+            payment_method=sale.payment_method.value,
+            amount_paid=float(sale.amount_paid),
+            change_given=float(sale.change_given),
+            status=sale.status.value,
+            notes=sale.notes,
+            items=sale.items,
+            sold_by_id=sale.sold_by_id,
+            sold_by_name=sale.sold_by.full_name if sale.sold_by else None,
+            sale_date=sale.sale_date,
+            created_at=sale.created_at,
+            updated_at=sale.updated_at
+        )
+    
+    except DoesNotExist:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Sale with ID {sale_id} not found"
+        )
+    except Exception as e:
+        logger.error(f"Failed to fetch sale: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to fetch sale: {str(e)}"
+        )
+
+
+@router.get("/sales/invoice/{invoice_number}", response_model=SaleResponse)
+async def get_sale_by_invoice(invoice_number: str):
+    """Get a sale by invoice number"""
+    try:
+        sale = await Sale.get(invoice_number=invoice_number).prefetch_related('sold_by', 'customer', 'session')
+        
+        return SaleResponse(
+            id=sale.id,
+            invoice_number=sale.invoice_number,
+            session_id=sale.session_id,
+            customer_id=sale.customer_id,
+            customer_name=sale.customer.name if sale.customer else None,
+            subtotal=float(sale.subtotal),
+            tax_amount=float(sale.tax_amount),
+            discount_amount=float(sale.discount_amount),
+            total_amount=float(sale.total_amount),
+            payment_method=sale.payment_method.value,
+            amount_paid=float(sale.amount_paid),
+            change_given=float(sale.change_given),
+            status=sale.status.value,
+            notes=sale.notes,
+            items=sale.items,
+            sold_by_id=sale.sold_by_id,
+            sold_by_name=sale.sold_by.full_name if sale.sold_by else None,
+            sale_date=sale.sale_date,
+            created_at=sale.created_at,
+            updated_at=sale.updated_at
+        )
+    
+    except DoesNotExist:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Sale with invoice number {invoice_number} not found"
+        )
+    except Exception as e:
+        logger.error(f"Failed to fetch sale: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to fetch sale: {str(e)}"
+        )

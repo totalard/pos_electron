@@ -1740,6 +1740,85 @@ export interface SessionTimelineData {
   transaction_count: number
 }
 
+// ============================================================================
+// Sales API
+// ============================================================================
+
+export interface Sale {
+  id: number
+  invoice_number: string
+  session_id?: number
+  customer_id?: number
+  customer_name?: string
+  subtotal: number
+  tax_amount: number
+  discount_amount: number
+  total_amount: number
+  payment_method: string
+  amount_paid: number
+  change_given: number
+  status: string
+  notes?: string
+  items: Array<{
+    product_id: number
+    product_name: string
+    quantity: number
+    unit_price: number
+    discount: number
+    tax: number
+    total: number
+  }>
+  sold_by_id?: number
+  sold_by_name?: string
+  sale_date: string
+  created_at: string
+  updated_at: string
+}
+
+export const salesAPI = {
+  /**
+   * Get all sales with optional filters
+   */
+  async getAllSales(params?: {
+    skip?: number
+    limit?: number
+    status?: string
+    start_date?: string
+    end_date?: string
+    customer_id?: number
+    session_id?: number
+  }): Promise<Sale[]> {
+    const queryParams = new URLSearchParams()
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined) {
+          queryParams.append(key, String(value))
+        }
+      })
+    }
+
+    const url = `${API_BASE_URL}/transactions/sales?${queryParams.toString()}`
+    const response = await fetch(url)
+    return handleResponse<Sale[]>(response)
+  },
+
+  /**
+   * Get a specific sale by ID
+   */
+  async getSale(saleId: number): Promise<Sale> {
+    const response = await fetch(`${API_BASE_URL}/transactions/sales/${saleId}`)
+    return handleResponse<Sale>(response)
+  },
+
+  /**
+   * Get a sale by invoice number
+   */
+  async getSaleByInvoice(invoiceNumber: string): Promise<Sale> {
+    const response = await fetch(`${API_BASE_URL}/transactions/sales/invoice/${invoiceNumber}`)
+    return handleResponse<Sale>(response)
+  }
+}
+
 export const dashboardAPI = {
   /**
    * Get comprehensive dashboard statistics
