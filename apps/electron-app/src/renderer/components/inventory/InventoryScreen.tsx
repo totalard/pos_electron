@@ -3,7 +3,9 @@ import { useAppStore, useInventoryStore } from '../../stores'
 import { PageHeader, PageContainer } from '../layout'
 import { Button, IconButton, ThemeToggle, LoadingSpinner, ErrorMessage } from '../common'
 import { InventoryDashboard } from './InventoryDashboard'
+import { EnhancedInventoryDashboard } from './EnhancedInventoryDashboard'
 import { StockTransactionsList } from './StockTransactionsList'
+import { EnhancedStockTransactionsList } from './EnhancedStockTransactionsList'
 import { StockAdjustmentForm } from './StockAdjustmentForm'
 import { StockAdjustmentsList } from './StockAdjustmentsList'
 import { InventoryReports } from './InventoryReports'
@@ -178,8 +180,8 @@ export function InventoryScreen({ onBack }: InventoryScreenProps) {
         {/* Content Based on View Mode */}
         {!isLoading && (
           <>
-            {viewMode === 'overview' && <InventoryDashboard />}
-            {viewMode === 'transactions' && <StockTransactionsList />}
+            {viewMode === 'overview' && <EnhancedInventoryDashboard />}
+            {viewMode === 'transactions' && <EnhancedStockTransactionsList />}
             {viewMode === 'adjustments' && <StockAdjustmentsList />}
             {viewMode === 'reports' && <InventoryReports />}
           </>
