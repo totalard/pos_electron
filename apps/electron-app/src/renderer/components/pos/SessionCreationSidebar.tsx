@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAppStore, usePinStore, useSessionStore, useSettingsStore } from '../../stores'
 import { posSessionAPI } from '../../services/api'
 import { Button, Input, Sidebar, CurrencyDisplay } from '../common'
 import { NumberInput } from '../forms'
 import { useCurrency } from '../../hooks'
+import { getDenominationsForCurrency } from '../../config/currencyDenominations'
 
 interface SessionCreationSidebarProps {
   isOpen: boolean
@@ -17,35 +18,63 @@ interface DenominationInput {
   label: string
 }
 
-const getDefaultDenominations = (formatCurrency: (amount: number) => string) => ({
-  bills: [
-    { value: 100, count: 0, label: formatCurrency(100) },
-    { value: 50, count: 0, label: formatCurrency(50) },
-    { value: 20, count: 0, label: formatCurrency(20) },
-    { value: 10, count: 0, label: formatCurrency(10) },
-    { value: 5, count: 0, label: formatCurrency(5) },
-    { value: 1, count: 0, label: formatCurrency(1) }
-  ],
-  coins: [
-    { value: 1, count: 0, label: formatCurrency(1) },
-    { value: 0.25, count: 0, label: formatCurrency(0.25) },
-    { value: 0.10, count: 0, label: formatCurrency(0.10) },
-    { value: 0.05, count: 0, label: formatCurrency(0.05) },
-    { value: 0.01, count: 0, label: formatCurrency(0.01) }
-  ]
-})
-
 export function SessionCreationSidebar({ isOpen, onSessionCreated, onCancel }: SessionCreationSidebarProps) {
   const { theme } = useAppStore()
   const { currentUser } = usePinStore()
   const { setActiveSession } = useSessionStore()
+  const { business } = useSettingsStore()
   
-  const { formatCurrency } = useCurrency()
-  const [bills, setBills] = useState<DenominationInput[]>(() => getDefaultDenominations(formatCurrency).bills)
-  const [coins, setCoins] = useState<DenominationInput[]>(() => getDefaultDenominations(formatCurrency).coins)
+  const { formatCurrency, currencyConfig } = useCurrency()
+  const [bills, setBills] = useState<DenominationInput[]>([])
+  const [coins, setCoins] = useState<DenominationInput[]>([])
   const [notes, setNotes] = useState('')
   const [isCreating, setIsCreating] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // Load denominations based on currency settings
+  useEffect(() => {
+    const currencyCode = currencyConfig.code
+    const savedConfig = business.denominationsConfig[currencyCode]
+
+    if (savedConfig) {
+      // Use saved configuration
+      setBills(
+        savedConfig.bills
+          .filter(d => d.enabled)
+          .map(d => ({
+            value: d.value,
+            count: 0,
+            label: formatCurrency(d.value)
+          }))
+      )
+      setCoins(
+        savedConfig.coins
+          .filter(d => d.enabled)
+          .map(d => ({
+            value: d.value,
+            count: 0,
+            label: formatCurrency(d.value)
+          }))
+      )
+    } else {
+      // Use defaults from currency configuration
+      const defaults = getDenominationsForCurrency(currencyCode)
+      setBills(
+        defaults.bills.map(value => ({
+          value,
+          count: 0,
+          label: formatCurrency(value)
+        }))
+      )
+      setCoins(
+        defaults.coins.map(value => ({
+          value,
+          count: 0,
+          label: formatCurrency(value)
+        }))
+      )
+    }
+  }, [currencyConfig.code, business.denominationsConfig, formatCurrency])
 
   const calculateTotal = (denominations: DenominationInput[]) => {
     return denominations.reduce((sum, d) => sum + (d.value * d.count), 0)

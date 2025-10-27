@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react'
-import { useAppStore, useSessionStore } from '../../stores'
+import { useAppStore, useSessionStore, useSettingsStore } from '../../stores'
 import { posSessionAPI, type SessionSummary } from '../../services/api'
 import { Button, Input } from '../common'
 import { NumberInput } from '../forms'
+import { useCurrency } from '../../hooks/useCurrency'
+import { getDenominationsForCurrency } from '../../config/currencyDenominations'
 
 interface SessionClosureDialogProps {
   onSessionClosed: () => void
@@ -15,34 +17,64 @@ interface DenominationInput {
   label: string
 }
 
-const BILL_DENOMINATIONS: DenominationInput[] = [
-  { value: 100, count: 0, label: '$100' },
-  { value: 50, count: 0, label: '$50' },
-  { value: 20, count: 0, label: '$20' },
-  { value: 10, count: 0, label: '$10' },
-  { value: 5, count: 0, label: '$5' },
-  { value: 1, count: 0, label: '$1' }
-]
-
-const COIN_DENOMINATIONS: DenominationInput[] = [
-  { value: 1, count: 0, label: '$1' },
-  { value: 0.25, count: 0, label: '25¢' },
-  { value: 0.10, count: 0, label: '10¢' },
-  { value: 0.05, count: 0, label: '5¢' },
-  { value: 0.01, count: 0, label: '1¢' }
-]
-
 export function SessionClosureDialog({ onSessionClosed, onCancel }: SessionClosureDialogProps) {
   const { theme } = useAppStore()
   const { activeSession, clearSession } = useSessionStore()
+  const { business } = useSettingsStore()
+  const { formatCurrency, currencyConfig } = useCurrency()
   
-  const [bills, setBills] = useState<DenominationInput[]>(BILL_DENOMINATIONS)
-  const [coins, setCoins] = useState<DenominationInput[]>(COIN_DENOMINATIONS)
+  const [bills, setBills] = useState<DenominationInput[]>([])
+  const [coins, setCoins] = useState<DenominationInput[]>([])
   const [notes, setNotes] = useState('')
   const [isClosing, setIsClosing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [summary, setSummary] = useState<SessionSummary | null>(null)
   const [isLoadingSummary, setIsLoadingSummary] = useState(true)
+
+  // Load denominations based on currency settings
+  useEffect(() => {
+    const currencyCode = currencyConfig.code
+    const savedConfig = business.denominationsConfig[currencyCode]
+
+    if (savedConfig) {
+      // Use saved configuration
+      setBills(
+        savedConfig.bills
+          .filter(d => d.enabled)
+          .map(d => ({
+            value: d.value,
+            count: 0,
+            label: formatCurrency(d.value)
+          }))
+      )
+      setCoins(
+        savedConfig.coins
+          .filter(d => d.enabled)
+          .map(d => ({
+            value: d.value,
+            count: 0,
+            label: formatCurrency(d.value)
+          }))
+      )
+    } else {
+      // Use defaults from currency configuration
+      const defaults = getDenominationsForCurrency(currencyCode)
+      setBills(
+        defaults.bills.map(value => ({
+          value,
+          count: 0,
+          label: formatCurrency(value)
+        }))
+      )
+      setCoins(
+        defaults.coins.map(value => ({
+          value,
+          count: 0,
+          label: formatCurrency(value)
+        }))
+      )
+    }
+  }, [currencyConfig.code, business.denominationsConfig, formatCurrency])
 
   useEffect(() => {
     if (activeSession) {

@@ -262,6 +262,14 @@ def get_default_settings() -> List[Dict[str, Any]]:
             'data_type': 'json',
             'description': 'Currency configuration and formatting options'
         },
+        {
+            'section': 'business',
+            'key': 'denominationsConfig',
+            'value': json.dumps({}),
+            'default_value': json.dumps({}),
+            'data_type': 'json',
+            'description': 'Cash denominations configuration per currency'
+        },
         
         # ===== TAX SETTINGS =====
         {

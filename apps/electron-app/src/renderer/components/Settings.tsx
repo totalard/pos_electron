@@ -3,6 +3,7 @@ import { useAppStore, useSettingsStore } from '../stores'
 import { SettingsNavigation } from './settings/SettingsNavigation'
 import { GeneralPanel } from './settings/GeneralPanel'
 import { BusinessPanel } from './settings/BusinessPanel'
+import { DenominationManagementPanel } from './settings/DenominationManagementPanel'
 import { TaxesPanel } from './settings/TaxesPanel'
 import { PaymentsPanel } from './settings/PaymentsPanel'
 import { HardwarePanel } from './settings/HardwarePanel'
@@ -40,6 +41,8 @@ export function Settings({ onBack }: SettingsProps) {
         return <GeneralPanel />
       case 'business':
         return <BusinessPanel />
+      case 'denominations':
+        return <DenominationManagementPanel />
       case 'taxes':
         return <TaxesPanel />
       case 'payments':

@@ -9,6 +9,7 @@ export type BusinessMode = 'restaurant' | 'retail'
 export type SettingsSection =
   | 'general'
   | 'business'
+  | 'denominations'
   | 'taxes'
   | 'payments'
   | 'hardware'
@@ -42,6 +43,18 @@ export interface GeneralSettings {
   timezone: string
 }
 
+export interface DenominationConfig {
+  value: number
+  enabled: boolean
+  label?: string
+}
+
+export interface CurrencyDenominationsConfig {
+  bills: DenominationConfig[]
+  coins: DenominationConfig[]
+  useDefaults: boolean
+}
+
 export interface BusinessSettings {
   mode: BusinessMode
   enableTableManagement: boolean // Restaurant mode
@@ -73,6 +86,7 @@ export interface BusinessSettings {
       }
     }
   }
+  denominationsConfig: Record<string, CurrencyDenominationsConfig>
 }
 
 export interface TaxSettings {
@@ -574,7 +588,8 @@ const initialState = {
           decimalPlaces: 2
         }
       }
-    }
+    },
+    denominationsConfig: {}
   },
 
   taxes: {
