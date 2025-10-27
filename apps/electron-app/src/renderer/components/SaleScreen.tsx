@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAppStore, usePOSStore, useProductStore, useSettingsStore, useSessionStore, usePinStore } from '../stores'
-import { POSHeader, POSFooter, POSProductGrid, POSProductList, POSCategorySidebar, POSCart, POSSearchBar, POSActionButton, CheckoutModal, DiscountDialog, ItemDiscountDialog, CashManagementDialog, EmailReceiptDialog, SessionCreationDialog, SessionClosureDialog, CustomerSelector, POSStatusFooter, TransactionNotesDialog, PriceOverrideDialog, QuantityAdjustDialog, ParkedTransactionsDialog, SessionInfoSidebar, PinConfirmDialog } from './pos'
+import { POSHeader, POSFooter, POSProductGrid, POSProductList, POSCategorySidebar, POSCart, POSSearchBar, POSActionButton, CheckoutModal, DiscountDialog, ItemDiscountDialog, CashManagementDialog, EmailReceiptDialog, SessionCreationSidebar, SessionClosureDialog, CustomerSelector, POSStatusFooter, TransactionNotesDialog, PriceOverrideDialog, QuantityAdjustDialog, ParkedTransactionsDialog, SessionInfoSidebar, PinConfirmDialog } from './pos'
 import { TableSelector, OrderTypeSelector, ProductCustomizationDialog, GuestCountSelector, AdditionalChargesSelector, AddressBookManager } from './restaurant'
 import { ConfirmDialog, ResizablePanel } from './common'
 import { useBarcodeScanner } from '../hooks'
@@ -680,6 +680,45 @@ export function SaleScreen({ onBack }: SaleScreenProps) {
     </div>
   )
 
+  // Show loading state while checking session
+  if (isCheckingSession) {
+    return (
+      <div className={`
+        fixed inset-0 z-50 flex items-center justify-center
+        ${theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'}
+      `}>
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-solid border-current border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite] mb-4"
+            style={{ borderColor: theme === 'dark' ? '#60a5fa' : '#3b82f6', borderRightColor: 'transparent' }}
+          />
+          <p className={`text-lg font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+            Loading session...
+          </p>
+        </div>
+      </div>
+    )
+  }
+
+  // Show session creation sidebar if no active session
+  if (!activeSession) {
+    return (
+      <div className={`
+        fixed inset-0 z-50 flex items-center justify-center
+        ${theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'}
+      `}>
+        <SessionCreationSidebar
+          isOpen={true}
+          onSessionCreated={() => {
+            setShowSessionCreation(false)
+          }}
+          onCancel={() => {
+            onBack()
+          }}
+        />
+      </div>
+    )
+  }
+
   return (
     <div className={`
       fixed inset-0 z-50 flex flex-col
@@ -844,18 +883,6 @@ export function SaleScreen({ onBack }: SaleScreenProps) {
         </>
       )}
 
-      {/* Session Dialogs */}
-      {showSessionCreation && (
-        <SessionCreationDialog
-          onSessionCreated={() => {
-            setShowSessionCreation(false)
-          }}
-          onCancel={() => {
-            // User must create a session to use POS
-            onBack()
-          }}
-        />
-      )}
 
       {showSessionClosure && (
         <SessionClosureDialog

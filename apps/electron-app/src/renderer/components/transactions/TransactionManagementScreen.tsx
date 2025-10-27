@@ -3,6 +3,7 @@ import { useAppStore } from '../../stores'
 import { PageHeader, PageContainer } from '../layout'
 import { Button, Input, ThemeToggle } from '../common'
 import { DateRangePicker } from '../forms'
+import { useCurrency } from '../../hooks/useCurrency'
 
 interface TransactionManagementScreenProps {
   onBack: () => void
@@ -36,6 +37,7 @@ const API_BASE_URL = 'http://localhost:8000/api'
 
 export function TransactionManagementScreen({ onBack }: TransactionManagementScreenProps) {
   const { theme } = useAppStore()
+  const { formatCurrency } = useCurrency()
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [summary, setSummary] = useState<TransactionSummary | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -127,12 +129,6 @@ export function TransactionManagementScreen({ onBack }: TransactionManagementScr
     setCurrentPage(1)
   }
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
-    }).format(amount)
-  }
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleString('en-US', {

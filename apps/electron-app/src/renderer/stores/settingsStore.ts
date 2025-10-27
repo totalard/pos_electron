@@ -1350,7 +1350,13 @@ export const useSettingsStore = create<SettingsState>()(
       name: 'settings-storage',
       partialize: (state) => ({
         selectedSection: state.selectedSection,
-        display: state.display
+        display: state.display,
+        business: state.business,
+        general: state.general,
+        taxes: state.taxes,
+        payments: state.payments,
+        inventory: state.inventory,
+        receipts: state.receipts
       })
     }
   )
