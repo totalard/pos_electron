@@ -4,11 +4,13 @@ import { useInternetConnection } from '../../hooks'
 export interface InternetStatusIndicatorProps {
   showLabel?: boolean
   size?: 'sm' | 'md' | 'lg'
+  showTooltip?: boolean
 }
 
 export function InternetStatusIndicator({ 
   showLabel = false, 
-  size = 'md' 
+  size = 'md',
+  showTooltip = true
 }: InternetStatusIndicatorProps) {
   const { theme } = useAppStore()
   const { isOnline, isChecking } = useInternetConnection()
@@ -31,10 +33,25 @@ export function InternetStatusIndicator({
     lg: 'text-base'
   }
 
+  const getTooltipText = () => {
+    if (isChecking) return 'Checking connection...'
+    if (isOnline) return 'Internet connected'
+    return 'No internet connection'
+  }
+
+  const containerClasses = `flex items-center gap-2 transition-all duration-200 ${
+    showLabel ? 'px-3 py-1.5 rounded-lg' : ''
+  } ${
+    showLabel ? (theme === 'dark' ? 'bg-gray-800/50' : 'bg-gray-100/50') : ''
+  } ${
+    showTooltip ? 'cursor-help' : ''
+  }`
+
   return (
-    <div className={`flex items-center gap-2 ${showLabel ? 'px-3 py-1.5 rounded-lg' : ''} ${
-      showLabel ? (theme === 'dark' ? 'bg-gray-800/50' : 'bg-gray-100/50') : ''
-    }`}>
+    <div 
+      className={containerClasses}
+      title={showTooltip ? getTooltipText() : undefined}
+    >
       {isChecking ? (
         <>
           <div className={`${sizeClasses[size]} rounded-full bg-yellow-500 animate-pulse`} />
@@ -47,7 +64,7 @@ export function InternetStatusIndicator({
       ) : isOnline ? (
         <>
           <svg 
-            className={`${iconSizeClasses[size]} ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`} 
+            className={`${iconSizeClasses[size]} ${theme === 'dark' ? 'text-green-400' : 'text-green-600'} transition-colors duration-200`} 
             fill="none" 
             stroke="currentColor" 
             viewBox="0 0 24 24"
@@ -68,7 +85,7 @@ export function InternetStatusIndicator({
       ) : (
         <>
           <svg 
-            className={`${iconSizeClasses[size]} ${theme === 'dark' ? 'text-red-400' : 'text-red-600'}`} 
+            className={`${iconSizeClasses[size]} ${theme === 'dark' ? 'text-red-400' : 'text-red-600'} transition-colors duration-200`} 
             fill="none" 
             stroke="currentColor" 
             viewBox="0 0 24 24"

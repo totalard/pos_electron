@@ -168,15 +168,15 @@ export function InventoryScreen({ onBack }: InventoryScreenProps) {
           <ErrorMessage message={error} className="mb-4" />
         )}
 
-        {/* Loading State */}
+        {/* Loading State - Only show spinner during initial load when no stats are available */}
         {isLoading && !stats && (
           <div className="flex items-center justify-center py-20">
             <LoadingSpinner size="lg" />
           </div>
         )}
 
-        {/* Content Based on View Mode */}
-        {!isLoading && (
+        {/* Content Based on View Mode - Show content once initial data is loaded */}
+        {stats && (
           <>
             {viewMode === 'overview' && <EnhancedInventoryDashboard />}
             {viewMode === 'transactions' && <EnhancedStockTransactionsList />}

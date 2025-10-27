@@ -8,7 +8,7 @@ export interface InternetConnectionStatus {
 
 /**
  * Hook to monitor internet connection status
- * Checks both browser online status and actual connectivity
+ * Uses Electron IPC for reliable network checks, with fallback to browser API
  */
 export function useInternetConnection(checkInterval: number = 30000) {
   const [status, setStatus] = useState<InternetConnectionStatus>({
@@ -17,40 +17,42 @@ export function useInternetConnection(checkInterval: number = 30000) {
     lastChecked: null
   })
 
-  // Check actual internet connectivity by making a request
+  // Check actual internet connectivity
   const checkConnectivity = async () => {
     setStatus(prev => ({ ...prev, isChecking: true }))
     
     try {
-      // Use a reliable endpoint that supports CORS
-      const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 5000) // 5 second timeout
+      let connected = navigator.onLine // Start with browser status
       
-      // Try multiple endpoints for reliability
-      const endpoints = [
-        'https://dns.google/resolve?name=google.com&type=A',
-        'https://1.1.1.1/cdn-cgi/trace'
-      ]
-      
-      let connected = false
-      for (const endpoint of endpoints) {
+      // Try to use Electron IPC for more reliable check
+      if (window.electronAPI?.checkNetworkStatus) {
         try {
-          const response = await fetch(endpoint, {
+          const result = await window.electronAPI.checkNetworkStatus()
+          connected = result.isOnline
+        } catch (error) {
+          // If IPC fails, fall back to browser API
+          console.debug('IPC network check failed, using browser API', error)
+          connected = navigator.onLine
+        }
+      } else {
+        // Fallback: try a simple fetch to verify connectivity
+        try {
+          const controller = new AbortController()
+          const timeoutId = setTimeout(() => controller.abort(), 5000)
+          
+          const response = await fetch('https://www.google.com/generate_204', {
             method: 'GET',
             cache: 'no-cache',
             signal: controller.signal
           })
           
-          if (response.ok) {
-            connected = true
-            break
-          }
+          clearTimeout(timeoutId)
+          connected = response.ok || response.status === 204
         } catch {
-          continue
+          // If fetch fails, use browser online status
+          connected = navigator.onLine
         }
       }
-      
-      clearTimeout(timeoutId)
       
       setStatus({
         isOnline: connected,
@@ -58,8 +60,9 @@ export function useInternetConnection(checkInterval: number = 30000) {
         lastChecked: new Date()
       })
     } catch (error) {
+      console.error('Network check error:', error)
       setStatus({
-        isOnline: false,
+        isOnline: navigator.onLine,
         isChecking: false,
         lastChecked: new Date()
       })

@@ -1,6 +1,7 @@
-import { app, BrowserWindow } from 'electron'
+import { app, BrowserWindow, ipcMain } from 'electron'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { net } from 'electron'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -58,6 +59,40 @@ const createWindow = () => {
     mainWindow = null
   })
 }
+
+// Handle network status check
+ipcMain.handle('check-network-status', async () => {
+  return new Promise((resolve) => {
+    const request = net.request('https://www.google.com')
+    let resolved = false
+    
+    const timeout = setTimeout(() => {
+      if (!resolved) {
+        resolved = true
+        request.abort()
+        resolve({ isOnline: false })
+      }
+    }, 5000)
+    
+    request.on('response', () => {
+      if (!resolved) {
+        resolved = true
+        clearTimeout(timeout)
+        resolve({ isOnline: true })
+      }
+    })
+    
+    request.on('error', () => {
+      if (!resolved) {
+        resolved = true
+        clearTimeout(timeout)
+        resolve({ isOnline: false })
+      }
+    })
+    
+    request.end()
+  })
+})
 
 // This method will be called when Electron has finished initialization
 app.whenReady().then(() => {

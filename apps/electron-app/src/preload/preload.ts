@@ -1,4 +1,4 @@
-import { contextBridge } from 'electron'
+import { contextBridge, ipcRenderer } from 'electron'
 
 // Define the API interface
 export interface IElectronAPI {
@@ -9,6 +9,8 @@ export interface IElectronAPI {
     chrome: string
     electron: string
   }
+  // Network status API
+  checkNetworkStatus: () => Promise<{ isOnline: boolean }>
 }
 
 // Expose protected methods that allow the renderer process to use
@@ -19,7 +21,8 @@ const electronAPI: IElectronAPI = {
     node: process.versions.node,
     chrome: process.versions.chrome,
     electron: process.versions.electron
-  }
+  },
+  checkNetworkStatus: () => ipcRenderer.invoke('check-network-status')
 }
 
 // Use contextBridge to safely expose the API
