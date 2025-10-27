@@ -40,26 +40,57 @@ def user_to_response(user: User) -> UserResponse:
 
 def product_to_response(product: Product) -> ProductResponse:
     """Convert Product model to ProductResponse schema"""
+    # Handle category - it might be a ForeignKey or None
+    category_value = None
+    category_id = None
+    category_name = None
+    
+    if hasattr(product, 'category_id') and product.category_id:
+        category_id = product.category_id
+        # If category is loaded, use its value and name
+        if hasattr(product, 'category') and hasattr(product.category, 'value'):
+            category_value = product.category.value
+            category_name = product.category.name if hasattr(product.category, 'name') else None
+        else:
+            # Fallback to category_id if category object not loaded
+            category_value = str(product.category_id)
+    
+    item_type_value = product.item_type.value if hasattr(product.item_type, 'value') else str(product.item_type)
+    
     return ProductResponse(
+        # Primary fields
         id=product.id,
         name=product.name,
         sku=product.sku,
         barcode=product.barcode,
         description=product.description,
-        item_type=product.item_type.value,
-        category=product.category.value,
+        
+        # New schema fields (required)
+        product_type=item_type_value,
+        category_id=category_id,
+        category_name=category_name,
+        base_price=float(product.selling_price),  # Map selling_price to base_price
         cost_price=float(product.cost_price),
-        selling_price=float(product.selling_price),
-        tax_rate=float(product.tax_rate),
-        track_inventory=product.track_inventory,
-        current_stock=product.current_stock,
-        min_stock_level=product.min_stock_level,
-        max_stock_level=product.max_stock_level,
+        tax_id=None,  # Not implemented yet
+        tax_name=None,  # Not implemented yet
         is_active=product.is_active,
-        image_url=product.image_url,
+        track_inventory=product.track_inventory,
+        stock_quantity=product.current_stock,
+        low_stock_threshold=product.min_stock_level if product.min_stock_level else 0,
+        max_stock_level=product.max_stock_level if product.max_stock_level else 0,
+        image_paths=[product.image_url] if product.image_url else [],
         notes=product.notes,
         created_at=product.created_at,
-        updated_at=product.updated_at
+        updated_at=product.updated_at,
+        
+        # Backward compatibility fields
+        item_type=item_type_value,
+        category=category_value,
+        selling_price=float(product.selling_price),
+        tax_rate=float(product.tax_rate),
+        current_stock=product.current_stock,
+        min_stock_level=product.min_stock_level if product.min_stock_level else 0,
+        image_url=product.image_url
     )
 
 

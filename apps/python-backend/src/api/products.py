@@ -32,178 +32,7 @@ logger = logging.getLogger(__name__)
 
 
 # ============================================================================
-# Product Endpoints
-# ============================================================================
-
-@router.get("/", response_model=List[ProductResponse])
-async def get_all_products(
-    skip: int = Query(0, ge=0),
-    limit: int = Query(100, ge=1, le=1000),
-    is_active: Optional[bool] = None,
-    item_type: Optional[str] = None,
-    category: Optional[str] = None,
-    search: Optional[str] = None
-):
-    """
-    Get all products with optional filtering and pagination.
-
-    - **skip**: Number of records to skip (for pagination)
-    - **limit**: Maximum number of records to return
-    - **is_active**: Filter by active status
-    - **item_type**: Filter by item type (product/service)
-    - **category**: Filter by category
-    - **search**: Search in name, SKU, or barcode
-    """
-    query = Product.all()
-
-    # Apply filters
-    if is_active is not None:
-        query = query.filter(is_active=is_active)
-
-    if item_type:
-        query = query.filter(item_type=item_type)
-
-    if category:
-        query = query.filter(category=category)
-
-    if search:
-        query = query.filter(
-            name__icontains=search
-        ) | query.filter(
-            sku__icontains=search
-        ) | query.filter(
-            barcode__icontains=search
-        )
-
-    # Apply pagination
-    products = await query.offset(skip).limit(limit).all()
-
-    return [product_to_response(product) for product in products]
-
-
-@router.get("/{product_id}", response_model=ProductResponse)
-async def get_product(product_id: int):
-    """Get a specific product by ID"""
-    try:
-        product = await Product.get(id=product_id)
-        return product_to_response(product)
-    except DoesNotExist:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Product with ID {product_id} not found"
-        )
-
-
-@router.post("/", response_model=ProductResponse, status_code=status.HTTP_201_CREATED)
-async def create_product(product_data: ProductCreate, created_by_id: int = 1):
-    """
-    Create a new product or service.
-
-    Note: In production, created_by_id should come from the authenticated session.
-    """
-    try:
-        # Get the creator user
-        creator = await User.get(id=created_by_id)
-
-        # Create product
-        new_product = await Product.create(
-            name=product_data.name,
-            sku=product_data.sku,
-            barcode=product_data.barcode,
-            description=product_data.description,
-            item_type=product_data.item_type,
-            category=product_data.category,
-            cost_price=Decimal(str(product_data.cost_price)),
-            selling_price=Decimal(str(product_data.selling_price)),
-            tax_rate=Decimal(str(product_data.tax_rate)),
-            track_inventory=product_data.track_inventory,
-            current_stock=product_data.current_stock,
-            min_stock_level=product_data.min_stock_level,
-            max_stock_level=product_data.max_stock_level,
-            is_active=product_data.is_active,
-            image_url=product_data.image_url,
-            notes=product_data.notes,
-            created_by=creator
-        )
-
-        logger.info(f"New product created: {new_product.name} (ID: {new_product.id})")
-
-        return product_to_response(new_product)
-
-    except DoesNotExist:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Creator user with ID {created_by_id} not found"
-        )
-    except IntegrityError as e:
-        logger.error(f"Failed to create product: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Failed to create product. SKU or barcode may already exist."
-        )
-
-
-@router.put("/{product_id}", response_model=ProductResponse)
-async def update_product(product_id: int, product_data: ProductUpdate):
-    """Update product information"""
-    try:
-        product = await Product.get(id=product_id)
-
-        # Update only provided fields
-        update_data = product_data.model_dump(exclude_unset=True)
-
-        # Convert float to Decimal for price fields
-        for field in ['cost_price', 'selling_price', 'tax_rate']:
-            if field in update_data and update_data[field] is not None:
-                update_data[field] = Decimal(str(update_data[field]))
-
-        for field, value in update_data.items():
-            setattr(product, field, value)
-
-        await product.save()
-
-        logger.info(f"Product {product_id} updated successfully")
-
-        return product_to_response(product)
-
-    except DoesNotExist:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Product with ID {product_id} not found"
-        )
-    except IntegrityError as e:
-        logger.error(f"Failed to update product: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Failed to update product. SKU or barcode may already exist."
-        )
-
-
-@router.delete("/{product_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_product(product_id: int):
-    """
-    Delete a product (soft delete by setting is_active to False).
-    """
-    try:
-        product = await Product.get(id=product_id)
-
-        # Soft delete
-        product.is_active = False
-        await product.save()
-
-        logger.info(f"Product {product_id} deactivated")
-
-        return None
-
-    except DoesNotExist:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Product with ID {product_id} not found"
-        )
-
-
-# ============================================================================
-# Stock Transaction Endpoints
+# Stock Transaction Endpoints (MUST come before /{product_id} route)
 # ============================================================================
 
 @router.post("/stock-transactions", response_model=StockTransactionResponse, status_code=status.HTTP_201_CREATED)
@@ -296,7 +125,7 @@ async def get_stock_transactions(
 
 
 # ============================================================================
-# Stock Adjustment Endpoints
+# Stock Adjustment Endpoints (MUST come before /{product_id} route)
 # ============================================================================
 
 @router.post("/stock-adjustments", response_model=StockAdjustmentResponse, status_code=status.HTTP_201_CREATED)
@@ -426,3 +255,174 @@ async def get_stock_adjustments(
         ))
 
     return result
+
+
+# ============================================================================
+# Product Endpoints
+# ============================================================================
+
+@router.get("/", response_model=List[ProductResponse])
+async def get_all_products(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=1000),
+    is_active: Optional[bool] = None,
+    item_type: Optional[str] = None,
+    category: Optional[str] = None,
+    search: Optional[str] = None
+):
+    """
+    Get all products with optional filtering and pagination.
+
+    - **skip**: Number of records to skip (for pagination)
+    - **limit**: Maximum number of records to return
+    - **is_active**: Filter by active status
+    - **item_type**: Filter by item type (product/service)
+    - **category**: Filter by category
+    - **search**: Search in name, SKU, or barcode
+    """
+    query = Product.all()
+
+    # Apply filters
+    if is_active is not None:
+        query = query.filter(is_active=is_active)
+
+    if item_type:
+        query = query.filter(item_type=item_type)
+
+    if category:
+        query = query.filter(category=category)
+
+    if search:
+        query = query.filter(
+            name__icontains=search
+        ) | query.filter(
+            sku__icontains=search
+        ) | query.filter(
+            barcode__icontains=search
+        )
+
+    # Apply pagination
+    products = await query.offset(skip).limit(limit).all()
+
+    return [product_to_response(product) for product in products]
+
+
+@router.post("/", response_model=ProductResponse, status_code=status.HTTP_201_CREATED)
+async def create_product(product_data: ProductCreate, created_by_id: int = 1):
+    """
+    Create a new product or service.
+
+    Note: In production, created_by_id should come from the authenticated session.
+    """
+    try:
+        # Get the creator user
+        creator = await User.get(id=created_by_id)
+
+        # Create product
+        new_product = await Product.create(
+            name=product_data.name,
+            sku=product_data.sku,
+            barcode=product_data.barcode,
+            description=product_data.description,
+            item_type=product_data.item_type,
+            category=product_data.category,
+            cost_price=Decimal(str(product_data.cost_price)),
+            selling_price=Decimal(str(product_data.selling_price)),
+            tax_rate=Decimal(str(product_data.tax_rate)),
+            track_inventory=product_data.track_inventory,
+            current_stock=product_data.current_stock,
+            min_stock_level=product_data.min_stock_level,
+            max_stock_level=product_data.max_stock_level,
+            is_active=product_data.is_active,
+            image_url=product_data.image_url,
+            notes=product_data.notes,
+            created_by=creator
+        )
+
+        logger.info(f"New product created: {new_product.name} (ID: {new_product.id})")
+
+        return product_to_response(new_product)
+
+    except DoesNotExist:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Creator user with ID {created_by_id} not found"
+        )
+    except IntegrityError as e:
+        logger.error(f"Failed to create product: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Failed to create product. SKU or barcode may already exist."
+        )
+
+
+@router.get("/{product_id}", response_model=ProductResponse)
+async def get_product(product_id: int):
+    """Get a specific product by ID"""
+    try:
+        product = await Product.get(id=product_id)
+        return product_to_response(product)
+    except DoesNotExist:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Product with ID {product_id} not found"
+        )
+
+
+@router.put("/{product_id}", response_model=ProductResponse)
+async def update_product(product_id: int, product_data: ProductUpdate):
+    """Update product information"""
+    try:
+        product = await Product.get(id=product_id)
+
+        # Update only provided fields
+        update_data = product_data.model_dump(exclude_unset=True)
+
+        # Convert float to Decimal for price fields
+        for field in ['cost_price', 'selling_price', 'tax_rate']:
+            if field in update_data and update_data[field] is not None:
+                update_data[field] = Decimal(str(update_data[field]))
+
+        for field, value in update_data.items():
+            setattr(product, field, value)
+
+        await product.save()
+
+        logger.info(f"Product {product_id} updated successfully")
+
+        return product_to_response(product)
+
+    except DoesNotExist:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Product with ID {product_id} not found"
+        )
+    except IntegrityError as e:
+        logger.error(f"Failed to update product: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Failed to update product. SKU or barcode may already exist."
+        )
+
+
+@router.delete("/{product_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_product(product_id: int):
+    """
+    Delete a product (soft delete by setting is_active to False).
+    """
+    try:
+        product = await Product.get(id=product_id)
+
+        # Soft delete
+        product.is_active = False
+        await product.save()
+
+        logger.info(f"Product {product_id} deactivated")
+
+        return None
+
+    except DoesNotExist:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Product with ID {product_id} not found"
+        )

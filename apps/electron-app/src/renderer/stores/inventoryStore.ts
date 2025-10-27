@@ -214,29 +214,76 @@ export const useInventoryStore = create<InventoryState>()(
         try {
           const { transactionFilters, pagination } = get()
 
-          const params = new URLSearchParams()
-          params.append('skip', pagination.skip.toString())
-          params.append('limit', pagination.limit.toString())
-
-          if (transactionFilters.search) params.append('search', transactionFilters.search)
-          if (transactionFilters.transactionType) params.append('transaction_type', transactionFilters.transactionType)
-          if (transactionFilters.productId) params.append('product_id', transactionFilters.productId.toString())
-          if (transactionFilters.dateFrom) params.append('date_from', transactionFilters.dateFrom)
-          if (transactionFilters.dateTo) params.append('date_to', transactionFilters.dateTo)
-
-          const response = await fetch(`${API_BASE_URL}/products/stock-transactions?${params}`)
+          // Build query parameters according to backend expectations
+          const queryParams = new URLSearchParams()
           
-          if (!response.ok) {
-            const errorData = await response.json().catch(() => ({ detail: 'Unknown error' }))
-            throw new Error(errorData.detail || `HTTP ${response.status}: Failed to fetch transactions`)
+          // Pagination parameters
+          if (pagination.skip !== undefined) {
+            queryParams.append('skip', pagination.skip.toString())
+          }
+          if (pagination.limit !== undefined) {
+            queryParams.append('limit', pagination.limit.toString())
           }
 
-          const transactions = await response.json()
+          // Filter parameters - match backend expected parameter names
+          if (transactionFilters.transactionType) {
+            queryParams.append('transaction_type', transactionFilters.transactionType)
+          }
+          if (transactionFilters.productId) {
+            queryParams.append('product_id', transactionFilters.productId.toString())
+          }
+          // Note: Backend doesn't support search or date filtering in the current implementation
+          // We'll handle these filters client-side
+
+          const response = await fetch(`${API_BASE_URL}/products/stock-transactions?${queryParams}`, {
+            headers: {
+              'Accept': 'application/json',
+              'Content-Type': 'application/json'
+            },
+            credentials: 'include'  // Include cookies for authentication
+          })
+          
+          if (!response.ok) {
+            let errorMessage = `HTTP ${response.status}: Failed to fetch transactions`
+            try {
+              const errorData = await response.json()
+              errorMessage = errorData.detail || errorData.message || errorMessage
+            } catch (e) {
+              // If we can't parse the error response, use the default message
+            }
+            throw new Error(errorMessage)
+          }
+
+          const result = await response.json()
+          
+          // The backend returns an array of transactions directly
+          let transactions = Array.isArray(result) ? result : [];
+          
+          // Apply client-side filtering for unsupported filters
+          if (transactionFilters.dateFrom) {
+            const fromDate = new Date(transactionFilters.dateFrom);
+            transactions = transactions.filter(t => new Date(t.created_at) >= fromDate);
+          }
+          if (transactionFilters.dateTo) {
+            const toDate = new Date(transactionFilters.dateTo);
+            toDate.setHours(23, 59, 59, 999);
+            transactions = transactions.filter(t => new Date(t.created_at) <= toDate);
+          }
+          if (transactionFilters.search) {
+            const searchTerm = transactionFilters.search.toLowerCase().trim();
+            transactions = transactions.filter(t => 
+              t.reference_number?.toLowerCase().includes(searchTerm) ||
+              t.notes?.toLowerCase().includes(searchTerm) ||
+              t.product_name?.toLowerCase().includes(searchTerm)
+            );
+          }
+          
+          const total = transactions.length;
 
           set({
             transactions,
             isLoading: false,
-            pagination: { ...pagination, total: transactions.length }
+            pagination: { ...pagination, total }
           })
         } catch (error) {
           set({
@@ -250,7 +297,7 @@ export const useInventoryStore = create<InventoryState>()(
         set({ isLoading: true, error: null })
 
         try {
-          const response = await fetch(`${API_BASE_URL}/inventory/transactions/${id}`)
+          const response = await fetch(`${API_BASE_URL}/products/stock-transactions/${id}`)
           if (!response.ok) throw new Error('Failed to fetch transaction')
 
           const transaction = await response.json()
@@ -267,7 +314,7 @@ export const useInventoryStore = create<InventoryState>()(
         set({ isLoading: true, error: null })
 
         try {
-          const response = await fetch(`${API_BASE_URL}/inventory/transactions`, {
+          const response = await fetch(`${API_BASE_URL}/products/stock-transactions`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data)
@@ -310,20 +357,57 @@ export const useInventoryStore = create<InventoryState>()(
           params.append('skip', pagination.skip.toString())
           params.append('limit', pagination.limit.toString())
 
-          if (adjustmentFilters.search) params.append('search', adjustmentFilters.search)
-          if (adjustmentFilters.isCompleted !== null) params.append('is_completed', adjustmentFilters.isCompleted.toString())
-          if (adjustmentFilters.dateFrom) params.append('date_from', adjustmentFilters.dateFrom)
-          if (adjustmentFilters.dateTo) params.append('date_to', adjustmentFilters.dateTo)
+          // Note: Backend doesn't support search, is_completed, date filtering yet
+          // These filters would need to be applied client-side if needed
 
-          const response = await fetch(`${API_BASE_URL}/inventory/adjustments?${params}`)
-          if (!response.ok) throw new Error('Failed to fetch adjustments')
+          const response = await fetch(`${API_BASE_URL}/products/stock-adjustments?${params}`, {
+            headers: {
+              'Accept': 'application/json',
+              'Content-Type': 'application/json'
+            },
+            credentials: 'include'
+          })
+          
+          if (!response.ok) {
+            let errorMessage = `HTTP ${response.status}: Failed to fetch adjustments`
+            try {
+              const errorData = await response.json()
+              errorMessage = errorData.detail || errorData.message || errorMessage
+            } catch (e) {
+              // If we can't parse the error response, use the default message
+            }
+            throw new Error(errorMessage)
+          }
 
           const adjustments = await response.json()
 
+          // Apply client-side filtering
+          let filteredAdjustments = Array.isArray(adjustments) ? adjustments : []
+          
+          if (adjustmentFilters.isCompleted !== null) {
+            filteredAdjustments = filteredAdjustments.filter(a => a.is_completed === adjustmentFilters.isCompleted)
+          }
+          if (adjustmentFilters.dateFrom) {
+            const fromDate = new Date(adjustmentFilters.dateFrom)
+            filteredAdjustments = filteredAdjustments.filter(a => new Date(a.adjustment_date) >= fromDate)
+          }
+          if (adjustmentFilters.dateTo) {
+            const toDate = new Date(adjustmentFilters.dateTo)
+            toDate.setHours(23, 59, 59, 999)
+            filteredAdjustments = filteredAdjustments.filter(a => new Date(a.adjustment_date) <= toDate)
+          }
+          if (adjustmentFilters.search) {
+            const searchTerm = adjustmentFilters.search.toLowerCase().trim()
+            filteredAdjustments = filteredAdjustments.filter(a => 
+              a.reason?.toLowerCase().includes(searchTerm) ||
+              a.notes?.toLowerCase().includes(searchTerm)
+            )
+          }
+
           set({
-            adjustments,
+            adjustments: filteredAdjustments,
             isLoading: false,
-            pagination: { ...pagination, total: adjustments.length }
+            pagination: { ...pagination, total: filteredAdjustments.length }
           })
         } catch (error) {
           set({
@@ -337,7 +421,7 @@ export const useInventoryStore = create<InventoryState>()(
         set({ isLoading: true, error: null })
 
         try {
-          const response = await fetch(`${API_BASE_URL}/inventory/adjustments/${id}`)
+          const response = await fetch(`${API_BASE_URL}/products/stock-adjustments/${id}`)
           if (!response.ok) throw new Error('Failed to fetch adjustment')
 
           const adjustment = await response.json()
@@ -354,13 +438,33 @@ export const useInventoryStore = create<InventoryState>()(
         set({ isLoading: true, error: null })
 
         try {
-          const response = await fetch(`${API_BASE_URL}/inventory/adjustments`, {
+          // Prepare payload matching backend schema
+          const payload = {
+            reason: data.reason,
+            notes: data.notes || null,
+            lines: data.lines || []
+          }
+
+          const response = await fetch(`${API_BASE_URL}/products/stock-adjustments`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
+            headers: { 
+              'Content-Type': 'application/json',
+              'Accept': 'application/json'
+            },
+            credentials: 'include',
+            body: JSON.stringify(payload)
           })
 
-          if (!response.ok) throw new Error('Failed to create adjustment')
+          if (!response.ok) {
+            let errorMessage = 'Failed to create adjustment'
+            try {
+              const errorData = await response.json()
+              errorMessage = errorData.detail || errorData.message || errorMessage
+            } catch (e) {
+              errorMessage = `HTTP ${response.status}: ${errorMessage}`
+            }
+            throw new Error(errorMessage)
+          }
 
           const adjustment = await response.json()
 
@@ -383,7 +487,7 @@ export const useInventoryStore = create<InventoryState>()(
         set({ isLoading: true, error: null })
 
         try {
-          const response = await fetch(`${API_BASE_URL}/inventory/adjustments/${id}`, {
+          const response = await fetch(`${API_BASE_URL}/products/stock-adjustments/${id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data)
@@ -413,7 +517,7 @@ export const useInventoryStore = create<InventoryState>()(
         set({ isLoading: true, error: null })
 
         try {
-          const response = await fetch(`${API_BASE_URL}/inventory/adjustments/${id}/complete`, {
+          const response = await fetch(`${API_BASE_URL}/products/stock-adjustments/${id}/complete`, {
             method: 'POST'
           })
 
@@ -446,7 +550,7 @@ export const useInventoryStore = create<InventoryState>()(
       fetchLowStockProducts: async () => {
         try {
           // Fetch products and filter for low stock
-          const response = await fetch(`${API_BASE_URL}/products?is_active=true`)
+          const response = await fetch(`${API_BASE_URL}/products/?is_active=true`)
           if (!response.ok) throw new Error('Failed to fetch products')
 
           const products = await response.json()
@@ -476,7 +580,7 @@ export const useInventoryStore = create<InventoryState>()(
       fetchStats: async () => {
         try {
           // Fetch products to calculate stats
-          const productsResponse = await fetch(`${API_BASE_URL}/products?is_active=true`)
+          const productsResponse = await fetch(`${API_BASE_URL}/products/?is_active=true`)
           if (!productsResponse.ok) throw new Error('Failed to fetch products')
 
           const products = await productsResponse.json()

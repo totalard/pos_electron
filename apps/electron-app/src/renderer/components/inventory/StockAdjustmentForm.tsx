@@ -74,8 +74,7 @@ export function StockAdjustmentForm({ onClose }: StockAdjustmentFormProps) {
       await createAdjustment({
         reason,
         notes: notes || undefined,
-        lines: lines as any, // Type will be handled by backend
-        is_completed: false
+        lines: lines as any // Type will be handled by backend
       })
       onClose()
     } catch (error) {
