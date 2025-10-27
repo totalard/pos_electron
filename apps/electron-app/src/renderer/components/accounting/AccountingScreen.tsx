@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useAppStore } from '../../stores'
 import { PageHeader } from '../layout'
+import { ThemeToggle } from '../common'
 import { ChartOfAccountsTab } from './ChartOfAccountsTab'
 import { JournalEntriesTab } from './JournalEntriesTab'
 import { ReportsTab } from './ReportsTab'
@@ -26,11 +27,24 @@ export function AccountingScreen({ onBack }: AccountingScreenProps) {
   ]
 
   return (
-    <div className={`h-screen flex flex-col ${theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'}`}>
+    <div className={`
+      h-screen w-screen flex flex-col
+      ${theme === 'dark'
+        ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900'
+        : 'bg-gradient-to-br from-gray-50 via-white to-gray-100'
+      }
+    `}>
       <PageHeader
         title="Accounting"
         subtitle="Manage accounts, journal entries, and financial reports"
+        showBackButton
         onBack={onBack}
+        icon={
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+          </svg>
+        }
+        actions={<ThemeToggle size="md" />}
       />
 
       {/* Tabs */}

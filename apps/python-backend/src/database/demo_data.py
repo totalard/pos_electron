@@ -54,7 +54,18 @@ from .models import (
     TaxInclusionType,
     RoundingMethod,
     Setting,
-    SettingDataType
+    SettingDataType,
+    Account,
+    AccountType,
+    AccountSubType,
+    JournalEntry,
+    JournalEntryLine,
+    JournalEntryStatus,
+    JournalEntryType,
+    FiscalYear,
+    FiscalYearStatus,
+    Purchase,
+    PurchaseStatus
 )
 
 
@@ -1655,6 +1666,11 @@ async def generate_all_demo_data():
         if not user:
             raise Exception("No user found. Please create a user first.")
         
+        # Import accounting demo data functions
+        from .demo_accounting_data import create_demo_accounts, create_demo_fiscal_years
+        from .demo_accounting_data_part2 import create_demo_purchases
+        from .demo_accounting_data_part3 import create_demo_journal_entries
+        
         # Create additional users with edge cases
         additional_users = await create_demo_users()
         all_users = [user] + additional_users
@@ -1706,6 +1722,19 @@ async def generate_all_demo_data():
         # Create normalized settings
         settings = await create_demo_settings()
         
+        # ===== ACCOUNTING DATA =====
+        # Create chart of accounts with balances
+        accounts = await create_demo_accounts()
+        
+        # Create fiscal years (open, closed, locked)
+        fiscal_years = await create_demo_fiscal_years()
+        
+        # Create purchases (all statuses and edge cases)
+        purchases = await create_demo_purchases(all_products)
+        
+        # Create journal entries (double-entry bookkeeping)
+        journal_entries = await create_demo_journal_entries(accounts)
+        
         print("\n" + "="*60)
         print("DEMO DATA GENERATION COMPLETE")
         print("="*60)
@@ -1728,6 +1757,11 @@ async def generate_all_demo_data():
         print(f"Customer Transactions: {len(customer_transactions)}")
         print(f"User Activity Logs: {len(activity_logs)}")
         print(f"Settings: {len(settings)}")
+        print(f"\n--- ACCOUNTING DATA ---")
+        print(f"Accounts: {len(accounts)}")
+        print(f"Fiscal Years: {len(fiscal_years)}")
+        print(f"Purchases: {len(purchases)}")
+        print(f"Journal Entries: {len(journal_entries)}")
         print("="*60 + "\n")
         
         return {
@@ -1745,7 +1779,11 @@ async def generate_all_demo_data():
             "cash_transactions": len(cash_transactions),
             "customer_transactions": len(customer_transactions),
             "activity_logs": len(activity_logs),
-            "settings": len(settings)
+            "settings": len(settings),
+            "accounts": len(accounts),
+            "fiscal_years": len(fiscal_years),
+            "purchases": len(purchases),
+            "journal_entries": len(journal_entries)
         }
         
     except Exception as e:
@@ -1764,6 +1802,19 @@ async def clear_demo_data():
         
         print("Deleting discount usages...")
         await DiscountUsage.all().delete()
+        
+        # Delete accounting data
+        print("Deleting journal entry lines...")
+        await JournalEntryLine.all().delete()
+        
+        print("Deleting journal entries...")
+        await JournalEntry.all().delete()
+        
+        print("Deleting purchases...")
+        await Purchase.all().delete()
+        
+        print("Deleting fiscal years...")
+        await FiscalYear.all().delete()
         
         print("Deleting transaction-related data...")
         await Expense.all().delete()
@@ -1800,6 +1851,9 @@ async def clear_demo_data():
         
         print("Deleting settings...")
         await Setting.all().delete()
+        
+        print("Deleting accounts...")
+        await Account.all().delete()
         
         # Note: We don't delete users as they are critical for system operation
         # Only delete demo users (not the first admin user)
