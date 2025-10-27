@@ -14,6 +14,7 @@ export interface DeviceInfo {
   path?: string
   address?: string
   port?: string
+  useEscPos?: boolean
 }
 
 export interface PrinterConfig {
@@ -60,15 +61,16 @@ export interface IElectronAPI {
     getDevices: () => Promise<{ success: boolean; data?: DeviceInfo[]; error?: string }>
     getDevicesByType: (type: string) => Promise<{ success: boolean; data?: DeviceInfo[]; error?: string }>
     setDeviceType: (deviceId: string, deviceType: string) => Promise<{ success: boolean; error?: string }>
+    setEscPosMode: (deviceId: string, useEscPos: boolean) => Promise<{ success: boolean; error?: string }>
     onHardwareEvent: (callback: (event: HardwareEvent) => void) => () => void
   }
-  
+
   printer: {
     scan: () => Promise<{ success: boolean; data?: DeviceInfo[]; error?: string }>
     connect: (config: PrinterConfig) => Promise<{ success: boolean; error?: string }>
     disconnect: () => Promise<{ success: boolean; error?: string }>
     print: (data: string) => Promise<{ success: boolean; error?: string }>
-    test: () => Promise<{ success: boolean; error?: string }>
+    test: (printerId?: string, useEscPos?: boolean) => Promise<{ success: boolean; error?: string }>
     getStatus: () => Promise<{ success: boolean; data?: any; error?: string }>
     getActive: () => Promise<{ success: boolean; data?: DeviceInfo | null; error?: string }>
   }
@@ -100,20 +102,21 @@ const electronAPI: IElectronAPI = {
     getDevices: () => ipcRenderer.invoke('hardware:get-devices'),
     getDevicesByType: (type: string) => ipcRenderer.invoke('hardware:get-devices-by-type', type),
     setDeviceType: (deviceId: string, deviceType: string) => ipcRenderer.invoke('hardware:set-device-type', deviceId, deviceType),
+    setEscPosMode: (deviceId: string, useEscPos: boolean) => ipcRenderer.invoke('hardware:set-escpos-mode', deviceId, useEscPos),
     onHardwareEvent: (callback: (event: HardwareEvent) => void) => {
       const listener = (_event: any, data: HardwareEvent) => callback(data)
       ipcRenderer.on('hardware-event', listener)
       return () => ipcRenderer.removeListener('hardware-event', listener)
     }
   },
-  
+
   // Printer APIs
   printer: {
     scan: () => ipcRenderer.invoke('printer:scan'),
     connect: (config: PrinterConfig) => ipcRenderer.invoke('printer:connect', config),
     disconnect: () => ipcRenderer.invoke('printer:disconnect'),
     print: (data: string) => ipcRenderer.invoke('printer:print', data),
-    test: () => ipcRenderer.invoke('printer:test'),
+    test: (printerId?: string, useEscPos?: boolean) => ipcRenderer.invoke('printer:test', printerId, useEscPos),
     getStatus: () => ipcRenderer.invoke('printer:status'),
     getActive: () => ipcRenderer.invoke('printer:get-active')
   },

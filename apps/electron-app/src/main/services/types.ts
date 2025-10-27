@@ -16,6 +16,7 @@ export interface DeviceInfo {
   path?: string
   address?: string
   port?: string
+  useEscPos?: boolean // ESC/POS mode for printers (true = ESC/POS, false = standard)
 }
 
 export enum DeviceType {

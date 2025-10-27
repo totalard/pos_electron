@@ -162,6 +162,17 @@ ipcMain.handle('hardware:set-device-type', async (_event, deviceId: string, devi
   }
 })
 
+// Set ESC/POS mode for a device
+ipcMain.handle('hardware:set-escpos-mode', async (_event, deviceId: string, useEscPos: boolean) => {
+  try {
+    const result = hardwareManager.setEscPosMode(deviceId, useEscPos)
+    return { success: result }
+  } catch (error) {
+    console.error('Set ESC/POS mode error:', error)
+    return { success: false, error: String(error) }
+  }
+})
+
 // Printer handlers
 ipcMain.handle('printer:scan', async () => {
   try {
@@ -203,9 +214,9 @@ ipcMain.handle('printer:print', async (_event, data: string) => {
   }
 })
 
-ipcMain.handle('printer:test', async () => {
+ipcMain.handle('printer:test', async (_event, printerId?: string, useEscPos?: boolean) => {
   try {
-    const result = await hardwareManager.testPrinter()
+    const result = await hardwareManager.testPrinter(printerId, useEscPos)
     return { success: result }
   } catch (error) {
     console.error('Printer test error:', error)

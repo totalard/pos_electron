@@ -58,7 +58,7 @@ interface HardwareState {
   connectPrinter: (config: PrinterConfig) => Promise<boolean>
   disconnectPrinter: () => Promise<void>
   printData: (data: string) => Promise<boolean>
-  testPrinter: () => Promise<boolean>
+  testPrinter: (printerId?: string, useEscPos?: boolean) => Promise<boolean>
   updatePrinterStatus: () => Promise<void>
   
   // Scanner actions
@@ -74,6 +74,7 @@ interface HardwareState {
   addLog: (type: 'info' | 'success' | 'warning' | 'error', message: string) => void
   clearLogs: () => void
   setDeviceType: (deviceId: string, deviceType: string) => Promise<boolean>
+  setEscPosMode: (deviceId: string, useEscPos: boolean) => Promise<boolean>
 }
 
 export const useHardwareStore = create<HardwareState>((set, get) => ({
@@ -244,13 +245,14 @@ export const useHardwareStore = create<HardwareState>((set, get) => ({
   },
 
   // Test printer
-  testPrinter: async () => {
+  testPrinter: async (printerId?: string, useEscPos?: boolean) => {
     try {
       const api = getElectronAPI()
       if (!api) return false
-      const result = await api.printer.test()
+      const result = await api.printer.test(printerId, useEscPos)
       if (result.success) {
-        get().addLog('success', 'Test print sent')
+        const mode = useEscPos ? 'ESC/POS' : 'Standard'
+        get().addLog('success', `Test print sent (${mode} mode)`)
         return true
       } else {
         get().addLog('error', `Test print failed: ${result.error}`)
@@ -418,7 +420,7 @@ export const useHardwareStore = create<HardwareState>((set, get) => ({
     try {
       const api = getElectronAPI()
       if (!api) return false
-      
+
       const result = await api.hardware.setDeviceType(deviceId, deviceType)
       if (result.success) {
         get().addLog('success', `Device type set to ${deviceType}`)
@@ -431,6 +433,29 @@ export const useHardwareStore = create<HardwareState>((set, get) => ({
       }
     } catch (error) {
       get().addLog('error', `Set device type error: ${String(error)}`)
+      return false
+    }
+  },
+
+  // Set ESC/POS mode for a device
+  setEscPosMode: async (deviceId: string, useEscPos: boolean) => {
+    try {
+      const api = getElectronAPI()
+      if (!api) return false
+
+      const result = await api.hardware.setEscPosMode(deviceId, useEscPos)
+      if (result.success) {
+        const mode = useEscPos ? 'ESC/POS' : 'Standard'
+        get().addLog('success', `Printer mode set to ${mode}`)
+        // Refresh device lists
+        await get().scanDevices()
+        return true
+      } else {
+        get().addLog('error', `Failed to set printer mode: ${result.error}`)
+        return false
+      }
+    } catch (error) {
+      get().addLog('error', `Set printer mode error: ${String(error)}`)
       return false
     }
   }

@@ -26,6 +26,126 @@ export interface PrintJob {
   error?: string
 }
 
+/**
+ * ESC/POS Command Builder
+ * Provides helper methods to build ESC/POS commands
+ */
+export class EscPosBuilder {
+  private buffer: number[] = []
+
+  /**
+   * Initialize printer
+   */
+  init(): this {
+    this.buffer.push(0x1b, 0x40)
+    return this
+  }
+
+  /**
+   * Set text alignment
+   */
+  align(alignment: 'left' | 'center' | 'right'): this {
+    const alignCode = alignment === 'left' ? 0x00 : alignment === 'center' ? 0x01 : 0x02
+    this.buffer.push(0x1b, 0x61, alignCode)
+    return this
+  }
+
+  /**
+   * Set text size
+   */
+  size(width: number, height: number): this {
+    const size = ((width - 1) << 4) | (height - 1)
+    this.buffer.push(0x1d, 0x21, size)
+    return this
+  }
+
+  /**
+   * Set text bold
+   */
+  bold(enabled: boolean): this {
+    this.buffer.push(0x1b, 0x45, enabled ? 0x01 : 0x00)
+    return this
+  }
+
+  /**
+   * Set text underline
+   */
+  underline(mode: 0 | 1 | 2): this {
+    this.buffer.push(0x1b, 0x2d, mode)
+    return this
+  }
+
+  /**
+   * Add text
+   */
+  text(text: string): this {
+    const textBuffer = Buffer.from(text, 'utf-8')
+    this.buffer.push(...textBuffer)
+    return this
+  }
+
+  /**
+   * Add line feed
+   */
+  feed(lines: number = 1): this {
+    for (let i = 0; i < lines; i++) {
+      this.buffer.push(0x0a)
+    }
+    return this
+  }
+
+  /**
+   * Cut paper
+   */
+  cut(mode: 'full' | 'partial' = 'full'): this {
+    this.buffer.push(0x1d, 0x56, mode === 'full' ? 0x00 : 0x01)
+    return this
+  }
+
+  /**
+   * Open cash drawer
+   */
+  openDrawer(): this {
+    this.buffer.push(0x1b, 0x70, 0x00, 0x19, 0xfa)
+    return this
+  }
+
+  /**
+   * Add barcode
+   */
+  barcode(data: string, type: number = 73): this {
+    this.buffer.push(0x1d, 0x6b, type, data.length)
+    const barcodeBuffer = Buffer.from(data, 'utf-8')
+    this.buffer.push(...barcodeBuffer)
+    return this
+  }
+
+  /**
+   * Add QR code
+   */
+  qrCode(data: string, size: number = 3): this {
+    // Set QR code size
+    this.buffer.push(0x1d, 0x28, 0x6b, 0x03, 0x00, 0x31, 0x43, size)
+    // Set error correction level
+    this.buffer.push(0x1d, 0x28, 0x6b, 0x03, 0x00, 0x31, 0x45, 0x30)
+    // Store data
+    const dataLength = data.length + 3
+    this.buffer.push(0x1d, 0x28, 0x6b, dataLength & 0xff, (dataLength >> 8) & 0xff, 0x31, 0x50, 0x30)
+    const qrBuffer = Buffer.from(data, 'utf-8')
+    this.buffer.push(...qrBuffer)
+    // Print QR code
+    this.buffer.push(0x1d, 0x28, 0x6b, 0x03, 0x00, 0x31, 0x51, 0x30)
+    return this
+  }
+
+  /**
+   * Build and return the buffer
+   */
+  build(): Buffer {
+    return Buffer.from(this.buffer)
+  }
+}
+
 export class PrinterService extends EventEmitter {
   private connectedPrinters: Map<string, DeviceInfo> = new Map()
   private activePrinter: DeviceInfo | null = null
@@ -394,17 +514,58 @@ export class PrinterService extends EventEmitter {
   /**
    * Test print
    */
-  async testPrint(): Promise<boolean> {
-    const testData = Buffer.from([
-      0x1b, 0x40, // Initialize printer
-      0x1b, 0x61, 0x01, // Center align
-      ...Buffer.from('TEST PRINT\n'),
-      ...Buffer.from('Printer is working!\n'),
-      0x1b, 0x64, 0x03, // Feed 3 lines
-      0x1d, 0x56, 0x00 // Cut paper
-    ])
+  async testPrint(useEscPos: boolean = true): Promise<boolean> {
+    if (useEscPos) {
+      // ESC/POS mode - use thermal printer commands
+      const testData = new EscPosBuilder()
+        .init()
+        .align('center')
+        .size(2, 2)
+        .bold(true)
+        .text('TEST PRINT')
+        .feed(1)
+        .size(1, 1)
+        .bold(false)
+        .text('ESC/POS Mode')
+        .feed(1)
+        .align('left')
+        .text('Printer is working correctly!')
+        .feed(1)
+        .text(`Date: ${new Date().toLocaleString()}`)
+        .feed(1)
+        .text('This is a test receipt.')
+        .feed(1)
+        .align('center')
+        .text('--------------------------------')
+        .feed(1)
+        .text('Thank you!')
+        .feed(3)
+        .cut()
+        .build()
 
-    return await this.print(testData)
+      return await this.print(testData)
+    } else {
+      // Standard mode - use plain text for regular printers
+      const testText = `
+========================================
+           TEST PRINT
+========================================
+
+Standard Printer Mode
+
+Printer is working correctly!
+Date: ${new Date().toLocaleString()}
+
+This is a test receipt.
+
+----------------------------------------
+           Thank you!
+========================================
+
+
+`
+      return await this.print(testText)
+    }
   }
 
   /**

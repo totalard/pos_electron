@@ -32,13 +32,16 @@ export function HardwareDeviceManager() {
     disconnectScanner,
     testScanner,
     clearLogs,
-    setDeviceType
+    setDeviceType,
+    setEscPosMode
   } = useHardwareStore()
 
   const [selectedTab, setSelectedTab] = useState<'printers' | 'scanners' | 'devices' | 'logs'>('printers')
   const [showConnectDialog, setShowConnectDialog] = useState(false)
   const [selectedDevice, setSelectedDevice] = useState<DeviceInfo | null>(null)
   const [apiAvailable, setApiAvailable] = useState(false)
+  const [selectedTestPrinter, setSelectedTestPrinter] = useState<string>('')
+  const [useEscPosMode, setUseEscPosMode] = useState(true)
 
   useEffect(() => {
     // Check if Electron API is available
@@ -236,21 +239,95 @@ export function HardwareDeviceManager() {
               <h3 className={`text-lg font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
                 Available Printers ({printers.length})
               </h3>
-              {activePrinter && (
-                <div className="flex space-x-2">
-                  <button
-                    onClick={testPrinter}
-                    className={`px-4 py-2 rounded-lg font-medium ${
-                      theme === 'dark'
-                        ? 'bg-green-600 hover:bg-green-700 text-white'
-                        : 'bg-green-500 hover:bg-green-600 text-white'
-                    }`}
-                  >
-                    Test Print
-                  </button>
+            </div>
+
+            {/* Test Print Section */}
+            {printers.length > 0 && (
+              <div className={`p-4 rounded-lg border ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'}`}>
+                <h4 className={`text-sm font-semibold mb-3 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                  Test Print
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  {/* Printer Selection */}
+                  <div>
+                    <label className={`block text-xs font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                      Select Printer
+                    </label>
+                    <select
+                      value={selectedTestPrinter}
+                      onChange={(e) => setSelectedTestPrinter(e.target.value)}
+                      className={`w-full px-3 py-2 rounded-lg border text-sm ${
+                        theme === 'dark'
+                          ? 'bg-gray-700 border-gray-600 text-white'
+                          : 'bg-white border-gray-300 text-gray-900'
+                      }`}
+                    >
+                      <option value="">Active Printer</option>
+                      {printers.map((printer) => (
+                        <option key={printer.id} value={printer.id}>
+                          {printer.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* ESC/POS Mode Toggle */}
+                  <div>
+                    <label className={`block text-xs font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                      Print Mode
+                    </label>
+                    <select
+                      value={useEscPosMode ? 'escpos' : 'standard'}
+                      onChange={(e) => setUseEscPosMode(e.target.value === 'escpos')}
+                      className={`w-full px-3 py-2 rounded-lg border text-sm ${
+                        theme === 'dark'
+                          ? 'bg-gray-700 border-gray-600 text-white'
+                          : 'bg-white border-gray-300 text-gray-900'
+                      }`}
+                    >
+                      <option value="escpos">ESC/POS (Thermal)</option>
+                      <option value="standard">Standard Printer</option>
+                    </select>
+                  </div>
+
+                  {/* Test Print Button */}
+                  <div className="flex items-end">
+                    <button
+                      onClick={() => testPrinter(selectedTestPrinter || undefined, useEscPosMode)}
+                      disabled={printers.length === 0}
+                      className={`w-full px-4 py-2 rounded-lg font-medium ${
+                        theme === 'dark'
+                          ? 'bg-green-600 hover:bg-green-700 text-white disabled:bg-gray-700 disabled:text-gray-500'
+                          : 'bg-green-500 hover:bg-green-600 text-white disabled:bg-gray-300 disabled:text-gray-500'
+                      }`}
+                    >
+                      Test Print
+                    </button>
+                  </div>
+                </div>
+                <p className={`text-xs mt-2 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+                  {useEscPosMode
+                    ? '📄 ESC/POS mode uses thermal printer commands (recommended for receipt printers)'
+                    : '📄 Standard mode uses plain text (for regular office printers)'}
+                </p>
+              </div>
+            )}
+
+            {/* Active Printer Disconnect */}
+            {activePrinter && (
+              <div className={`p-3 rounded-lg border ${theme === 'dark' ? 'bg-blue-900/20 border-blue-700' : 'bg-blue-50 border-blue-200'}`}>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className={`text-sm font-medium ${theme === 'dark' ? 'text-blue-300' : 'text-blue-900'}`}>
+                      Active Printer: {activePrinter.name}
+                    </p>
+                    <p className={`text-xs ${theme === 'dark' ? 'text-blue-400' : 'text-blue-700'}`}>
+                      {activePrinter.connection} • {activePrinter.status}
+                    </p>
+                  </div>
                   <button
                     onClick={disconnectPrinter}
-                    className={`px-4 py-2 rounded-lg font-medium ${
+                    className={`px-3 py-1 rounded text-sm font-medium ${
                       theme === 'dark'
                         ? 'bg-red-600 hover:bg-red-700 text-white'
                         : 'bg-red-500 hover:bg-red-600 text-white'
@@ -259,8 +336,8 @@ export function HardwareDeviceManager() {
                     Disconnect
                   </button>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
 
             {printers.length === 0 ? (
               <div className={`text-center py-12 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
@@ -281,37 +358,67 @@ export function HardwareDeviceManager() {
                         : 'bg-white border-gray-200'
                     }`}
                   >
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <h4 className={`font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                          {printer.name}
-                        </h4>
-                        <div className={`text-sm mt-1 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-                          <p>Connection: {printer.connection}</p>
-                          {printer.manufacturer && <p>Manufacturer: {printer.manufacturer}</p>}
-                          {printer.path && <p>Path: {printer.path}</p>}
-                          <p className={getStatusColor(printer.status)}>Status: {printer.status}</p>
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <h4 className={`font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                            {printer.name}
+                          </h4>
+                          <div className={`text-sm mt-1 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+                            <p>Connection: {printer.connection}</p>
+                            {printer.manufacturer && <p>Manufacturer: {printer.manufacturer}</p>}
+                            {printer.path && <p>Path: {printer.path}</p>}
+                            <p className={getStatusColor(printer.status)}>Status: {printer.status}</p>
+                          </div>
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          {activePrinter?.id !== printer.id && (
+                            <button
+                              onClick={() => handleConnectPrinter(printer)}
+                              className={`px-4 py-2 rounded-lg font-medium ${
+                                theme === 'dark'
+                                  ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                                  : 'bg-blue-500 hover:bg-blue-600 text-white'
+                              }`}
+                            >
+                              Connect
+                            </button>
+                          )}
+                          {activePrinter?.id === printer.id && (
+                            <span className={`px-4 py-2 rounded-lg font-medium text-center ${
+                              theme === 'dark' ? 'bg-green-600 text-white' : 'bg-green-500 text-white'
+                            }`}>
+                              Connected
+                            </span>
+                          )}
                         </div>
                       </div>
-                      {activePrinter?.id !== printer.id && (
+
+                      {/* ESC/POS Mode Toggle for Printer */}
+                      <div className={`flex items-center justify-between p-2 rounded ${theme === 'dark' ? 'bg-gray-700/50' : 'bg-gray-100'}`}>
+                        <div>
+                          <label className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                            ESC/POS Mode
+                          </label>
+                          <p className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+                            {printer.useEscPos ? 'Thermal printer commands' : 'Standard text mode'}
+                          </p>
+                        </div>
                         <button
-                          onClick={() => handleConnectPrinter(printer)}
-                          className={`px-4 py-2 rounded-lg font-medium ${
-                            theme === 'dark'
-                              ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                              : 'bg-blue-500 hover:bg-blue-600 text-white'
+                          onClick={() => setEscPosMode(printer.id, !printer.useEscPos)}
+                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                            printer.useEscPos
+                              ? theme === 'dark' ? 'bg-blue-600' : 'bg-blue-500'
+                              : theme === 'dark' ? 'bg-gray-600' : 'bg-gray-300'
                           }`}
                         >
-                          Connect
+                          <span
+                            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                              printer.useEscPos ? 'translate-x-6' : 'translate-x-1'
+                            }`}
+                          />
                         </button>
-                      )}
-                      {activePrinter?.id === printer.id && (
-                        <span className={`px-4 py-2 rounded-lg font-medium ${
-                          theme === 'dark' ? 'bg-green-600 text-white' : 'bg-green-500 text-white'
-                        }`}>
-                          Connected
-                        </span>
-                      )}
+                      </div>
                     </div>
                   </div>
                 ))}

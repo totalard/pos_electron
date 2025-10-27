@@ -180,8 +180,20 @@ export class HardwareManager extends EventEmitter {
   /**
    * Test printer
    */
-  async testPrinter(): Promise<boolean> {
-    return await this.printerService.testPrint()
+  async testPrinter(printerId?: string, useEscPos?: boolean): Promise<boolean> {
+    // If a specific printer ID is provided, we would switch to that printer
+    // For now, we'll use the active printer with the specified mode
+    const printer = printerId ? this.usbService.getDevice(printerId) : this.getActivePrinter()
+    const escPosMode = useEscPos !== undefined ? useEscPos : (printer?.useEscPos ?? true)
+
+    return await this.printerService.testPrint(escPosMode)
+  }
+
+  /**
+   * Set ESC/POS mode for a device
+   */
+  setEscPosMode(deviceId: string, useEscPos: boolean): boolean {
+    return this.usbService.setEscPosMode(deviceId, useEscPos)
   }
 
   /**

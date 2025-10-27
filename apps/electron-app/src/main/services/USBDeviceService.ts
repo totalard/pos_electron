@@ -6,6 +6,7 @@
 import { EventEmitter } from 'events'
 import usb from 'usb'
 import { DeviceInfo, DeviceType, ConnectionType, DeviceStatus, KNOWN_PRINTER_IDS, KNOWN_SCANNER_IDS } from './types'
+import { getDevicePersistenceService, DevicePersistenceService } from './DevicePersistenceService'
 
 export class USBDeviceService extends EventEmitter {
   private devices: Map<string, DeviceInfo> = new Map()
@@ -13,9 +14,23 @@ export class USBDeviceService extends EventEmitter {
   private attachHandler: ((device: usb.Device) => void) | null = null
   private detachHandler: ((device: usb.Device) => void) | null = null
   private manualDeviceTypes: Map<string, DeviceType> = new Map() // Store manually assigned device types
+  private persistenceService: DevicePersistenceService
 
   constructor() {
     super()
+    this.persistenceService = getDevicePersistenceService()
+    this.loadPersistedDeviceTypes()
+  }
+
+  /**
+   * Load persisted device types from storage
+   */
+  private loadPersistedDeviceTypes(): void {
+    const configs = this.persistenceService.getAllConfigs()
+    configs.forEach(config => {
+      this.manualDeviceTypes.set(config.deviceId, config.type)
+    })
+    console.log(`Loaded ${configs.length} persisted device configurations`)
   }
 
   /**
@@ -141,6 +156,9 @@ export class USBDeviceService extends EventEmitter {
     // Store the manual assignment
     this.manualDeviceTypes.set(deviceId, deviceType)
 
+    // Persist the device type
+    this.persistenceService.saveDeviceConfig(deviceId, deviceType, device.useEscPos)
+
     // Update the device info
     device.type = deviceType
     this.devices.set(deviceId, device)
@@ -160,11 +178,32 @@ export class USBDeviceService extends EventEmitter {
   }
 
   /**
+   * Set ESC/POS mode for a device
+   */
+  setEscPosMode(deviceId: string, useEscPos: boolean): boolean {
+    const device = this.devices.get(deviceId)
+    if (!device) {
+      return false
+    }
+
+    // Update device info
+    device.useEscPos = useEscPos
+    this.devices.set(deviceId, device)
+
+    // Persist the setting
+    this.persistenceService.saveDeviceConfig(deviceId, device.type, useEscPos)
+
+    console.log(`Device ${device.name} ESC/POS mode set to: ${useEscPos}`)
+    return true
+  }
+
+  /**
    * Clear manual device type assignment
    */
   clearManualDeviceType(deviceId: string): void {
     this.manualDeviceTypes.delete(deviceId)
-    
+    this.persistenceService.removeDeviceConfig(deviceId)
+
     // Re-scan to get automatic type
     const devices = usb.getDeviceList()
     devices.forEach((usbDevice) => {
@@ -251,6 +290,9 @@ export class USBDeviceService extends EventEmitter {
         manufacturer = knownManufacturer
       }
 
+      // Load persisted ESC/POS mode setting
+      const persistedEscPos = this.persistenceService.getEscPosMode(deviceId)
+
       const deviceInfo: DeviceInfo = {
         id: deviceId,
         name: `${manufacturer} ${product}`,
@@ -261,7 +303,8 @@ export class USBDeviceService extends EventEmitter {
         productId,
         manufacturer,
         serialNumber,
-        path: `USB:${vendorId.toString(16)}:${productId.toString(16)}`
+        path: `USB:${vendorId.toString(16)}:${productId.toString(16)}`,
+        useEscPos: persistedEscPos !== undefined ? persistedEscPos : false
       }
 
       return deviceInfo
