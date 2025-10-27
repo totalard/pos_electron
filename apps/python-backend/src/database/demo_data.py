@@ -23,23 +23,38 @@ from .models import (
     ProductVariation,
     ProductBundle,
     Customer,
+    CreditStatus,
     CustomerTransaction,
+    CustomerTransactionType,
     StockTransaction,
     TransactionType,
     StockAdjustment,
     StockAdjustmentLine,
     User,
+    UserRole,
+    UserActivityLog,
+    ActivityType,
     Sale,
     SaleStatus,
     PaymentMethod,
     CashTransaction,
+    CashTransactionType,
     Expense,
+    ExpenseCategory,
+    ExpenseStatus,
     Discount,
     DiscountUsage,
     DiscountType,
     DiscountStatus,
     POSSession,
-    SessionStatus
+    SessionStatus,
+    TaxRule,
+    TaxType,
+    TaxCalculationMethod,
+    TaxInclusionType,
+    RoundingMethod,
+    Setting,
+    SettingDataType
 )
 
 
@@ -193,9 +208,11 @@ async def create_demo_categories() -> Dict[str, ProductCategory]:
 
 
 async def create_demo_simple_products(category_map: Dict[str, ProductCategory]) -> List[Product]:
-    """Create demo simple products."""
+    """Create demo simple products with edge cases."""
     print("Creating demo simple products...")
     products = []
+    
+    user = await User.first()
     
     for prod_data in SIMPLE_PRODUCTS:
         category = category_map.get(prod_data["category"])
@@ -215,11 +232,55 @@ async def create_demo_simple_products(category_map: Dict[str, ProductCategory]) 
             stock_quantity=prod_data["stock"],
             min_stock_level=prod_data["low_stock"],
             low_stock_threshold=prod_data["low_stock"],
-            is_active=True
+            is_active=True,
+            created_by=user
         )
         products.append(product)
     
-    print(f"Created {len(products)} simple products")
+    # Edge case: Inactive product
+    inactive_product = await Product.create(
+        name="Discontinued Product",
+        sku="DISC-001",
+        barcode="9999999999999",
+        description="This product is no longer available",
+        product_type=ProductType.SIMPLE,
+        item_type=ItemType.PRODUCT,
+        category=category_map.get("Electronics"),
+        base_price=Decimal("99.99"),
+        cost_price=Decimal("50.00"),
+        selling_price=Decimal("99.99"),
+        track_inventory=True,
+        current_stock=0,
+        stock_quantity=0,
+        min_stock_level=0,
+        low_stock_threshold=0,
+        is_active=False,  # Inactive
+        created_by=user
+    )
+    products.append(inactive_product)
+    
+    # Edge case: Product with no barcode
+    no_barcode_product = await Product.create(
+        name="Custom Bulk Item",
+        sku="BULK-001",
+        description="Sold by weight - no barcode",
+        product_type=ProductType.SIMPLE,
+        item_type=ItemType.PRODUCT,
+        category=category_map.get("Food & Beverages"),
+        base_price=Decimal("5.99"),
+        cost_price=Decimal("2.50"),
+        selling_price=Decimal("5.99"),
+        track_inventory=True,
+        current_stock=100,
+        stock_quantity=100,
+        min_stock_level=20,
+        low_stock_threshold=20,
+        is_active=True,
+        created_by=user
+    )
+    products.append(no_barcode_product)
+    
+    print(f"Created {len(products)} simple products with edge cases")
     return products
 
 
@@ -336,26 +397,85 @@ async def create_demo_service_products(category_map: Dict[str, ProductCategory])
 
 
 async def create_demo_customers() -> List[Customer]:
-    """Create demo customers."""
+    """Create demo customers with comprehensive edge cases."""
     print("Creating demo customers...")
     customers = []
     
-    for cust_data in CUSTOMERS:
+    # Get admin user for created_by
+    user = await User.first()
+    
+    # Create regular customers with various configurations
+    for i, cust_data in enumerate(CUSTOMERS):
+        # Vary credit limits and loyalty points
+        credit_limit = Decimal("0.00")
+        credit_balance = Decimal("0.00")
+        loyalty_points = 0
+        credit_status = CreditStatus.GOOD
+        
+        if i % 4 == 0:  # 25% with credit
+            credit_limit = Decimal(str(random.choice([500, 1000, 2000, 5000])))
+            credit_balance = Decimal(str(random.uniform(0, float(credit_limit) * 0.5)))
+            loyalty_points = random.randint(0, 500)
+        elif i % 4 == 1:  # 25% with high credit usage (warning)
+            credit_limit = Decimal("1000.00")
+            credit_balance = Decimal("850.00")  # 85% - warning status
+            credit_status = CreditStatus.WARNING
+            loyalty_points = random.randint(100, 1000)
+        elif i % 4 == 2:  # 25% exceeded credit
+            credit_limit = Decimal("500.00")
+            credit_balance = Decimal("550.00")  # Exceeded
+            credit_status = CreditStatus.EXCEEDED
+            loyalty_points = random.randint(50, 200)
+        else:  # 25% regular with loyalty
+            loyalty_points = random.randint(0, 2000)
+        
         customer = await Customer.create(
             name=cust_data["name"],
             email=cust_data.get("email"),
             phone=cust_data.get("phone"),
             address=cust_data.get("address"),
-            is_active=True
+            credit_limit=credit_limit,
+            credit_balance=credit_balance,
+            credit_status=credit_status,
+            loyalty_points=loyalty_points,
+            created_by=user
         )
         customers.append(customer)
     
-    print(f"Created {len(customers)} customers")
+    # Add edge case: Customer with blocked credit
+    blocked_customer = await Customer.create(
+        name="Blocked Credit Customer",
+        email="blocked@email.com",
+        phone="+1-555-9999",
+        address="999 Blocked St",
+        credit_limit=Decimal("0.00"),
+        credit_balance=Decimal("1000.00"),
+        credit_status=CreditStatus.BLOCKED,
+        loyalty_points=0,
+        created_by=user
+    )
+    customers.append(blocked_customer)
+    
+    # Add edge case: VIP customer with high credit and loyalty
+    vip_customer = await Customer.create(
+        name="VIP Customer",
+        email="vip@email.com",
+        phone="+1-555-8888",
+        address="888 VIP Plaza",
+        credit_limit=Decimal("10000.00"),
+        credit_balance=Decimal("0.00"),
+        credit_status=CreditStatus.GOOD,
+        loyalty_points=5000,
+        created_by=user
+    )
+    customers.append(vip_customer)
+    
+    print(f"Created {len(customers)} customers with edge cases")
     return customers
 
 
 async def create_demo_stock_transactions(products: List[Product]) -> List[StockTransaction]:
-    """Create demo stock transactions."""
+    """Create comprehensive demo stock transactions covering all types."""
     print("Creating demo stock transactions...")
     transactions = []
     
@@ -368,7 +488,7 @@ async def create_demo_stock_transactions(products: List[Product]) -> List[StockT
     # Create various transaction types for products with inventory
     inventory_products = [p for p in products if p.track_inventory and p.current_stock > 0]
     
-    for product in inventory_products[:10]:  # Limit to first 10 products
+    for i, product in enumerate(inventory_products[:10]):  # Limit to first 10 products
         # Purchase transaction (stock in)
         purchase_qty = random.randint(20, 50)
         transaction = await StockTransaction.create(
@@ -402,8 +522,84 @@ async def create_demo_stock_transactions(products: List[Product]) -> List[StockT
                     performed_by=user
                 )
                 transactions.append(transaction)
+        
+        # Add edge case transactions for first few products
+        if i < 3:
+            # Return transaction (stock in)
+            return_qty = random.randint(1, 3)
+            stock_before = product.current_stock
+            stock_after = stock_before + return_qty
+            return_tx = await StockTransaction.create(
+                transaction_type=TransactionType.RETURN,
+                product=product,
+                quantity=return_qty,
+                stock_before=stock_before,
+                stock_after=stock_after,
+                unit_cost=product.cost_price,
+                total_cost=product.cost_price * return_qty,
+                reference_number=f"RET-{random.randint(1000, 9999)}",
+                notes="Customer return - restocked",
+                performed_by=user
+            )
+            transactions.append(return_tx)
+        
+        if i < 2:
+            # Damage transaction (stock out)
+            damage_qty = random.randint(1, 2)
+            if product.current_stock >= damage_qty:
+                stock_before = product.current_stock
+                stock_after = stock_before - damage_qty
+                damage_tx = await StockTransaction.create(
+                    transaction_type=TransactionType.DAMAGE,
+                    product=product,
+                    quantity=-damage_qty,
+                    stock_before=stock_before,
+                    stock_after=stock_after,
+                    unit_cost=product.cost_price,
+                    total_cost=product.cost_price * damage_qty,
+                    reference_number=f"DMG-{random.randint(1000, 9999)}",
+                    notes="Damaged during handling - written off",
+                    performed_by=user
+                )
+                transactions.append(damage_tx)
+        
+        if i == 0:
+            # Transfer transaction (stock out from one location)
+            transfer_qty = random.randint(5, 10)
+            if product.current_stock >= transfer_qty:
+                stock_before = product.current_stock
+                stock_after = stock_before - transfer_qty
+                transfer_tx = await StockTransaction.create(
+                    transaction_type=TransactionType.TRANSFER,
+                    product=product,
+                    quantity=-transfer_qty,
+                    stock_before=stock_before,
+                    stock_after=stock_after,
+                    reference_number=f"TRF-{random.randint(1000, 9999)}",
+                    notes="Transferred to warehouse location B",
+                    performed_by=user
+                )
+                transactions.append(transfer_tx)
+        
+        # Adjustment transaction
+        if i == 1:
+            adjustment_qty = random.randint(-2, 2)
+            if adjustment_qty != 0 and (product.current_stock + adjustment_qty >= 0):
+                stock_before = product.current_stock
+                stock_after = stock_before + adjustment_qty
+                adj_tx = await StockTransaction.create(
+                    transaction_type=TransactionType.ADJUSTMENT,
+                    product=product,
+                    quantity=adjustment_qty,
+                    stock_before=stock_before,
+                    stock_after=stock_after,
+                    reference_number=f"ADJ-{random.randint(1000, 9999)}",
+                    notes="Stock count adjustment - discrepancy found",
+                    performed_by=user
+                )
+                transactions.append(adj_tx)
     
-    print(f"Created {len(transactions)} stock transactions")
+    print(f"Created {len(transactions)} stock transactions with edge cases")
     return transactions
 
 
@@ -551,11 +747,11 @@ async def create_demo_discounts() -> List[Discount]:
 
 
 async def create_demo_pos_sessions(user: User) -> List[POSSession]:
-    """Create demo POS sessions."""
+    """Create demo POS sessions with edge cases."""
     print("Creating demo POS sessions...")
     sessions = []
     
-    # Create a closed session from yesterday
+    # Create a closed session from yesterday with overage
     yesterday = datetime.now() - timedelta(days=1)
     session1 = await POSSession.create(
         session_number=f"SES-{yesterday.strftime('%Y%m%d')}-001",
@@ -572,7 +768,7 @@ async def create_demo_pos_sessions(user: User) -> List[POSSession]:
             "coins": {"1": 10, "0.25": 20}
         },
         expected_cash=Decimal("445.00"),
-        cash_variance=Decimal("5.00"),
+        cash_variance=Decimal("5.00"),  # Positive variance (overage)
         total_sales=Decimal("350.00"),
         total_cash_in=Decimal("0.00"),
         total_cash_out=Decimal("105.00"),
@@ -587,9 +783,66 @@ async def create_demo_pos_sessions(user: User) -> List[POSSession]:
     )
     sessions.append(session1)
     
+    # Create a closed session from 2 days ago with shortage
+    two_days_ago = datetime.now() - timedelta(days=2)
+    session2 = await POSSession.create(
+        session_number=f"SES-{two_days_ago.strftime('%Y%m%d')}-001",
+        user=user,
+        status=SessionStatus.CLOSED,
+        opening_cash=Decimal("200.00"),
+        opening_denominations={
+            "bills": {"100": 2},
+            "coins": {}
+        },
+        closing_cash=Decimal("380.00"),
+        closing_denominations={
+            "bills": {"100": 3, "50": 1, "20": 1, "10": 1},
+            "coins": {}
+        },
+        expected_cash=Decimal("395.00"),
+        cash_variance=Decimal("-15.00"),  # Negative variance (shortage)
+        total_sales=Decimal("295.00"),
+        total_cash_in=Decimal("50.00"),
+        total_cash_out=Decimal("150.00"),
+        payment_summary={
+            "cash": 195.00,
+            "card": 75.00,
+            "mobile": 25.00
+        },
+        opened_at=two_days_ago,
+        closed_at=two_days_ago + timedelta(hours=9),
+        opening_notes="Morning shift",
+        closing_notes="End of shift - shortage detected, investigating"
+    )
+    sessions.append(session2)
+    
+    # Edge case: Suspended session
+    three_days_ago = datetime.now() - timedelta(days=3)
+    session3 = await POSSession.create(
+        session_number=f"SES-{three_days_ago.strftime('%Y%m%d')}-002",
+        user=user,
+        status=SessionStatus.SUSPENDED,
+        opening_cash=Decimal("200.00"),
+        opening_denominations={
+            "bills": {"100": 2},
+            "coins": {}
+        },
+        total_sales=Decimal("125.00"),
+        total_cash_in=Decimal("0.00"),
+        total_cash_out=Decimal("0.00"),
+        payment_summary={
+            "cash": 85.00,
+            "card": 40.00
+        },
+        opened_at=three_days_ago,
+        opening_notes="Afternoon shift",
+        closing_notes="Session suspended due to system maintenance"
+    )
+    sessions.append(session3)
+    
     # Create an active session for today
     today = datetime.now()
-    session2 = await POSSession.create(
+    session4 = await POSSession.create(
         session_number=f"SES-{today.strftime('%Y%m%d')}-001",
         user=user,
         status=SessionStatus.ACTIVE,
@@ -605,9 +858,9 @@ async def create_demo_pos_sessions(user: User) -> List[POSSession]:
         opened_at=today,
         opening_notes="Starting new shift"
     )
-    sessions.append(session2)
+    sessions.append(session4)
     
-    print(f"Created {len(sessions)} POS sessions")
+    print(f"Created {len(sessions)} POS sessions with edge cases")
     return sessions
 
 
@@ -728,10 +981,672 @@ async def create_demo_sales(
     return sales
 
 
+async def create_demo_users() -> List[User]:
+    """Create additional demo users with various roles and statuses."""
+    print("Creating additional demo users...")
+    users = []
+    
+    # Get the first admin user
+    admin = await User.first()
+    
+    # Create additional staff users
+    staff_user1 = await User.create(
+        full_name="Jane Smith",
+        mobile_number="+1-555-2001",
+        pin_hash="hashed_pin_2",  # In real app, this would be properly hashed
+        role=UserRole.USER,
+        is_active=True,
+        email="jane.smith@pos.com",
+        avatar_color="blue",
+        notes="Cashier - Morning shift",
+        created_by=admin
+    )
+    users.append(staff_user1)
+    
+    staff_user2 = await User.create(
+        full_name="Mike Johnson",
+        mobile_number="+1-555-2002",
+        pin_hash="hashed_pin_3",
+        role=UserRole.USER,
+        is_active=True,
+        email="mike.j@pos.com",
+        avatar_color="green",
+        notes="Cashier - Evening shift",
+        created_by=admin
+    )
+    users.append(staff_user2)
+    
+    # Edge case: Inactive user
+    inactive_user = await User.create(
+        full_name="Inactive User",
+        mobile_number="+1-555-2003",
+        pin_hash="hashed_pin_4",
+        role=UserRole.USER,
+        is_active=False,
+        email="inactive@pos.com",
+        avatar_color="gray",
+        notes="Former employee - deactivated",
+        created_by=admin
+    )
+    users.append(inactive_user)
+    
+    # Edge case: User without optional fields
+    minimal_user = await User.create(
+        full_name="Minimal User",
+        pin_hash="hashed_pin_5",
+        role=UserRole.USER,
+        is_active=True,
+        created_by=admin
+    )
+    users.append(minimal_user)
+    
+    print(f"Created {len(users)} additional users")
+    return users
+
+
+async def create_demo_tax_rules() -> List[TaxRule]:
+    """Create comprehensive tax rules including GST, VAT, and compound taxes."""
+    print("Creating demo tax rules...")
+    tax_rules = []
+    
+    # Simple percentage tax
+    simple_tax = await TaxRule.create(
+        name="Standard Sales Tax",
+        description="Standard 8% sales tax",
+        tax_type=TaxType.SIMPLE,
+        rate=Decimal("8.00"),
+        calculation_method=TaxCalculationMethod.PERCENTAGE,
+        inclusion_type=TaxInclusionType.EXCLUSIVE,
+        rounding_method=RoundingMethod.ROUND_HALF_UP,
+        is_active=True,
+        priority=1
+    )
+    tax_rules.append(simple_tax)
+    
+    # GST - CGST + SGST (India intra-state)
+    gst_intra = await TaxRule.create(
+        name="GST 18% (CGST + SGST)",
+        description="18% GST for intra-state transactions",
+        tax_type=TaxType.GST_CGST,
+        rate=Decimal("18.00"),
+        cgst_rate=Decimal("9.00"),
+        sgst_rate=Decimal("9.00"),
+        hsn_code="8471",
+        calculation_method=TaxCalculationMethod.PERCENTAGE,
+        inclusion_type=TaxInclusionType.EXCLUSIVE,
+        rounding_method=RoundingMethod.ROUND_HALF_UP,
+        is_active=True,
+        priority=2
+    )
+    tax_rules.append(gst_intra)
+    
+    # GST - IGST (India inter-state)
+    gst_inter = await TaxRule.create(
+        name="GST 18% (IGST)",
+        description="18% GST for inter-state transactions",
+        tax_type=TaxType.GST_IGST,
+        rate=Decimal("18.00"),
+        igst_rate=Decimal("18.00"),
+        hsn_code="8471",
+        calculation_method=TaxCalculationMethod.PERCENTAGE,
+        inclusion_type=TaxInclusionType.EXCLUSIVE,
+        rounding_method=RoundingMethod.ROUND_HALF_UP,
+        is_active=False,  # Inactive by default
+        priority=3
+    )
+    tax_rules.append(gst_inter)
+    
+    # GST with CESS
+    gst_cess = await TaxRule.create(
+        name="GST 28% + CESS 12%",
+        description="Luxury goods tax with cess",
+        tax_type=TaxType.GST_CGST,
+        rate=Decimal("28.00"),
+        cgst_rate=Decimal("14.00"),
+        sgst_rate=Decimal("14.00"),
+        cess_rate=Decimal("12.00"),
+        hsn_code="8703",
+        calculation_method=TaxCalculationMethod.PERCENTAGE,
+        inclusion_type=TaxInclusionType.EXCLUSIVE,
+        rounding_method=RoundingMethod.ROUND_HALF_UP,
+        is_active=True,
+        priority=4
+    )
+    tax_rules.append(gst_cess)
+    
+    # Inclusive tax
+    inclusive_tax = await TaxRule.create(
+        name="VAT 10% (Inclusive)",
+        description="10% VAT included in price",
+        tax_type=TaxType.VAT,
+        rate=Decimal("10.00"),
+        calculation_method=TaxCalculationMethod.PERCENTAGE,
+        inclusion_type=TaxInclusionType.INCLUSIVE,
+        rounding_method=RoundingMethod.ROUND_HALF_UP,
+        is_active=True,
+        priority=5
+    )
+    tax_rules.append(inclusive_tax)
+    
+    # Fixed amount tax
+    fixed_tax = await TaxRule.create(
+        name="Environmental Fee",
+        description="Fixed $5 environmental fee",
+        tax_type=TaxType.SIMPLE,
+        rate=Decimal("0.00"),
+        calculation_method=TaxCalculationMethod.FIXED_AMOUNT,
+        fixed_amount=Decimal("5.00"),
+        inclusion_type=TaxInclusionType.EXCLUSIVE,
+        rounding_method=RoundingMethod.NO_ROUNDING,
+        is_active=True,
+        priority=6
+    )
+    tax_rules.append(fixed_tax)
+    
+    # Tax exempt rule
+    exempt_tax = await TaxRule.create(
+        name="Tax Exempt",
+        description="Zero-rated tax for exempt items",
+        tax_type=TaxType.SIMPLE,
+        rate=Decimal("0.00"),
+        calculation_method=TaxCalculationMethod.PERCENTAGE,
+        inclusion_type=TaxInclusionType.EXCLUSIVE,
+        is_tax_exempt=True,
+        is_active=True,
+        priority=10
+    )
+    tax_rules.append(exempt_tax)
+    
+    # Compound tax (calculated on top of other taxes)
+    compound_tax = await TaxRule.create(
+        name="Luxury Tax (Compound)",
+        description="5% luxury tax on top of base tax",
+        tax_type=TaxType.SIMPLE,
+        rate=Decimal("5.00"),
+        calculation_method=TaxCalculationMethod.PERCENTAGE,
+        inclusion_type=TaxInclusionType.EXCLUSIVE,
+        rounding_method=RoundingMethod.ROUND_UP,
+        is_compound=True,
+        is_active=True,
+        priority=7
+    )
+    tax_rules.append(compound_tax)
+    
+    print(f"Created {len(tax_rules)} tax rules")
+    return tax_rules
+
+
+async def create_demo_expenses(sessions: List[POSSession]) -> List[Expense]:
+    """Create comprehensive expense records covering all categories and statuses."""
+    print("Creating demo expenses...")
+    expenses = []
+    
+    user = await User.first()
+    if not user:
+        print("No user found, skipping expenses")
+        return expenses
+    
+    # Get a session for reference
+    session = sessions[0] if sessions else None
+    
+    # Create expenses for each category
+    expense_data = [
+        {
+            "title": "Monthly Rent Payment",
+            "category": ExpenseCategory.RENT,
+            "amount": Decimal("2500.00"),
+            "status": ExpenseStatus.PAID,
+            "vendor": "Property Management Co.",
+            "payment_method": "bank_transfer"
+        },
+        {
+            "title": "Electricity Bill",
+            "category": ExpenseCategory.UTILITIES,
+            "amount": Decimal("350.75"),
+            "status": ExpenseStatus.PAID,
+            "vendor": "City Power Company",
+            "payment_method": "auto_debit"
+        },
+        {
+            "title": "Staff Salaries - January",
+            "category": ExpenseCategory.SALARIES,
+            "amount": Decimal("8500.00"),
+            "status": ExpenseStatus.APPROVED,
+            "vendor": "Payroll",
+            "payment_method": "bank_transfer"
+        },
+        {
+            "title": "Office Supplies",
+            "category": ExpenseCategory.SUPPLIES,
+            "amount": Decimal("245.50"),
+            "status": ExpenseStatus.PAID,
+            "vendor": "Office Depot",
+            "payment_method": "credit_card"
+        },
+        {
+            "title": "Social Media Advertising",
+            "category": ExpenseCategory.MARKETING,
+            "amount": Decimal("500.00"),
+            "status": ExpenseStatus.PENDING,
+            "vendor": "Facebook Ads",
+            "payment_method": "credit_card"
+        },
+        {
+            "title": "POS System Maintenance",
+            "category": ExpenseCategory.MAINTENANCE,
+            "amount": Decimal("150.00"),
+            "status": ExpenseStatus.PAID,
+            "vendor": "Tech Support Inc.",
+            "payment_method": "cash"
+        },
+        {
+            "title": "Delivery Van Fuel",
+            "category": ExpenseCategory.TRANSPORTATION,
+            "amount": Decimal("120.00"),
+            "status": ExpenseStatus.PAID,
+            "vendor": "Gas Station",
+            "payment_method": "cash"
+        },
+        {
+            "title": "Business Insurance Premium",
+            "category": ExpenseCategory.INSURANCE,
+            "amount": Decimal("1200.00"),
+            "status": ExpenseStatus.APPROVED,
+            "vendor": "Insurance Corp",
+            "payment_method": "bank_transfer"
+        },
+        {
+            "title": "Quarterly Tax Payment",
+            "category": ExpenseCategory.TAXES,
+            "amount": Decimal("3500.00"),
+            "status": ExpenseStatus.PENDING,
+            "vendor": "Tax Authority",
+            "payment_method": "bank_transfer"
+        },
+        {
+            "title": "Miscellaneous Expense",
+            "category": ExpenseCategory.OTHER,
+            "amount": Decimal("75.25"),
+            "status": ExpenseStatus.REJECTED,
+            "vendor": "Various",
+            "payment_method": "cash"
+        },
+    ]
+    
+    for i, exp_data in enumerate(expense_data):
+        expense_date = datetime.now() - timedelta(days=random.randint(1, 30))
+        due_date = expense_date + timedelta(days=30) if exp_data["status"] == ExpenseStatus.PENDING else None
+        payment_date = expense_date + timedelta(days=random.randint(1, 5)) if exp_data["status"] == ExpenseStatus.PAID else None
+        
+        expense = await Expense.create(
+            expense_number=f"EXP-{expense_date.strftime('%Y%m%d')}-{str(i+1).zfill(3)}",
+            title=exp_data["title"],
+            description=f"Description for {exp_data['title']}",
+            amount=exp_data["amount"],
+            category=exp_data["category"],
+            status=exp_data["status"],
+            vendor_name=exp_data["vendor"],
+            vendor_contact=f"+1-555-{random.randint(1000, 9999)}",
+            payment_method=exp_data["payment_method"],
+            payment_reference=f"REF-{random.randint(10000, 99999)}" if exp_data["status"] == ExpenseStatus.PAID else None,
+            payment_date=payment_date,
+            expense_date=expense_date,
+            due_date=due_date,
+            attachments=[f"/uploads/receipt_{i+1}.pdf"] if random.random() < 0.5 else [],
+            created_by=user,
+            approved_by=user if exp_data["status"] in [ExpenseStatus.APPROVED, ExpenseStatus.PAID] else None,
+            notes=f"Notes for {exp_data['title']}"
+        )
+        expenses.append(expense)
+    
+    print(f"Created {len(expenses)} expenses")
+    return expenses
+
+
+async def create_demo_cash_transactions(sessions: List[POSSession]) -> List[CashTransaction]:
+    """Create comprehensive cash transactions covering all types."""
+    print("Creating demo cash transactions...")
+    transactions = []
+    
+    user = await User.first()
+    if not user or not sessions:
+        print("No user or sessions found, skipping cash transactions")
+        return transactions
+    
+    # Get closed session
+    closed_session = next((s for s in sessions if s.status == SessionStatus.CLOSED), None)
+    if not closed_session:
+        return transactions
+    
+    # Opening balance
+    opening_tx = await CashTransaction.create(
+        transaction_type=CashTransactionType.OPENING_BALANCE,
+        amount=closed_session.opening_cash,
+        balance_before=Decimal("0.00"),
+        balance_after=closed_session.opening_cash,
+        reference_number=closed_session.session_number,
+        category="Session Opening",
+        description="Opening cash for session",
+        session=closed_session,
+        performed_by=user,
+        transaction_date=closed_session.opened_at
+    )
+    transactions.append(opening_tx)
+    
+    # Cash in transactions
+    cash_in_data = [
+        {"amount": Decimal("100.00"), "category": "Cash Deposit", "desc": "Additional cash added to drawer"},
+        {"amount": Decimal("50.00"), "category": "Cash Deposit", "desc": "Change fund replenishment"},
+    ]
+    
+    for cash_in in cash_in_data:
+        tx_date = closed_session.opened_at + timedelta(hours=random.randint(1, 4))
+        balance_before = opening_tx.balance_after
+        balance_after = balance_before + cash_in["amount"]
+        
+        tx = await CashTransaction.create(
+            transaction_type=CashTransactionType.CASH_IN,
+            amount=cash_in["amount"],
+            balance_before=balance_before,
+            balance_after=balance_after,
+            reference_number=f"CI-{random.randint(1000, 9999)}",
+            category=cash_in["category"],
+            description=cash_in["desc"],
+            session=closed_session,
+            performed_by=user,
+            transaction_date=tx_date
+        )
+        transactions.append(tx)
+        opening_tx.balance_after = balance_after
+    
+    # Cash out transactions
+    cash_out_data = [
+        {"amount": Decimal("50.00"), "category": "Petty Cash", "desc": "Office supplies purchase"},
+        {"amount": Decimal("30.00"), "category": "Vendor Payment", "desc": "COD delivery payment"},
+        {"amount": Decimal("25.00"), "category": "Refund", "desc": "Customer refund"},
+    ]
+    
+    for cash_out in cash_out_data:
+        tx_date = closed_session.opened_at + timedelta(hours=random.randint(2, 6))
+        balance_before = opening_tx.balance_after
+        balance_after = balance_before - cash_out["amount"]
+        
+        tx = await CashTransaction.create(
+            transaction_type=CashTransactionType.CASH_OUT,
+            amount=cash_out["amount"],
+            balance_before=balance_before,
+            balance_after=balance_after,
+            reference_number=f"CO-{random.randint(1000, 9999)}",
+            category=cash_out["category"],
+            description=cash_out["desc"],
+            notes=f"Approved by manager",
+            session=closed_session,
+            performed_by=user,
+            transaction_date=tx_date
+        )
+        transactions.append(tx)
+        opening_tx.balance_after = balance_after
+    
+    # Closing balance
+    closing_tx = await CashTransaction.create(
+        transaction_type=CashTransactionType.CLOSING_BALANCE,
+        amount=closed_session.closing_cash,
+        balance_before=opening_tx.balance_after,
+        balance_after=closed_session.closing_cash,
+        reference_number=closed_session.session_number,
+        category="Session Closing",
+        description="Closing cash count",
+        session=closed_session,
+        performed_by=user,
+        transaction_date=closed_session.closed_at
+    )
+    transactions.append(closing_tx)
+    
+    print(f"Created {len(transactions)} cash transactions")
+    return transactions
+
+
+async def create_demo_customer_transactions(customers: List[Customer]) -> List[CustomerTransaction]:
+    """Create comprehensive customer transactions for credit and loyalty tracking."""
+    print("Creating demo customer transactions...")
+    transactions = []
+    
+    user = await User.first()
+    if not user or not customers:
+        print("No user or customers found, skipping customer transactions")
+        return transactions
+    
+    # Get customers with credit
+    credit_customers = [c for c in customers if c.credit_limit > 0]
+    
+    for customer in credit_customers[:5]:  # Limit to first 5
+        # Credit sale transaction
+        credit_amount = Decimal(str(random.uniform(50, 200)))
+        balance_before = Decimal("0.00")
+        balance_after = credit_amount
+        
+        credit_tx = await CustomerTransaction.create(
+            customer=customer,
+            transaction_type="credit_sale",
+            amount=credit_amount,
+            loyalty_points=int(float(credit_amount) / 10),  # 1 point per $10
+            balance_before=balance_before,
+            balance_after=balance_after,
+            loyalty_points_before=0,
+            loyalty_points_after=int(float(credit_amount) / 10),
+            reference_number=f"INV-{random.randint(10000, 99999)}",
+            notes="Credit sale transaction",
+            created_by=user
+        )
+        transactions.append(credit_tx)
+        
+        # Payment transaction
+        payment_amount = Decimal(str(random.uniform(20, float(credit_amount))))
+        payment_tx = await CustomerTransaction.create(
+            customer=customer,
+            transaction_type="payment",
+            amount=payment_amount,
+            loyalty_points=0,
+            balance_before=balance_after,
+            balance_after=balance_after - payment_amount,
+            loyalty_points_before=credit_tx.loyalty_points_after,
+            loyalty_points_after=credit_tx.loyalty_points_after,
+            reference_number=f"PAY-{random.randint(10000, 99999)}",
+            notes="Customer payment received",
+            created_by=user
+        )
+        transactions.append(payment_tx)
+    
+    # Loyalty point redemption
+    loyalty_customers = [c for c in customers if c.loyalty_points > 100]
+    if loyalty_customers:
+        customer = loyalty_customers[0]
+        points_redeemed = 100
+        redemption_value = Decimal("10.00")  # $10 for 100 points
+        
+        loyalty_tx = await CustomerTransaction.create(
+            customer=customer,
+            transaction_type="loyalty_redemption",
+            amount=redemption_value,
+            loyalty_points=-points_redeemed,
+            balance_before=customer.credit_balance,
+            balance_after=customer.credit_balance,
+            loyalty_points_before=customer.loyalty_points,
+            loyalty_points_after=customer.loyalty_points - points_redeemed,
+            reference_number=f"LYL-{random.randint(10000, 99999)}",
+            notes="Loyalty points redeemed for discount",
+            created_by=user
+        )
+        transactions.append(loyalty_tx)
+    
+    # Credit adjustment
+    if credit_customers:
+        customer = credit_customers[0]
+        adjustment_amount = Decimal("25.00")
+        
+        adjustment_tx = await CustomerTransaction.create(
+            customer=customer,
+            transaction_type="credit_adjustment",
+            amount=adjustment_amount,
+            loyalty_points=0,
+            balance_before=customer.credit_balance,
+            balance_after=customer.credit_balance - adjustment_amount,
+            loyalty_points_before=customer.loyalty_points,
+            loyalty_points_after=customer.loyalty_points,
+            reference_number=f"ADJ-{random.randint(10000, 99999)}",
+            notes="Credit adjustment - goodwill gesture",
+            created_by=user
+        )
+        transactions.append(adjustment_tx)
+    
+    print(f"Created {len(transactions)} customer transactions")
+    return transactions
+
+
+async def create_demo_user_activity_logs(users: List[User], sessions: List[POSSession]) -> List[UserActivityLog]:
+    """Create comprehensive user activity logs."""
+    print("Creating demo user activity logs...")
+    logs = []
+    
+    if not users or not sessions:
+        print("No users or sessions found, skipping activity logs")
+        return logs
+    
+    admin = users[0]
+    session = sessions[0] if sessions else None
+    session_id = f"sess_{random.randint(100000, 999999)}"
+    
+    # Login activity
+    login_log = await UserActivityLog.create(
+        user=admin,
+        activity_type=ActivityType.LOGIN,
+        description="User logged in successfully",
+        session_id=session_id,
+        ip_address="192.168.1.100",
+        duration_ms=150,
+        metadata={"device": "POS Terminal 1", "method": "PIN"}
+    )
+    logs.append(login_log)
+    
+    # Sale activity
+    sale_log = await UserActivityLog.create(
+        user=admin,
+        activity_type=ActivityType.SALE,
+        description="Completed sale transaction",
+        session_id=session_id,
+        ip_address="192.168.1.100",
+        duration_ms=5000,
+        metadata={"invoice": "INV-001", "amount": 125.50, "items": 3}
+    )
+    logs.append(sale_log)
+    
+    # Product create
+    product_log = await UserActivityLog.create(
+        user=admin,
+        activity_type=ActivityType.PRODUCT_CREATE,
+        description="Created new product",
+        session_id=session_id,
+        ip_address="192.168.1.100",
+        duration_ms=2000,
+        metadata={"product_name": "New Product", "sku": "NEW-001"}
+    )
+    logs.append(product_log)
+    
+    # Settings update
+    settings_log = await UserActivityLog.create(
+        user=admin,
+        activity_type=ActivityType.SETTINGS_UPDATE,
+        description="Updated system settings",
+        session_id=session_id,
+        ip_address="192.168.1.100",
+        duration_ms=1000,
+        metadata={"section": "display", "changes": ["theme", "fontSize"]}
+    )
+    logs.append(settings_log)
+    
+    # Inventory adjustment
+    inventory_log = await UserActivityLog.create(
+        user=admin,
+        activity_type=ActivityType.INVENTORY_ADJUSTMENT,
+        description="Performed stock adjustment",
+        session_id=session_id,
+        ip_address="192.168.1.100",
+        duration_ms=3000,
+        metadata={"products_adjusted": 5, "reason": "Physical count"}
+    )
+    logs.append(inventory_log)
+    
+    # Logout activity
+    logout_log = await UserActivityLog.create(
+        user=admin,
+        activity_type=ActivityType.LOGOUT,
+        description="User logged out",
+        session_id=session_id,
+        ip_address="192.168.1.100",
+        duration_ms=100,
+        metadata={"session_duration_minutes": 120}
+    )
+    logs.append(logout_log)
+    
+    print(f"Created {len(logs)} user activity logs")
+    return logs
+
+
+async def create_demo_settings() -> List[Setting]:
+    """Create comprehensive normalized settings."""
+    print("Creating demo settings...")
+    settings = []
+    
+    # Display settings
+    display_settings = [
+        {"section": "display", "key": "theme", "value": "light", "default": "light", "type": SettingDataType.STRING, "desc": "UI theme (light/dark)"},
+        {"section": "display", "key": "fontSize", "value": "medium", "default": "medium", "type": SettingDataType.STRING, "desc": "Font size (small/medium/large)"},
+        {"section": "display", "key": "screenTimeout", "value": "0", "default": "0", "type": SettingDataType.NUMBER, "desc": "Screen timeout in minutes (0 = never)"},
+    ]
+    
+    # Security settings
+    security_settings = [
+        {"section": "security", "key": "sessionTimeout", "value": "30", "default": "30", "type": SettingDataType.NUMBER, "desc": "Session timeout in minutes"},
+        {"section": "security", "key": "requirePinForRefunds", "value": "true", "default": "true", "type": SettingDataType.BOOLEAN, "desc": "Require PIN for refunds"},
+        {"section": "security", "key": "requirePinForVoids", "value": "true", "default": "true", "type": SettingDataType.BOOLEAN, "desc": "Require PIN for voids"},
+        {"section": "security", "key": "requirePinForDiscounts", "value": "false", "default": "false", "type": SettingDataType.BOOLEAN, "desc": "Require PIN for discounts"},
+    ]
+    
+    # Inventory settings
+    inventory_settings = [
+        {"section": "inventory", "key": "enableStockTracking", "value": "true", "default": "true", "type": SettingDataType.BOOLEAN, "desc": "Enable stock tracking"},
+        {"section": "inventory", "key": "lowStockThreshold", "value": "10", "default": "10", "type": SettingDataType.NUMBER, "desc": "Low stock alert threshold"},
+        {"section": "inventory", "key": "allowNegativeStock", "value": "false", "default": "false", "type": SettingDataType.BOOLEAN, "desc": "Allow negative stock"},
+    ]
+    
+    # Business settings
+    business_settings = [
+        {"section": "business", "key": "storeName", "value": "MidLogic POS", "default": "MidLogic POS", "type": SettingDataType.STRING, "desc": "Store name"},
+        {"section": "business", "key": "currency", "value": "USD", "default": "USD", "type": SettingDataType.STRING, "desc": "Currency code"},
+        {"section": "business", "key": "timezone", "value": "UTC", "default": "UTC", "type": SettingDataType.STRING, "desc": "Timezone"},
+    ]
+    
+    all_settings = display_settings + security_settings + inventory_settings + business_settings
+    
+    for setting_data in all_settings:
+        setting = await Setting.create(
+            section=setting_data["section"],
+            key=setting_data["key"],
+            value=setting_data["value"],
+            default_value=setting_data["default"],
+            data_type=setting_data["type"],
+            description=setting_data["desc"]
+        )
+        settings.append(setting)
+    
+    print(f"Created {len(settings)} settings")
+    return settings
+
+
 async def generate_all_demo_data():
-    """Generate all demo data."""
+    """Generate all comprehensive demo data with edge cases."""
     print("\n" + "="*60)
-    print("GENERATING COMPREHENSIVE DEMO DATA")
+    print("GENERATING COMPREHENSIVE DEMO DATA WITH EDGE CASES")
     print("="*60 + "\n")
     
     try:
@@ -739,6 +1654,13 @@ async def generate_all_demo_data():
         user = await User.first()
         if not user:
             raise Exception("No user found. Please create a user first.")
+        
+        # Create additional users with edge cases
+        additional_users = await create_demo_users()
+        all_users = [user] + additional_users
+        
+        # Create tax rules (GST, VAT, compound, etc.)
+        tax_rules = await create_demo_tax_rules()
         
         # Create categories
         category_map = await create_demo_categories()
@@ -751,7 +1673,7 @@ async def generate_all_demo_data():
         
         all_products = simple_products + variation_products + bundle_products + service_products
         
-        # Create customers
+        # Create customers with edge cases (credit statuses, loyalty)
         customers = await create_demo_customers()
         
         # Create discounts
@@ -764,14 +1686,31 @@ async def generate_all_demo_data():
         sales = await create_demo_sales(all_products, customers, sessions, discounts)
         
         # Create stock transactions
-        transactions = await create_demo_stock_transactions(all_products)
+        stock_transactions = await create_demo_stock_transactions(all_products)
         
         # Create stock adjustments
         adjustments = await create_demo_stock_adjustments(all_products)
         
+        # Create expenses (all categories and statuses)
+        expenses = await create_demo_expenses(sessions)
+        
+        # Create cash transactions (all types)
+        cash_transactions = await create_demo_cash_transactions(sessions)
+        
+        # Create customer transactions (credit, loyalty)
+        customer_transactions = await create_demo_customer_transactions(customers)
+        
+        # Create user activity logs
+        activity_logs = await create_demo_user_activity_logs(all_users, sessions)
+        
+        # Create normalized settings
+        settings = await create_demo_settings()
+        
         print("\n" + "="*60)
         print("DEMO DATA GENERATION COMPLETE")
         print("="*60)
+        print(f"Users: {len(all_users)}")
+        print(f"Tax Rules: {len(tax_rules)}")
         print(f"Categories: {len(category_map)}")
         print(f"Products: {len(all_products)}")
         print(f"  - Simple: {len(simple_products)}")
@@ -782,19 +1721,31 @@ async def generate_all_demo_data():
         print(f"Discounts: {len(discounts)}")
         print(f"POS Sessions: {len(sessions)}")
         print(f"Sales: {len(sales)}")
-        print(f"Stock Transactions: {len(transactions)}")
+        print(f"Stock Transactions: {len(stock_transactions)}")
         print(f"Stock Adjustments: {len(adjustments)}")
+        print(f"Expenses: {len(expenses)}")
+        print(f"Cash Transactions: {len(cash_transactions)}")
+        print(f"Customer Transactions: {len(customer_transactions)}")
+        print(f"User Activity Logs: {len(activity_logs)}")
+        print(f"Settings: {len(settings)}")
         print("="*60 + "\n")
         
         return {
+            "users": len(all_users),
+            "tax_rules": len(tax_rules),
             "categories": len(category_map),
             "products": len(all_products),
             "customers": len(customers),
             "discounts": len(discounts),
             "sessions": len(sessions),
             "sales": len(sales),
-            "transactions": len(transactions),
-            "adjustments": len(adjustments)
+            "stock_transactions": len(stock_transactions),
+            "adjustments": len(adjustments),
+            "expenses": len(expenses),
+            "cash_transactions": len(cash_transactions),
+            "customer_transactions": len(customer_transactions),
+            "activity_logs": len(activity_logs),
+            "settings": len(settings)
         }
         
     except Exception as e:
@@ -808,38 +1759,54 @@ async def clear_demo_data():
     
     try:
         # Delete in reverse order of dependencies
-        # First delete discount usages (depends on sales, discounts, customers)
+        print("Deleting user activity logs...")
+        await UserActivityLog.all().delete()
+        
+        print("Deleting discount usages...")
         await DiscountUsage.all().delete()
         
-        # Delete transaction-related data
+        print("Deleting transaction-related data...")
         await Expense.all().delete()
         await CashTransaction.all().delete()
         
-        # Delete sales (depends on sessions, customers, products)
+        print("Deleting sales...")
         await Sale.all().delete()
         
-        # Delete POS sessions (depends on users)
+        print("Deleting POS sessions...")
         await POSSession.all().delete()
         
-        # Delete customer transactions
+        print("Deleting customer transactions...")
         await CustomerTransaction.all().delete()
         
-        # Delete inventory data
+        print("Deleting inventory data...")
         await StockAdjustmentLine.all().delete()
         await StockAdjustment.all().delete()
         await StockTransaction.all().delete()
         
-        # Delete discounts (depends on users)
+        print("Deleting discounts...")
         await Discount.all().delete()
         
-        # Delete product-related data
+        print("Deleting tax rules...")
+        await TaxRule.all().delete()
+        
+        print("Deleting product-related data...")
         await ProductBundle.all().delete()
         await ProductVariation.all().delete()
         await Product.all().delete()
         await ProductCategory.all().delete()
         
-        # Finally delete customer data
+        print("Deleting customers...")
         await Customer.all().delete()
+        
+        print("Deleting settings...")
+        await Setting.all().delete()
+        
+        # Note: We don't delete users as they are critical for system operation
+        # Only delete demo users (not the first admin user)
+        print("Deleting demo users (keeping admin)...")
+        admin = await User.first()
+        if admin:
+            await User.filter(id__gt=admin.id).delete()
         
         print("Demo data cleared successfully")
     except Exception as e:
