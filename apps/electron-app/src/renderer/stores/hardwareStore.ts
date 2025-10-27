@@ -249,17 +249,26 @@ export const useHardwareStore = create<HardwareState>((set, get) => ({
     try {
       const api = getElectronAPI()
       if (!api) return false
+      
+      const mode = useEscPos ? 'ESC/POS' : 'Standard'
+      get().addLog('info', `Initiating test print (${mode} mode)...`)
+      
+      if (printerId) {
+        get().addLog('info', `Connecting to selected printer...`)
+      }
+      
       const result = await api.printer.test(printerId, useEscPos)
       if (result.success) {
-        const mode = useEscPos ? 'ESC/POS' : 'Standard'
-        get().addLog('success', `Test print sent (${mode} mode)`)
+        get().addLog('success', `✓ Test print sent successfully (${mode} mode)`)
+        // Refresh printer status after test
+        get().updatePrinterStatus()
         return true
       } else {
-        get().addLog('error', `Test print failed: ${result.error}`)
+        get().addLog('error', `✗ Test print failed: ${result.error}`)
         return false
       }
     } catch (error) {
-      get().addLog('error', `Test print error: ${String(error)}`)
+      get().addLog('error', `✗ Test print error: ${String(error)}`)
       return false
     }
   },

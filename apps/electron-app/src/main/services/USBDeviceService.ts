@@ -252,31 +252,10 @@ export class USBDeviceService extends EventEmitter {
       const vendorId = descriptor.idVendor
       const productId = descriptor.idProduct
 
-      // Try to open device to get more info
+      // Use basic device info
       let manufacturer = 'Unknown'
-      let product = 'Unknown Device'
-      let serialNumber = ''
-
-      try {
-        device.open()
-        
-        if (descriptor.iManufacturer) {
-          manufacturer = device.getStringDescriptor(descriptor.iManufacturer) || manufacturer
-        }
-        
-        if (descriptor.iProduct) {
-          product = device.getStringDescriptor(descriptor.iProduct) || product
-        }
-        
-        if (descriptor.iSerialNumber) {
-          serialNumber = device.getStringDescriptor(descriptor.iSerialNumber) || ''
-        }
-        
-        device.close()
-      } catch (error) {
-        // Device might be in use or require permissions
-        console.warn('Could not open device for details:', error)
-      }
+      const product = 'Unknown Device'
+      const serialNumber = ''
 
       const deviceId = this.getDeviceId(device)
       

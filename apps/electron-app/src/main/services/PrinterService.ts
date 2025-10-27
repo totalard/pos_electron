@@ -9,6 +9,14 @@ import { SerialPort } from 'serialport'
 import usb from 'usb'
 import { DeviceInfo, DeviceType, ConnectionType, DeviceStatus, PrinterStatus, KNOWN_PRINTER_IDS } from './types'
 
+// Import escpos library
+const escpos = require('escpos')
+try {
+  escpos.USB = require('escpos-usb')
+} catch (error) {
+  console.warn('escpos-usb not available:', error)
+}
+
 export interface PrinterConfig {
   connection: 'USB' | 'Network' | 'Serial'
   port?: string
@@ -153,6 +161,8 @@ export class PrinterService extends EventEmitter {
   private serialPort: SerialPort | null = null
   private printQueue: PrintJob[] = []
   private isPrinting = false
+  private escposPrinter: any = null // escpos.Printer instance
+  private escposDevice: any = null // escpos device adapter
 
   constructor() {
     super()
@@ -198,20 +208,7 @@ export class PrinterService extends EventEmitter {
       const knownPrinter = KNOWN_PRINTER_IDS.find((p) => p.vendorId === vendorId)
       
       if (knownPrinter) {
-        let name = knownPrinter.name
-        
-        try {
-          device.open()
-          if (descriptor.iProduct) {
-            const productName = device.getStringDescriptor(descriptor.iProduct)
-            if (productName && typeof productName === 'string') {
-              name = `${knownPrinter.name} ${productName}`
-            }
-          }
-          device.close()
-        } catch (error) {
-          // Ignore errors
-        }
+        const name = knownPrinter.name
 
         printers.push({
           id: `usb-printer-${vendorId}-${productId}`,
@@ -294,33 +291,51 @@ export class PrinterService extends EventEmitter {
       throw new Error('Vendor ID and Product ID required for USB connection')
     }
 
-    const device = usb.findByIds(config.vendorId, config.productId)
-    if (!device) {
-      throw new Error('USB printer not found')
-    }
+    return new Promise((resolve, reject) => {
+      try {
+        // Find the USB device
+        const devices = usb.getDeviceList()
+        const device = devices.find(
+          (d) => d.deviceDescriptor.idVendor === config.vendorId && 
+                 d.deviceDescriptor.idProduct === config.productId
+        )
 
-    try {
-      device.open()
-      this.usbDevice = device
-      
-      const printerInfo: DeviceInfo = {
-        id: `usb-${config.vendorId}-${config.productId}`,
-        name: `USB Printer`,
-        type: DeviceType.PRINTER,
-        connection: ConnectionType.USB,
-        status: DeviceStatus.CONNECTED,
-        vendorId: config.vendorId,
-        productId: config.productId
+        if (!device) {
+          throw new Error(`USB device not found: ${config.vendorId}:${config.productId}`)
+        }
+
+        // Store the USB device
+        this.usbDevice = device
+
+        // Try to open the device
+        try {
+          device.open()
+          console.log('USB device opened successfully')
+        } catch (error) {
+          console.error('Error opening USB device:', error)
+          throw new Error(`Failed to open USB device: ${error}`)
+        }
+
+        const printerInfo: DeviceInfo = {
+          id: `usb-${config.vendorId}-${config.productId}`,
+          name: `USB Printer`,
+          type: DeviceType.PRINTER,
+          connection: ConnectionType.USB,
+          status: DeviceStatus.CONNECTED,
+          vendorId: config.vendorId,
+          productId: config.productId
+        }
+
+        this.activePrinter = printerInfo
+        this.emit('printer-connected', printerInfo)
+        console.log('USB printer connected successfully')
+        resolve(true)
+      } catch (error) {
+        console.error('Error connecting to USB printer:', error)
+        this.usbDevice = null
+        reject(error)
       }
-
-      this.activePrinter = printerInfo
-      this.emit('printer-connected', printerInfo)
-      console.log('USB printer connected')
-      return true
-    } catch (error) {
-      console.error('Error opening USB device:', error)
-      throw error
-    }
+    })
   }
 
   /**
@@ -392,6 +407,10 @@ export class PrinterService extends EventEmitter {
       this.serialPort = null
     }
 
+    // Clear escpos references (not used anymore but keep for compatibility)
+    this.escposDevice = null
+    this.escposPrinter = null
+
     if (this.activePrinter) {
       this.emit('printer-disconnected', this.activePrinter)
       this.activePrinter = null
@@ -457,7 +476,10 @@ export class PrinterService extends EventEmitter {
   private async executePrintJob(job: PrintJob): Promise<void> {
     const data = typeof job.data === 'string' ? Buffer.from(job.data) : job.data
 
-    if (this.serialPort && this.serialPort.isOpen) {
+    // Prioritize direct USB printing (escpos-usb is broken)
+    if (this.usbDevice) {
+      return this.printToUSB(data)
+    } else if (this.serialPort && this.serialPort.isOpen) {
       return new Promise((resolve, reject) => {
         this.serialPort!.write(data, (error) => {
           if (error) {
@@ -469,12 +491,66 @@ export class PrinterService extends EventEmitter {
           }
         })
       })
-    } else if (this.usbDevice) {
-      // USB printing would require finding the correct endpoint and writing to it
-      // This is a simplified version
-      throw new Error('USB printing not fully implemented')
     } else {
       throw new Error('No printer connection available')
+    }
+  }
+
+  /**
+   * Print data to USB device
+   */
+  private async printToUSB(data: Buffer): Promise<void> {
+    if (!this.usbDevice) {
+      throw new Error('No USB device connected')
+    }
+
+    try {
+      const device = this.usbDevice
+
+      // Get the first interface
+      const iface = device.interface(0)
+
+      // Claim the interface if not already claimed
+      if (!iface.isKernelDriverActive()) {
+        try {
+          iface.claim()
+        } catch (error) {
+          console.warn('Could not claim interface:', error)
+        }
+      } else {
+        // Detach kernel driver if active (Linux)
+        try {
+          iface.detachKernelDriver()
+          iface.claim()
+        } catch (error) {
+          console.warn('Could not detach kernel driver:', error)
+        }
+      }
+
+      // Find the OUT endpoint (for writing data to the printer)
+      const endpoints = iface.endpoints
+      const outEndpoint = endpoints.find(
+        (ep) => ep.direction === 'out'
+      ) as usb.OutEndpoint | undefined
+
+      if (!outEndpoint) {
+        throw new Error('No OUT endpoint found on USB device')
+      }
+
+      // Write data to the printer
+      return new Promise((resolve, reject) => {
+        outEndpoint.transfer(data, (error) => {
+          if (error) {
+            reject(new Error(`USB transfer failed: ${error.message}`))
+          } else {
+            console.log(`Successfully sent ${data.length} bytes to printer`)
+            resolve()
+          }
+        })
+      })
+    } catch (error) {
+      console.error('USB print error:', error)
+      throw new Error(`USB printing failed: ${error instanceof Error ? error.message : String(error)}`)
     }
   }
 
@@ -515,8 +591,12 @@ export class PrinterService extends EventEmitter {
    * Test print
    */
   async testPrint(useEscPos: boolean = true): Promise<boolean> {
+    if (!this.activePrinter) {
+      throw new Error('No printer connected')
+    }
+
     if (useEscPos) {
-      // ESC/POS mode - use thermal printer commands
+      // Use custom ESC/POS builder (escpos library is broken)
       const testData = new EscPosBuilder()
         .init()
         .align('center')
@@ -569,12 +649,82 @@ This is a test receipt.
   }
 
   /**
+   * Print receipt using escpos library
+   * @param receiptData Receipt data to print
+   */
+  async printReceipt(receiptData: any): Promise<boolean> {
+    if (!this.escposPrinter) {
+      throw new Error('ESC/POS printer not available')
+    }
+
+    return new Promise((resolve, reject) => {
+      try {
+        const printer = this.escposPrinter
+        
+        printer
+          .font('a')
+          .align('ct')
+          .style('bu')
+          .size(2, 2)
+          .text(receiptData.storeName || 'STORE')
+          .size(1, 1)
+          .style('normal')
+          .text(receiptData.address || '')
+          .text(receiptData.phone || '')
+          .feed(1)
+          .align('lt')
+          .text(`Receipt: ${receiptData.receiptNumber || ''}`)
+          .text(`Date: ${receiptData.date || new Date().toLocaleString()}`)
+          .text(`Cashier: ${receiptData.cashier || ''}`)
+          .feed(1)
+          .text('--------------------------------')
+          .feed(1)
+
+        // Print items
+        if (receiptData.items && Array.isArray(receiptData.items)) {
+          receiptData.items.forEach((item: any) => {
+            printer.text(`${item.name}`)
+            printer.text(`  ${item.quantity} x ${item.price} = ${item.total}`)
+          })
+        }
+
+        printer
+          .feed(1)
+          .text('--------------------------------')
+          .align('rt')
+          .text(`Subtotal: ${receiptData.subtotal || '0.00'}`)
+          .text(`Tax: ${receiptData.tax || '0.00'}`)
+          .text(`Discount: ${receiptData.discount || '0.00'}`)
+          .style('bu')
+          .size(1, 2)
+          .text(`TOTAL: ${receiptData.total || '0.00'}`)
+          .size(1, 1)
+          .style('normal')
+          .feed(1)
+          .align('ct')
+          .text('Thank you for your purchase!')
+          .feed(3)
+          .cut()
+          .flush(() => {
+            console.log('Receipt printed successfully')
+            resolve(true)
+          })
+      } catch (error) {
+        console.error('Receipt print failed:', error)
+        reject(error)
+      }
+    })
+  }
+
+  /**
    * Cleanup
    */
   destroy(): void {
     this.disconnect()
     this.connectedPrinters.clear()
     this.printQueue = []
+    this.escposPrinter = null
+    this.escposDevice = null
     this.removeAllListeners()
   }
 }

@@ -42,6 +42,7 @@ export function HardwareDeviceManager() {
   const [apiAvailable, setApiAvailable] = useState(false)
   const [selectedTestPrinter, setSelectedTestPrinter] = useState<string>('')
   const [useEscPosMode, setUseEscPosMode] = useState(true)
+  const [isTesting, setIsTesting] = useState(false)
 
   useEffect(() => {
     // Check if Electron API is available
@@ -62,6 +63,17 @@ export function HardwareDeviceManager() {
     await scanDevices()
     await scanPrinters()
     await scanScanners()
+  }
+
+  const handleTestPrinter = async () => {
+    setIsTesting(true)
+    try {
+      await testPrinter(selectedTestPrinter || undefined, useEscPosMode)
+      // Refresh devices after test to update connection status
+      await scanPrinters()
+    } finally {
+      setIsTesting(false)
+    }
   }
 
   const handleConnectPrinter = async (printer: DeviceInfo) => {
@@ -293,15 +305,15 @@ export function HardwareDeviceManager() {
                   {/* Test Print Button */}
                   <div className="flex items-end">
                     <button
-                      onClick={() => testPrinter(selectedTestPrinter || undefined, useEscPosMode)}
-                      disabled={printers.length === 0}
-                      className={`w-full px-4 py-2 rounded-lg font-medium ${
+                      onClick={handleTestPrinter}
+                      disabled={printers.length === 0 || isTesting}
+                      className={`w-full px-4 py-2 rounded-lg font-medium transition-colors ${
                         theme === 'dark'
                           ? 'bg-green-600 hover:bg-green-700 text-white disabled:bg-gray-700 disabled:text-gray-500'
                           : 'bg-green-500 hover:bg-green-600 text-white disabled:bg-gray-300 disabled:text-gray-500'
                       }`}
                     >
-                      Test Print
+                      {isTesting ? 'Testing...' : 'Test Print'}
                     </button>
                   </div>
                 </div>

@@ -181,8 +181,62 @@ export class HardwareManager extends EventEmitter {
    * Test printer
    */
   async testPrinter(printerId?: string, useEscPos?: boolean): Promise<boolean> {
-    // If a specific printer ID is provided, we would switch to that printer
-    // For now, we'll use the active printer with the specified mode
+    let justConnected = false
+    
+    // If a specific printer ID is provided, connect to it first
+    if (printerId) {
+      const printer = this.usbService.getDevice(printerId)
+      if (!printer) {
+        // Try to find it in the printers list
+        const printersList = await this.printerService.scanPrinters()
+        const foundPrinter = printersList.find(p => p.id === printerId)
+        if (!foundPrinter) {
+          throw new Error(`Printer with ID ${printerId} not found`)
+        }
+        
+        // Connect to the printer
+        const config: PrinterConfig = {
+          connection: foundPrinter.connection as 'USB' | 'Network' | 'Serial',
+          vendorId: foundPrinter.vendorId,
+          productId: foundPrinter.productId,
+          port: foundPrinter.port,
+          address: foundPrinter.address
+        }
+        
+        const connected = await this.connectPrinter(config)
+        if (!connected) {
+          throw new Error(`Failed to connect to printer: ${foundPrinter.name}`)
+        }
+        justConnected = true
+      }
+    }
+    
+    // Check if we have an active printer (only if we didn't just connect)
+    if (!justConnected) {
+      const activePrinter = this.getActivePrinter()
+      if (!activePrinter) {
+        // Try to auto-connect to the first available printer
+        const printers = await this.printerService.scanPrinters()
+        if (printers.length === 0) {
+          throw new Error('No printers found. Please scan for devices first.')
+        }
+        
+        const firstPrinter = printers[0]
+        const config: PrinterConfig = {
+          connection: firstPrinter.connection as 'USB' | 'Network' | 'Serial',
+          vendorId: firstPrinter.vendorId,
+          productId: firstPrinter.productId,
+          port: firstPrinter.port,
+          address: firstPrinter.address
+        }
+        
+        const connected = await this.connectPrinter(config)
+        if (!connected) {
+          throw new Error(`Failed to connect to printer: ${firstPrinter.name}`)
+        }
+      }
+    }
+    
     const printer = printerId ? this.usbService.getDevice(printerId) : this.getActivePrinter()
     const escPosMode = useEscPos !== undefined ? useEscPos : (printer?.useEscPos ?? true)
 
@@ -240,16 +294,42 @@ export class HardwareManager extends EventEmitter {
 
   /**
    * Get all printers
+   * Returns both auto-detected printers and manually assigned printer devices
    */
   getPrinters(): DeviceInfo[] {
-    return this.printerService.getConnectedPrinters()
+    const autoPrinters = this.printerService.getConnectedPrinters()
+    const manualPrinters = this.usbService.getDevicesByType(DeviceType.PRINTER)
+
+    // Merge both lists, avoiding duplicates by ID
+    const printerMap = new Map<string, DeviceInfo>()
+
+    // Add auto-detected printers first
+    autoPrinters.forEach(printer => printerMap.set(printer.id, printer))
+
+    // Add manually assigned printers (will override if same ID)
+    manualPrinters.forEach(printer => printerMap.set(printer.id, printer))
+
+    return Array.from(printerMap.values())
   }
 
   /**
    * Get all scanners
+   * Returns both auto-detected scanners and manually assigned scanner devices
    */
   getScanners(): DeviceInfo[] {
-    return this.scannerService.getConnectedScanners()
+    const autoScanners = this.scannerService.getConnectedScanners()
+    const manualScanners = this.usbService.getDevicesByType(DeviceType.SCANNER)
+
+    // Merge both lists, avoiding duplicates by ID
+    const scannerMap = new Map<string, DeviceInfo>()
+
+    // Add auto-detected scanners first
+    autoScanners.forEach(scanner => scannerMap.set(scanner.id, scanner))
+
+    // Add manually assigned scanners (will override if same ID)
+    manualScanners.forEach(scanner => scannerMap.set(scanner.id, scanner))
+
+    return Array.from(scannerMap.values())
   }
 
   /**
