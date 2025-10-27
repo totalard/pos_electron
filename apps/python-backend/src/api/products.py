@@ -106,11 +106,24 @@ async def get_stock_transactions(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
     product_id: Optional[int] = None,
-    transaction_type: Optional[str] = None
+    transaction_type: Optional[str] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    reference_number: Optional[str] = None,
+    search: Optional[str] = None
 ):
     """
-    Get stock transactions with optional filtering.
+    Get stock transactions with comprehensive filtering.
+    
+    - **product_id**: Filter by specific product
+    - **transaction_type**: Filter by transaction type (purchase, sale, adjustment, etc.)
+    - **start_date**: Filter transactions from this date (ISO format)
+    - **end_date**: Filter transactions until this date (ISO format)
+    - **reference_number**: Filter by reference number
+    - **search**: Search in reference number or notes
     """
+    from datetime import datetime
+    
     query = StockTransaction.all()
 
     if product_id:
@@ -118,8 +131,25 @@ async def get_stock_transactions(
 
     if transaction_type:
         query = query.filter(transaction_type=transaction_type)
+    
+    if start_date:
+        query = query.filter(created_at__gte=datetime.fromisoformat(start_date))
+    
+    if end_date:
+        query = query.filter(created_at__lte=datetime.fromisoformat(end_date))
+    
+    if reference_number:
+        query = query.filter(reference_number__icontains=reference_number)
+    
+    if search:
+        # Search in reference_number and notes
+        query = query.filter(
+            reference_number__icontains=search
+        ) | query.filter(
+            notes__icontains=search
+        )
 
-    transactions = await query.offset(skip).limit(limit).all()
+    transactions = await query.order_by('-created_at').offset(skip).limit(limit).all()
 
     return [stock_transaction_to_response(t) for t in transactions]
 
@@ -426,3 +456,278 @@ async def delete_product(product_id: int):
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Product with ID {product_id} not found"
         )
+
+
+# ============================================================================
+# Inventory Reports & Analytics Endpoints
+# ============================================================================
+
+@router.get("/inventory/low-stock", response_model=List[ProductResponse])
+async def get_low_stock_products(
+    threshold_type: str = Query('absolute', regex='^(absolute|percentage)$'),
+    threshold_value: Optional[int] = None
+):
+    """
+    Get products with low stock levels.
+    
+    - **threshold_type**: 'absolute' or 'percentage'
+    - **threshold_value**: Override default threshold
+    """
+    query = Product.filter(is_active=True, track_inventory=True)
+    products = await query.all()
+    
+    low_stock_products = []
+    for product in products:
+        if threshold_type == 'absolute':
+            threshold = threshold_value if threshold_value is not None else product.min_stock_level
+            if product.current_stock <= threshold:
+                low_stock_products.append(product)
+        else:  # percentage
+            threshold = threshold_value if threshold_value is not None else 20
+            if product.min_stock_level > 0:
+                percentage = (product.current_stock / product.min_stock_level) * 100
+                if percentage <= threshold:
+                    low_stock_products.append(product)
+    
+    return [product_to_response(p) for p in low_stock_products]
+
+
+@router.get("/inventory/out-of-stock", response_model=List[ProductResponse])
+async def get_out_of_stock_products():
+    """Get all products that are completely out of stock."""
+    products = await Product.filter(
+        is_active=True,
+        track_inventory=True,
+        current_stock=0
+    ).all()
+    
+    return [product_to_response(p) for p in products]
+
+
+@router.get("/inventory/valuation")
+async def get_inventory_valuation():
+    """
+    Get total inventory valuation and breakdown by category.
+    
+    Returns total stock value, cost breakdown, and potential profit.
+    """
+    products = await Product.filter(is_active=True, track_inventory=True).all()
+    
+    total_cost_value = Decimal('0')
+    total_selling_value = Decimal('0')
+    category_breakdown = {}
+    
+    for product in products:
+        cost_value = Decimal(str(product.cost_price or 0)) * product.current_stock
+        selling_value = Decimal(str(product.selling_price or 0)) * product.current_stock
+        
+        total_cost_value += cost_value
+        total_selling_value += selling_value
+        
+        category = product.category or 'Uncategorized'
+        if category not in category_breakdown:
+            category_breakdown[category] = {
+                'cost_value': Decimal('0'),
+                'selling_value': Decimal('0'),
+                'quantity': 0,
+                'products': 0
+            }
+        
+        category_breakdown[category]['cost_value'] += cost_value
+        category_breakdown[category]['selling_value'] += selling_value
+        category_breakdown[category]['quantity'] += product.current_stock
+        category_breakdown[category]['products'] += 1
+    
+    return {
+        'total_cost_value': float(total_cost_value),
+        'total_selling_value': float(total_selling_value),
+        'potential_profit': float(total_selling_value - total_cost_value),
+        'profit_margin_percentage': float((total_selling_value - total_cost_value) / total_selling_value * 100) if total_selling_value > 0 else 0,
+        'total_products': len(products),
+        'total_quantity': sum(p.current_stock for p in products),
+        'category_breakdown': {
+            cat: {
+                'cost_value': float(data['cost_value']),
+                'selling_value': float(data['selling_value']),
+                'potential_profit': float(data['selling_value'] - data['cost_value']),
+                'quantity': data['quantity'],
+                'products': data['products']
+            }
+            for cat, data in category_breakdown.items()
+        }
+    }
+
+
+@router.get("/inventory/stock-movement")
+async def get_stock_movement_report(
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    product_id: Optional[int] = None
+):
+    """
+    Get stock movement report showing all transactions within a date range.
+    
+    Includes purchases, sales, adjustments, returns, damages, and transfers.
+    """
+    from datetime import datetime, timedelta
+    
+    query = StockTransaction.all()
+    
+    if product_id:
+        query = query.filter(product_id=product_id)
+    
+    if start_date:
+        query = query.filter(created_at__gte=datetime.fromisoformat(start_date))
+    
+    if end_date:
+        query = query.filter(created_at__lte=datetime.fromisoformat(end_date))
+    
+    transactions = await query.order_by('-created_at').all()
+    
+    # Calculate summary by transaction type
+    summary = {}
+    for trans in transactions:
+        trans_type = trans.transaction_type.value
+        if trans_type not in summary:
+            summary[trans_type] = {
+                'count': 0,
+                'total_quantity': 0,
+                'total_value': Decimal('0')
+            }
+        summary[trans_type]['count'] += 1
+        summary[trans_type]['total_quantity'] += abs(trans.quantity)
+        summary[trans_type]['total_value'] += Decimal(str(trans.total_cost or 0))
+    
+    return {
+        'transactions': [stock_transaction_to_response(t) for t in transactions],
+        'summary': {
+            trans_type: {
+                'count': data['count'],
+                'total_quantity': data['total_quantity'],
+                'total_value': float(data['total_value'])
+            }
+            for trans_type, data in summary.items()
+        },
+        'total_transactions': len(transactions)
+    }
+
+
+@router.get("/inventory/reorder-suggestions")
+async def get_reorder_suggestions():
+    """
+    Get products that need reordering based on current stock levels and reorder points.
+    
+    Returns products below reorder threshold with suggested quantities.
+    """
+    products = await Product.filter(
+        is_active=True,
+        track_inventory=True
+    ).all()
+    
+    suggestions = []
+    for product in products:
+        # Check if below reorder point (using min_stock_level as reorder point)
+        if product.current_stock <= product.min_stock_level:
+            # Calculate suggested order quantity
+            # Simple formula: (max_stock_level - current_stock) or 2x min_stock_level
+            suggested_quantity = max(
+                product.max_stock_level - product.current_stock if product.max_stock_level else 0,
+                product.min_stock_level * 2
+            )
+            
+            suggestions.append({
+                'product_id': product.id,
+                'product_name': product.name,
+                'sku': product.sku,
+                'current_stock': product.current_stock,
+                'min_stock_level': product.min_stock_level,
+                'max_stock_level': product.max_stock_level,
+                'suggested_quantity': suggested_quantity,
+                'estimated_cost': float(Decimal(str(product.cost_price or 0)) * suggested_quantity),
+                'urgency': 'critical' if product.current_stock == 0 else 'high' if product.current_stock < product.min_stock_level * 0.5 else 'medium'
+            })
+    
+    # Sort by urgency and current stock
+    suggestions.sort(key=lambda x: (
+        0 if x['urgency'] == 'critical' else 1 if x['urgency'] == 'high' else 2,
+        x['current_stock']
+    ))
+    
+    return {
+        'suggestions': suggestions,
+        'total_products': len(suggestions),
+        'critical_count': sum(1 for s in suggestions if s['urgency'] == 'critical'),
+        'high_priority_count': sum(1 for s in suggestions if s['urgency'] == 'high'),
+        'total_estimated_cost': sum(s['estimated_cost'] for s in suggestions)
+    }
+
+
+@router.get("/inventory/abc-analysis")
+async def get_abc_analysis():
+    """
+    Perform ABC analysis on inventory based on value.
+    
+    - A items: Top 20% of products by value (typically 80% of total value)
+    - B items: Next 30% of products (typically 15% of total value)
+    - C items: Remaining 50% of products (typically 5% of total value)
+    """
+    products = await Product.filter(is_active=True, track_inventory=True).all()
+    
+    # Calculate value for each product
+    product_values = []
+    for product in products:
+        value = Decimal(str(product.cost_price or 0)) * product.current_stock
+        product_values.append({
+            'product': product,
+            'value': value
+        })
+    
+    # Sort by value descending
+    product_values.sort(key=lambda x: x['value'], reverse=True)
+    
+    total_value = sum(pv['value'] for pv in product_values)
+    cumulative_value = Decimal('0')
+    
+    a_items = []
+    b_items = []
+    c_items = []
+    
+    for pv in product_values:
+        cumulative_value += pv['value']
+        cumulative_percentage = float(cumulative_value / total_value * 100) if total_value > 0 else 0
+        
+        product_data = {
+            **product_to_response(pv['product']),
+            'stock_value': float(pv['value']),
+            'cumulative_percentage': cumulative_percentage
+        }
+        
+        if cumulative_percentage <= 80:
+            a_items.append(product_data)
+        elif cumulative_percentage <= 95:
+            b_items.append(product_data)
+        else:
+            c_items.append(product_data)
+    
+    return {
+        'a_items': {
+            'products': a_items,
+            'count': len(a_items),
+            'total_value': float(sum(Decimal(str(p['stock_value'])) for p in a_items)),
+            'percentage_of_total': float(sum(Decimal(str(p['stock_value'])) for p in a_items) / total_value * 100) if total_value > 0 else 0
+        },
+        'b_items': {
+            'products': b_items,
+            'count': len(b_items),
+            'total_value': float(sum(Decimal(str(p['stock_value'])) for p in b_items)),
+            'percentage_of_total': float(sum(Decimal(str(p['stock_value'])) for p in b_items) / total_value * 100) if total_value > 0 else 0
+        },
+        'c_items': {
+            'products': c_items,
+            'count': len(c_items),
+            'total_value': float(sum(Decimal(str(p['stock_value'])) for p in c_items)),
+            'percentage_of_total': float(sum(Decimal(str(p['stock_value'])) for p in c_items) / total_value * 100) if total_value > 0 else 0
+        },
+        'total_value': float(total_value),
+        'total_products': len(products)
+    }

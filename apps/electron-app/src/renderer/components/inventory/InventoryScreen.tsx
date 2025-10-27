@@ -5,6 +5,9 @@ import { Button, IconButton, ThemeToggle, LoadingSpinner, ErrorMessage } from '.
 import { InventoryDashboard } from './InventoryDashboard'
 import { StockTransactionsList } from './StockTransactionsList'
 import { StockAdjustmentForm } from './StockAdjustmentForm'
+import { StockAdjustmentsList } from './StockAdjustmentsList'
+import { InventoryReports } from './InventoryReports'
+import { BulkOperations } from './BulkOperations'
 
 interface InventoryScreenProps {
   onBack: () => void
@@ -27,6 +30,7 @@ export function InventoryScreen({ onBack }: InventoryScreenProps) {
   } = useInventoryStore()
 
   const [showAdjustmentForm, setShowAdjustmentForm] = useState(false)
+  const [showBulkOperations, setShowBulkOperations] = useState(false)
 
   // Load initial data
   useEffect(() => {
@@ -126,6 +130,18 @@ export function InventoryScreen({ onBack }: InventoryScreenProps) {
               />
             </div>
 
+            <Button
+              variant="secondary"
+              size="md"
+              onClick={() => setShowBulkOperations(true)}
+              icon={
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                </svg>
+              }
+            >
+              Bulk Operations
+            </Button>
             {settings?.enableStockAdjustment && (
               <Button
                 variant="primary"
@@ -164,60 +180,8 @@ export function InventoryScreen({ onBack }: InventoryScreenProps) {
           <>
             {viewMode === 'overview' && <InventoryDashboard />}
             {viewMode === 'transactions' && <StockTransactionsList />}
-            {viewMode === 'adjustments' && (
-              <div className={`
-                p-6 rounded-xl
-                ${theme === 'dark' 
-                  ? 'bg-gray-800/50 border border-gray-700' 
-                  : 'bg-white border border-gray-200'
-                }
-              `}>
-                <div className="text-center py-12">
-                  <svg className="w-16 h-16 mx-auto mb-4 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                  </svg>
-                  <h3 className={`text-xl font-semibold mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                    Stock Adjustments
-                  </h3>
-                  <p className={`mb-6 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-                    Create and manage bulk stock adjustments
-                  </p>
-                  <Button
-                    variant="primary"
-                    size="md"
-                    onClick={handleNewAdjustment}
-                    icon={
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                      </svg>
-                    }
-                  >
-                    Create Adjustment
-                  </Button>
-                </div>
-              </div>
-            )}
-            {viewMode === 'reports' && (
-              <div className={`
-                p-6 rounded-xl
-                ${theme === 'dark' 
-                  ? 'bg-gray-800/50 border border-gray-700' 
-                  : 'bg-white border border-gray-200'
-                }
-              `}>
-                <div className="text-center py-12">
-                  <svg className="w-16 h-16 mx-auto mb-4 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                  </svg>
-                  <h3 className={`text-xl font-semibold mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                    Inventory Reports
-                  </h3>
-                  <p className={`${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-                    Analytics and reporting features coming soon
-                  </p>
-                </div>
-              </div>
-            )}
+            {viewMode === 'adjustments' && <StockAdjustmentsList />}
+            {viewMode === 'reports' && <InventoryReports />}
           </>
         )}
       </PageContainer>
@@ -230,6 +194,24 @@ export function InventoryScreen({ onBack }: InventoryScreenProps) {
             ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}
           `}>
             <StockAdjustmentForm onClose={handleCloseAdjustmentForm} />
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Operations Modal */}
+      {showBulkOperations && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className={`
+            w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-xl shadow-2xl
+            ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}
+          `}>
+            <BulkOperations
+              onClose={() => setShowBulkOperations(false)}
+              onSuccess={() => {
+                fetchStats()
+                fetchTransactions()
+              }}
+            />
           </div>
         </div>
       )}
