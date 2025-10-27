@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAppStore } from '../../stores'
-import { Dialog } from '../common'
+import { Modal } from '../common'
 
 interface ItemNoteDialogProps {
   isOpen: boolean
@@ -36,7 +36,7 @@ export function ItemNoteDialog({
   }
 
   return (
-    <Dialog
+    <Modal
       isOpen={isOpen}
       onClose={onClose}
       title="Add Product Note"
@@ -163,6 +163,6 @@ export function ItemNoteDialog({
           </button>
         </div>
       </div>
-    </Dialog>
+    </Modal>
   )
 }

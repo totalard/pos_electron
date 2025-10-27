@@ -13,7 +13,7 @@ interface DashboardProps {
 
 export function Dashboard({ onNavigate, onLock, onLogout }: DashboardProps) {
   const { theme } = useAppStore()
-  const { currentUser } = usePinStore()
+  const currentUser = usePinStore((state) => state.currentUser)
   const { business } = useSettingsStore()
   const [currentTime, setCurrentTime] = useState(new Date())
 

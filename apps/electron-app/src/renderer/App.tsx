@@ -106,14 +106,17 @@ function App() {
     }
   }, [theme])
 
-  // Initialize system and reset PIN store when app starts
+  // Initialize system when app starts (only on mount, not on every render)
   useEffect(() => {
-    resetPin()
+    // Only reset PIN on initial app load, not after dashboard is shown
+    if (currentScreen === 'splash') {
+      resetPin()
+    }
     // Initialize the system (create primary user if needed)
     initializeSystem().catch(console.error)
     // Load settings from backend to ensure business mode is synced
     loadSettings().catch(console.error)
-  }, [resetPin, initializeSystem, loadSettings])
+  }, []) // Empty dependency array - run only once on mount
 
   return (
     <div className="h-screen w-screen overflow-hidden">
