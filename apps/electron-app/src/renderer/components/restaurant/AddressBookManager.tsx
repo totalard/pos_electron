@@ -68,7 +68,7 @@ export function AddressBookManager({
   return (
     <>
       <RightPanel isOpen={isOpen} onClose={onClose} title="Address Book" width="lg">
-        <div className="p-6 space-y-4 overflow-y-auto h-full">
+        <div className="space-y-4">
           {/* Action Bar */}
           <div className="flex flex-wrap gap-3">
             <Button

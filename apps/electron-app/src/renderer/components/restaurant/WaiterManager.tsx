@@ -76,7 +76,7 @@ export function WaiterManager({ isOpen, onClose }: WaiterManagerProps) {
   return (
     <>
       <RightPanel isOpen={isOpen} onClose={onClose} title="Waiter Management" width="lg">
-        <div className="p-6 space-y-4 overflow-y-auto h-full">
+        <div className="space-y-4">
           {/* Header with Add Button */}
           <div className="flex items-center justify-between">
             <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
@@ -317,7 +317,7 @@ function WaiterDialog({ isOpen, onClose, onSave, waiter }: WaiterDialogProps) {
 
   return (
     <RightPanel isOpen={isOpen} onClose={onClose} title={waiter ? 'Edit Waiter' : 'Add Waiter'} width="md">
-      <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto h-full">
+      <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className={`block text-sm font-medium mb-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
             Name *

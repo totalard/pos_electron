@@ -69,8 +69,8 @@ export function RightPanel({
   children,
   ...props
 }: RightPanelProps) {
-  // RightPanel wraps content with no padding by default (children control their own padding)
-  // This maintains backward compatibility with existing implementations
+  // RightPanel now uses default padding (24px) to match Sidebar best practices
+  // Components should no longer manually add p-6 or p-4 classes
   return (
     <Sidebar
       isOpen={isOpen}
@@ -80,7 +80,7 @@ export function RightPanel({
       showCloseButton={showCloseButton}
       closeOnBackdrop={closeOnBackdrop}
       autoFocus={autoFocus}
-      contentVariant="none"
+      contentVariant="default"
       className={className}
       {...props}
     >
