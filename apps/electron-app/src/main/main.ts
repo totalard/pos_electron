@@ -151,6 +151,17 @@ ipcMain.handle('hardware:get-devices-by-type', async (_event, type: string) => {
   }
 })
 
+// Set device type manually
+ipcMain.handle('hardware:set-device-type', async (_event, deviceId: string, deviceType: string) => {
+  try {
+    const result = hardwareManager.setDeviceType(deviceId, deviceType as any)
+    return { success: result }
+  } catch (error) {
+    console.error('Set device type error:', error)
+    return { success: false, error: String(error) }
+  }
+})
+
 // Printer handlers
 ipcMain.handle('printer:scan', async () => {
   try {

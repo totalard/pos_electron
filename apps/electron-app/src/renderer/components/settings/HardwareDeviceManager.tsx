@@ -31,14 +31,25 @@ export function HardwareDeviceManager() {
     connectScanner,
     disconnectScanner,
     testScanner,
-    clearLogs
+    clearLogs,
+    setDeviceType
   } = useHardwareStore()
 
   const [selectedTab, setSelectedTab] = useState<'printers' | 'scanners' | 'devices' | 'logs'>('printers')
   const [showConnectDialog, setShowConnectDialog] = useState(false)
   const [selectedDevice, setSelectedDevice] = useState<DeviceInfo | null>(null)
+  const [apiAvailable, setApiAvailable] = useState(false)
 
   useEffect(() => {
+    // Check if Electron API is available
+    const checkAPI = () => {
+      const available = typeof window !== 'undefined' && !!window.electronAPI
+      setApiAvailable(available)
+      console.log('[HardwareDeviceManager] Electron API available:', available)
+    }
+    
+    checkAPI()
+    
     if (!isInitialized) {
       initialize()
     }
@@ -102,6 +113,33 @@ export function HardwareDeviceManager() {
 
   return (
     <div className={`p-6 space-y-6 ${theme === 'dark' ? 'bg-gray-900' : 'bg-white'}`}>
+      {/* API Not Available Warning */}
+      {!apiAvailable && (
+        <div className={`p-4 rounded-lg border-2 ${theme === 'dark' ? 'bg-yellow-900/20 border-yellow-600' : 'bg-yellow-50 border-yellow-400'}`}>
+          <div className="flex items-start space-x-3">
+            <svg className="w-6 h-6 text-yellow-600 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <div className="flex-1">
+              <h3 className={`font-semibold mb-1 ${theme === 'dark' ? 'text-yellow-400' : 'text-yellow-800'}`}>
+                Hardware API Not Available
+              </h3>
+              <p className={`text-sm ${theme === 'dark' ? 'text-yellow-300' : 'text-yellow-700'}`}>
+                The Electron hardware API is not loaded. This usually happens when:
+              </p>
+              <ul className={`text-sm mt-2 ml-4 list-disc space-y-1 ${theme === 'dark' ? 'text-yellow-300' : 'text-yellow-700'}`}>
+                <li>The preload script failed to load</li>
+                <li>Running in a browser instead of Electron</li>
+                <li>The application needs to be restarted</li>
+              </ul>
+              <p className={`text-sm mt-2 ${theme === 'dark' ? 'text-yellow-300' : 'text-yellow-700'}`}>
+                <strong>Solution:</strong> Restart the application. If the issue persists, check the console for errors.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
@@ -445,7 +483,7 @@ export function HardwareDeviceManager() {
                     key={device.id}
                     className={`p-4 rounded-lg border ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}
                   >
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-start justify-between gap-4">
                       <div className="flex-1">
                         <h4 className={`font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
                           {device.name}
@@ -460,11 +498,37 @@ export function HardwareDeviceManager() {
                           <p className={getStatusColor(device.status)}>Status: {device.status}</p>
                         </div>
                       </div>
-                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                        theme === 'dark' ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-700'
-                      }`}>
-                        {device.type}
-                      </span>
+                      <div className="flex flex-col items-end gap-2">
+                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                          theme === 'dark' ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-700'
+                        }`}>
+                          {device.type}
+                        </span>
+                        {device.type === 'unknown' && (
+                          <div className="flex flex-col gap-1">
+                            <button
+                              onClick={() => setDeviceType(device.id, 'printer')}
+                              className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
+                                theme === 'dark'
+                                  ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                                  : 'bg-blue-500 hover:bg-blue-600 text-white'
+                              }`}
+                            >
+                              Mark as Printer
+                            </button>
+                            <button
+                              onClick={() => setDeviceType(device.id, 'scanner')}
+                              className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
+                                theme === 'dark'
+                                  ? 'bg-green-600 hover:bg-green-700 text-white'
+                                  : 'bg-green-500 hover:bg-green-600 text-white'
+                              }`}
+                            >
+                              Mark as Scanner
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))}

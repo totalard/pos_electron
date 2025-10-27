@@ -73,6 +73,7 @@ interface HardwareState {
   // Utility
   addLog: (type: 'info' | 'success' | 'warning' | 'error', message: string) => void
   clearLogs: () => void
+  setDeviceType: (deviceId: string, deviceType: string) => Promise<boolean>
 }
 
 export const useHardwareStore = create<HardwareState>((set, get) => ({
@@ -410,5 +411,27 @@ export const useHardwareStore = create<HardwareState>((set, get) => ({
   // Clear logs
   clearLogs: () => {
     set({ logs: [] })
+  },
+
+  // Set device type manually
+  setDeviceType: async (deviceId: string, deviceType: string) => {
+    try {
+      const api = getElectronAPI()
+      if (!api) return false
+      
+      const result = await api.hardware.setDeviceType(deviceId, deviceType)
+      if (result.success) {
+        get().addLog('success', `Device type set to ${deviceType}`)
+        // Refresh device lists
+        await get().scanDevices()
+        return true
+      } else {
+        get().addLog('error', `Failed to set device type: ${result.error}`)
+        return false
+      }
+    } catch (error) {
+      get().addLog('error', `Set device type error: ${String(error)}`)
+      return false
+    }
   }
 }))

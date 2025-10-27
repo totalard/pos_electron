@@ -59,6 +59,7 @@ export interface IElectronAPI {
     scanDevices: () => Promise<{ success: boolean; data?: any; error?: string }>
     getDevices: () => Promise<{ success: boolean; data?: DeviceInfo[]; error?: string }>
     getDevicesByType: (type: string) => Promise<{ success: boolean; data?: DeviceInfo[]; error?: string }>
+    setDeviceType: (deviceId: string, deviceType: string) => Promise<{ success: boolean; error?: string }>
     onHardwareEvent: (callback: (event: HardwareEvent) => void) => () => void
   }
   
@@ -98,6 +99,7 @@ const electronAPI: IElectronAPI = {
     scanDevices: () => ipcRenderer.invoke('hardware:scan-devices'),
     getDevices: () => ipcRenderer.invoke('hardware:get-devices'),
     getDevicesByType: (type: string) => ipcRenderer.invoke('hardware:get-devices-by-type', type),
+    setDeviceType: (deviceId: string, deviceType: string) => ipcRenderer.invoke('hardware:set-device-type', deviceId, deviceType),
     onHardwareEvent: (callback: (event: HardwareEvent) => void) => {
       const listener = (_event: any, data: HardwareEvent) => callback(data)
       ipcRenderer.on('hardware-event', listener)
@@ -128,6 +130,9 @@ const electronAPI: IElectronAPI = {
 
 // Use contextBridge to safely expose the API
 contextBridge.exposeInMainWorld('electronAPI', electronAPI)
+
+// Log successful preload
+console.log('[Preload] Electron API successfully exposed to renderer')
 
 // Type augmentation for window object
 declare global {

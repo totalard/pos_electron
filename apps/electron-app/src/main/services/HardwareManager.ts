@@ -145,6 +145,18 @@ export class HardwareManager extends EventEmitter {
   }
 
   /**
+   * Manually set device type
+   */
+  setDeviceType(deviceId: string, deviceType: DeviceType): boolean {
+    const result = this.usbService.setDeviceType(deviceId, deviceType)
+    if (result) {
+      // Trigger a rescan to update printer/scanner lists
+      this.scanAllDevices()
+    }
+    return result
+  }
+
+  /**
    * Connect to printer
    */
   async connectPrinter(config: PrinterConfig): Promise<boolean> {

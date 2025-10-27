@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "description": "POS Electron Application",
   "main": "dist/main/main.js",
-  "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build && electron-builder",

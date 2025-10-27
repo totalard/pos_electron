@@ -7,12 +7,12 @@ import { EventEmitter } from 'events'
 import usb from 'usb'
 import { DeviceInfo, DeviceType, ConnectionType, DeviceStatus, KNOWN_PRINTER_IDS, KNOWN_SCANNER_IDS } from './types'
 
-// Cast usb module to EventEmitter for proper typing
-const usbEventEmitter = usb as unknown as EventEmitter
-
 export class USBDeviceService extends EventEmitter {
   private devices: Map<string, DeviceInfo> = new Map()
   private isMonitoring = false
+  private attachHandler: ((device: usb.Device) => void) | null = null
+  private detachHandler: ((device: usb.Device) => void) | null = null
+  private manualDeviceTypes: Map<string, DeviceType> = new Map() // Store manually assigned device types
 
   constructor() {
     super()
@@ -31,16 +31,33 @@ export class USBDeviceService extends EventEmitter {
     // Initial scan
     this.scanDevices()
 
-    // Listen for device attach/detach events
-    usbEventEmitter.on('attach', (device: any) => {
-      console.log('USB device attached:', device)
-      this.handleDeviceAttach(device)
-    })
+    // Try to set up hotplug monitoring if available
+    try {
+      // Check if usb.on is available (some environments don't support it)
+      if (typeof (usb as any).on === 'function') {
+        // Create handlers
+        this.attachHandler = (device: usb.Device) => {
+          console.log('USB device attached:', device)
+          this.handleDeviceAttach(device)
+        }
 
-    usbEventEmitter.on('detach', (device: any) => {
-      console.log('USB device detached:', device)
-      this.handleDeviceDetach(device)
-    })
+        this.detachHandler = (device: usb.Device) => {
+          console.log('USB device detached:', device)
+          this.handleDeviceDetach(device)
+        }
+
+        // Listen for device attach/detach events
+        (usb as any).on('attach', this.attachHandler);
+        (usb as any).on('detach', this.detachHandler)
+        
+        console.log('USB hotplug monitoring enabled')
+      } else {
+        console.log('USB hotplug monitoring not available - using manual scanning only')
+      }
+    } catch (error) {
+      console.warn('Could not enable USB hotplug monitoring:', error)
+      console.log('USB device monitoring will use manual scanning only')
+    }
 
     console.log('USB device monitoring started')
   }
@@ -54,8 +71,22 @@ export class USBDeviceService extends EventEmitter {
     }
 
     this.isMonitoring = false
-    usbEventEmitter.removeAllListeners('attach')
-    usbEventEmitter.removeAllListeners('detach')
+    
+    // Remove event listeners if they were set up
+    try {
+      if (this.attachHandler && typeof (usb as any).removeListener === 'function') {
+        (usb as any).removeListener('attach', this.attachHandler)
+        this.attachHandler = null
+      }
+      
+      if (this.detachHandler && typeof (usb as any).removeListener === 'function') {
+        (usb as any).removeListener('detach', this.detachHandler)
+        this.detachHandler = null
+      }
+    } catch (error) {
+      console.warn('Error removing USB event listeners:', error)
+    }
+    
     console.log('USB device monitoring stopped')
   }
 
@@ -96,6 +127,55 @@ export class USBDeviceService extends EventEmitter {
    */
   getDevice(id: string): DeviceInfo | undefined {
     return this.devices.get(id)
+  }
+
+  /**
+   * Manually set device type (for unknown devices)
+   */
+  setDeviceType(deviceId: string, deviceType: DeviceType): boolean {
+    const device = this.devices.get(deviceId)
+    if (!device) {
+      return false
+    }
+
+    // Store the manual assignment
+    this.manualDeviceTypes.set(deviceId, deviceType)
+
+    // Update the device info
+    device.type = deviceType
+    this.devices.set(deviceId, device)
+
+    // Emit event
+    this.emit('device-type-changed', device)
+    console.log(`Device ${device.name} manually set to type: ${deviceType}`)
+
+    return true
+  }
+
+  /**
+   * Get manually assigned device type
+   */
+  getManualDeviceType(deviceId: string): DeviceType | undefined {
+    return this.manualDeviceTypes.get(deviceId)
+  }
+
+  /**
+   * Clear manual device type assignment
+   */
+  clearManualDeviceType(deviceId: string): void {
+    this.manualDeviceTypes.delete(deviceId)
+    
+    // Re-scan to get automatic type
+    const devices = usb.getDeviceList()
+    devices.forEach((usbDevice) => {
+      const id = this.getDeviceId(usbDevice)
+      if (id === deviceId) {
+        const deviceInfo = this.createDeviceInfo(usbDevice)
+        if (deviceInfo) {
+          this.devices.set(deviceId, deviceInfo)
+        }
+      }
+    })
   }
 
   /**
@@ -159,8 +239,11 @@ export class USBDeviceService extends EventEmitter {
         console.warn('Could not open device for details:', error)
       }
 
-      // Identify device type
-      const deviceType = this.identifyDeviceType(vendorId, productId, product)
+      const deviceId = this.getDeviceId(device)
+      
+      // Check if device has a manually assigned type
+      const manualType = this.manualDeviceTypes.get(deviceId)
+      const deviceType = manualType || this.identifyDeviceType(vendorId, productId, product)
       
       // Get known manufacturer name
       const knownManufacturer = this.getKnownManufacturer(vendorId)
@@ -169,7 +252,7 @@ export class USBDeviceService extends EventEmitter {
       }
 
       const deviceInfo: DeviceInfo = {
-        id: this.getDeviceId(device),
+        id: deviceId,
         name: `${manufacturer} ${product}`,
         type: deviceType,
         connection: ConnectionType.USB,

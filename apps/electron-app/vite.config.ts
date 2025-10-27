@@ -16,7 +16,11 @@ export default defineConfig({
           build: {
             outDir: 'dist/main',
             rollupOptions: {
-              external: ['electron', 'serialport', 'usb', 'node-hid', 'escpos', 'escpos-usb']
+              external: ['electron', 'serialport', 'usb', 'node-hid', 'escpos', 'escpos-usb'],
+              output: {
+                format: 'cjs',
+                entryFileNames: '[name].js'
+              }
             }
           }
         }
@@ -25,7 +29,14 @@ export default defineConfig({
         input: 'src/preload/preload.ts',
         vite: {
           build: {
-            outDir: 'dist/preload'
+            outDir: 'dist/preload',
+            rollupOptions: {
+              external: ['electron'],
+              output: {
+                format: 'cjs',
+                entryFileNames: '[name].js'
+              }
+            }
           }
         }
       },
