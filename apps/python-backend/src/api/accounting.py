@@ -139,6 +139,49 @@ async def get_income_statement(start_date: Optional[str] = None, end_date: Optio
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@router.get("/reports/trial-balance", response_model=TrialBalanceResponse)
+async def get_trial_balance(as_of_date: Optional[str] = None):
+    """Get trial balance report"""
+    try:
+        as_of = datetime.fromisoformat(as_of_date) if as_of_date else datetime.now()
+        
+        accounts = await Account.filter(is_active=True).order_by('account_code')
+        
+        account_balances = []
+        total_debit = Decimal('0.00')
+        total_credit = Decimal('0.00')
+        
+        for acc in accounts:
+            balance = acc.current_balance
+            if balance > 0:
+                if acc.account_type in [AccountType.ASSET, AccountType.EXPENSE]:
+                    total_debit += balance
+                else:
+                    total_credit += balance
+            
+            account_balances.append({
+                "account_id": acc.id,
+                "account_code": acc.account_code,
+                "account_name": acc.account_name,
+                "account_type": acc.account_type.value,
+                "current_balance": float(balance),
+                "total_debit": float(balance) if acc.account_type in [AccountType.ASSET, AccountType.EXPENSE] and balance > 0 else 0.0,
+                "total_credit": float(balance) if acc.account_type not in [AccountType.ASSET, AccountType.EXPENSE] and balance > 0 else 0.0,
+                "transaction_count": 0
+            })
+        
+        return TrialBalanceResponse(
+            as_of_date=as_of,
+            accounts=account_balances,
+            total_debit=float(total_debit),
+            total_credit=float(total_credit),
+            is_balanced=total_debit == total_credit
+        )
+    except Exception as e:
+        logger.error(f"Failed to generate trial balance: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.get("/fiscal-years", response_model=List[FiscalYearResponse])
 async def get_fiscal_years():
     """Get fiscal years"""
@@ -147,4 +190,22 @@ async def get_fiscal_years():
         return [FiscalYearResponse.from_orm(fy) for fy in fiscal_years]
     except Exception as e:
         logger.error(f"Failed to fetch fiscal years: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/fiscal-years", response_model=FiscalYearResponse, status_code=201)
+async def create_fiscal_year(fiscal_year_data: FiscalYearCreate, created_by_id: int = 1):
+    """Create fiscal year"""
+    try:
+        fiscal_year = await FiscalYear.create(
+            year_name=fiscal_year_data.year_name,
+            start_date=fiscal_year_data.start_date,
+            end_date=fiscal_year_data.end_date,
+            opening_balance=Decimal(str(fiscal_year_data.opening_balance)),
+            created_by_id=created_by_id
+        )
+        await fiscal_year.fetch_related('created_by', 'closed_by')
+        return FiscalYearResponse.from_orm(fiscal_year)
+    except Exception as e:
+        logger.error(f"Failed to create fiscal year: {e}")
         raise HTTPException(status_code=500, detail=str(e))

@@ -43,6 +43,10 @@ TORTOISE_ORM = {
                 "src.database.models.expense",
                 "src.database.models.discount",
                 "src.database.models.pos_session",  # POS Session management
+                "src.database.models.account",  # Accounting - Chart of Accounts
+                "src.database.models.journal_entry",  # Accounting - Journal Entries
+                "src.database.models.fiscal_year",  # Accounting - Fiscal Years
+                "src.database.models.purchase",  # Purchase Orders
                 "aerich.models"  # Required for Aerich migrations
             ],
             "default_connection": "default",
