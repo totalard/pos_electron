@@ -114,41 +114,76 @@ export interface PaymentSettings {
   cashRoundingAmount: number
 }
 
+// Printer Configuration Interfaces
+export interface PrinterConfiguration {
+  id: string
+  name: string
+  type: 'kitchen' | 'cashier' | 'label'
+  connection: 'USB' | 'Network' | 'COM'
+  port?: string
+  address?: string
+  baudRate: number
+  vendorId?: number
+  productId?: number
+  paperSize?: '58mm' | '80mm'
+  enabled: boolean
+  // Kitchen printer specific
+  assignedCategories?: number[] // Route specific product categories to this printer
+  priority?: number // Printing order (lower = higher priority)
+}
+
+export interface PrintersConfiguration {
+  cashier: PrinterConfiguration | null
+  kitchen: PrinterConfiguration[]
+  label: PrinterConfiguration | null
+}
+
+// Customer Display Configuration Interfaces
+export interface CarouselSettings {
+  enabled: boolean
+  slideDuration: number // seconds
+  transitionEffect: 'fade' | 'slide' | 'none'
+  adContent: AdContent[]
+}
+
+export interface AdContent {
+  id: string
+  type: 'image' | 'video' | 'text'
+  url?: string // For image/video
+  text?: string // For text ads
+  duration?: number // Override default slide duration
+  order: number
+}
+
+export interface CustomerDisplayConfiguration {
+  id: string
+  name: string
+  enabled: boolean
+  type: 'Monitor' | 'Pole Display' | 'Tablet'
+  connection: 'HDMI' | 'USB' | 'Network'
+  port?: string
+  address?: string
+  // Display content settings
+  showItems: boolean
+  showTotal: boolean
+  showPromo: boolean
+  fontSize: 'Small' | 'Medium' | 'Large'
+  // Carousel settings
+  carousel: CarouselSettings
+}
+
 export interface HardwareSettings {
-  // Receipt Printer Configuration
-  receiptPrinterEnabled: boolean
-  receiptPrinterConnection: 'USB' | 'Network' | 'COM'
-  receiptPrinterPort: string
-  receiptPrinterBaudRate: number
-  receiptPrinterPaperSize: '58mm' | '80mm'
+  // Multi-Printer Configuration
+  printers: PrintersConfiguration
 
-  // Kitchen Printer Configuration
-  kitchenPrinterEnabled: boolean
-  kitchenPrinterConnection: 'USB' | 'Network' | 'COM'
-  kitchenPrinterPort: string
-  kitchenPrinterBaudRate: number
-
-  // Label Printer Configuration
-  labelPrinterEnabled: boolean
-  labelPrinterConnection: 'USB' | 'Network' | 'COM'
-  labelPrinterPort: string
-  labelPrinterBaudRate: number
+  // Multi-Display Configuration
+  customerDisplays: CustomerDisplayConfiguration[]
 
   // Cash Drawer Configuration
   cashDrawerEnabled: boolean
   cashDrawerConnection: 'Printer' | 'USB' | 'COM'
   cashDrawerTrigger: 'Manual' | 'Auto'
   cashDrawerAutoOpen: boolean
-
-  // Customer Display Configuration
-  customerDisplayEnabled: boolean
-  customerDisplayType: 'Monitor' | 'Pole Display' | 'Tablet'
-  customerDisplayConnection: 'HDMI' | 'USB' | 'Network'
-  customerDisplayPort: string
-  customerDisplayShowItems: boolean
-  customerDisplayShowTotal: boolean
-  customerDisplayShowPromo: boolean
-  customerDisplayFontSize: 'Small' | 'Medium' | 'Large'
 
   // Scale/Weight Device Configuration
   scaleEnabled: boolean
@@ -495,6 +530,17 @@ export interface SettingsState {
   updateTaxSettings: (settings: Partial<TaxSettings>) => Promise<void>
   updatePaymentSettings: (settings: Partial<PaymentSettings>) => Promise<void>
   updateHardwareSettings: (settings: Partial<HardwareSettings>) => Promise<void>
+  addKitchenPrinter: (printer: Omit<PrinterConfiguration, 'id' | 'type'>) => Promise<void>
+  updateKitchenPrinter: (id: string, updates: Partial<PrinterConfiguration>) => Promise<void>
+  removeKitchenPrinter: (id: string) => Promise<void>
+  setCashierPrinter: (printer: Omit<PrinterConfiguration, 'id' | 'type'> | null) => Promise<void>
+  setLabelPrinter: (printer: Omit<PrinterConfiguration, 'id' | 'type'> | null) => Promise<void>
+  addCustomerDisplay: (display: Omit<CustomerDisplayConfiguration, 'id'>) => Promise<void>
+  updateCustomerDisplay: (id: string, updates: Partial<CustomerDisplayConfiguration>) => Promise<void>
+  removeCustomerDisplay: (id: string) => Promise<void>
+  updateDisplayCarousel: (id: string, carousel: Partial<CarouselSettings>) => Promise<void>
+  addCarouselAd: (displayId: string, ad: Omit<AdContent, 'id'>) => Promise<void>
+  removeCarouselAd: (displayId: string, adId: string) => Promise<void>
   updateReceiptSettings: (settings: Partial<ReceiptSettings>) => Promise<void>
   updateInventorySettings: (settings: Partial<InventorySettings>) => Promise<void>
   updateRestaurantSettings: (settings: Partial<RestaurantSettings>) => Promise<void>
@@ -617,40 +663,21 @@ const initialState = {
   },
 
   hardware: {
-    // Receipt Printer Configuration
-    receiptPrinterEnabled: false,
-    receiptPrinterConnection: 'USB' as const,
-    receiptPrinterPort: '',
-    receiptPrinterBaudRate: 9600,
-    receiptPrinterPaperSize: '80mm' as const,
+    // Multi-Printer Configuration
+    printers: {
+      cashier: null,
+      kitchen: [],
+      label: null
+    },
 
-    // Kitchen Printer Configuration
-    kitchenPrinterEnabled: false,
-    kitchenPrinterConnection: 'USB' as const,
-    kitchenPrinterPort: '',
-    kitchenPrinterBaudRate: 9600,
-
-    // Label Printer Configuration
-    labelPrinterEnabled: false,
-    labelPrinterConnection: 'USB' as const,
-    labelPrinterPort: '',
-    labelPrinterBaudRate: 9600,
+    // Multi-Display Configuration
+    customerDisplays: [],
 
     // Cash Drawer Configuration
     cashDrawerEnabled: false,
     cashDrawerConnection: 'Printer' as const,
     cashDrawerTrigger: 'Manual' as const,
     cashDrawerAutoOpen: false,
-
-    // Customer Display Configuration
-    customerDisplayEnabled: false,
-    customerDisplayType: 'Monitor' as const,
-    customerDisplayConnection: 'HDMI' as const,
-    customerDisplayPort: '',
-    customerDisplayShowItems: true,
-    customerDisplayShowTotal: true,
-    customerDisplayShowPromo: true,
-    customerDisplayFontSize: 'Medium' as const,
 
     // Scale/Weight Device Configuration
     scaleEnabled: false,
@@ -1019,6 +1046,212 @@ export const useSettingsStore = create<SettingsState>()(
           await settingsAPI.updateSettings({ hardware: updatedHardware })
         } catch (error) {
           console.error('Failed to update hardware settings:', error)
+          set({ hardware: currentState.hardware })
+        }
+      },
+
+      // Printer Management Functions
+      addKitchenPrinter: async (printer: Omit<PrinterConfiguration, 'id' | 'type'>) => {
+        const currentState = get()
+        const newPrinter: PrinterConfiguration = {
+          ...printer,
+          id: `kitchen_${Date.now()}`,
+          type: 'kitchen'
+        }
+        const updatedPrinters = {
+          ...currentState.hardware.printers,
+          kitchen: [...currentState.hardware.printers.kitchen, newPrinter]
+        }
+        const updatedHardware = { ...currentState.hardware, printers: updatedPrinters }
+        set({ hardware: updatedHardware })
+
+        try {
+          await settingsAPI.updateSettings({ hardware: updatedHardware })
+        } catch (error) {
+          console.error('Failed to add kitchen printer:', error)
+          set({ hardware: currentState.hardware })
+        }
+      },
+
+      updateKitchenPrinter: async (id: string, updates: Partial<PrinterConfiguration>) => {
+        const currentState = get()
+        const updatedKitchen = currentState.hardware.printers.kitchen.map(p =>
+          p.id === id ? { ...p, ...updates } : p
+        )
+        const updatedPrinters = { ...currentState.hardware.printers, kitchen: updatedKitchen }
+        const updatedHardware = { ...currentState.hardware, printers: updatedPrinters }
+        set({ hardware: updatedHardware })
+
+        try {
+          await settingsAPI.updateSettings({ hardware: updatedHardware })
+        } catch (error) {
+          console.error('Failed to update kitchen printer:', error)
+          set({ hardware: currentState.hardware })
+        }
+      },
+
+      removeKitchenPrinter: async (id: string) => {
+        const currentState = get()
+        const updatedKitchen = currentState.hardware.printers.kitchen.filter(p => p.id !== id)
+        const updatedPrinters = { ...currentState.hardware.printers, kitchen: updatedKitchen }
+        const updatedHardware = { ...currentState.hardware, printers: updatedPrinters }
+        set({ hardware: updatedHardware })
+
+        try {
+          await settingsAPI.updateSettings({ hardware: updatedHardware })
+        } catch (error) {
+          console.error('Failed to remove kitchen printer:', error)
+          set({ hardware: currentState.hardware })
+        }
+      },
+
+      setCashierPrinter: async (printer: Omit<PrinterConfiguration, 'id' | 'type'> | null) => {
+        const currentState = get()
+        const cashierPrinter = printer ? {
+          ...printer,
+          id: 'cashier_main',
+          type: 'cashier' as const
+        } : null
+        const updatedPrinters = { ...currentState.hardware.printers, cashier: cashierPrinter }
+        const updatedHardware = { ...currentState.hardware, printers: updatedPrinters }
+        set({ hardware: updatedHardware })
+
+        try {
+          await settingsAPI.updateSettings({ hardware: updatedHardware })
+        } catch (error) {
+          console.error('Failed to set cashier printer:', error)
+          set({ hardware: currentState.hardware })
+        }
+      },
+
+      setLabelPrinter: async (printer: Omit<PrinterConfiguration, 'id' | 'type'> | null) => {
+        const currentState = get()
+        const labelPrinter = printer ? {
+          ...printer,
+          id: 'label_main',
+          type: 'label' as const
+        } : null
+        const updatedPrinters = { ...currentState.hardware.printers, label: labelPrinter }
+        const updatedHardware = { ...currentState.hardware, printers: updatedPrinters }
+        set({ hardware: updatedHardware })
+
+        try {
+          await settingsAPI.updateSettings({ hardware: updatedHardware })
+        } catch (error) {
+          console.error('Failed to set label printer:', error)
+          set({ hardware: currentState.hardware })
+        }
+      },
+
+      // Customer Display Management Functions
+      addCustomerDisplay: async (display: Omit<CustomerDisplayConfiguration, 'id'>) => {
+        const currentState = get()
+        const newDisplay: CustomerDisplayConfiguration = {
+          ...display,
+          id: `display_${Date.now()}`
+        }
+        const updatedDisplays = [...currentState.hardware.customerDisplays, newDisplay]
+        const updatedHardware = { ...currentState.hardware, customerDisplays: updatedDisplays }
+        set({ hardware: updatedHardware })
+
+        try {
+          await settingsAPI.updateSettings({ hardware: updatedHardware })
+        } catch (error) {
+          console.error('Failed to add customer display:', error)
+          set({ hardware: currentState.hardware })
+        }
+      },
+
+      updateCustomerDisplay: async (id: string, updates: Partial<CustomerDisplayConfiguration>) => {
+        const currentState = get()
+        const updatedDisplays = currentState.hardware.customerDisplays.map(d =>
+          d.id === id ? { ...d, ...updates } : d
+        )
+        const updatedHardware = { ...currentState.hardware, customerDisplays: updatedDisplays }
+        set({ hardware: updatedHardware })
+
+        try {
+          await settingsAPI.updateSettings({ hardware: updatedHardware })
+        } catch (error) {
+          console.error('Failed to update customer display:', error)
+          set({ hardware: currentState.hardware })
+        }
+      },
+
+      removeCustomerDisplay: async (id: string) => {
+        const currentState = get()
+        const updatedDisplays = currentState.hardware.customerDisplays.filter(d => d.id !== id)
+        const updatedHardware = { ...currentState.hardware, customerDisplays: updatedDisplays }
+        set({ hardware: updatedHardware })
+
+        try {
+          await settingsAPI.updateSettings({ hardware: updatedHardware })
+        } catch (error) {
+          console.error('Failed to remove customer display:', error)
+          set({ hardware: currentState.hardware })
+        }
+      },
+
+      updateDisplayCarousel: async (id: string, carousel: Partial<CarouselSettings>) => {
+        const currentState = get()
+        const updatedDisplays = currentState.hardware.customerDisplays.map(d =>
+          d.id === id ? { ...d, carousel: { ...d.carousel, ...carousel } } : d
+        )
+        const updatedHardware = { ...currentState.hardware, customerDisplays: updatedDisplays }
+        set({ hardware: updatedHardware })
+
+        try {
+          await settingsAPI.updateSettings({ hardware: updatedHardware })
+        } catch (error) {
+          console.error('Failed to update display carousel:', error)
+          set({ hardware: currentState.hardware })
+        }
+      },
+
+      addCarouselAd: async (displayId: string, ad: Omit<AdContent, 'id'>) => {
+        const currentState = get()
+        const newAd: AdContent = {
+          ...ad,
+          id: `ad_${Date.now()}`
+        }
+        const updatedDisplays = currentState.hardware.customerDisplays.map(d =>
+          d.id === displayId ? {
+            ...d,
+            carousel: {
+              ...d.carousel,
+              adContent: [...d.carousel.adContent, newAd]
+            }
+          } : d
+        )
+        const updatedHardware = { ...currentState.hardware, customerDisplays: updatedDisplays }
+        set({ hardware: updatedHardware })
+
+        try {
+          await settingsAPI.updateSettings({ hardware: updatedHardware })
+        } catch (error) {
+          console.error('Failed to add carousel ad:', error)
+          set({ hardware: currentState.hardware })
+        }
+      },
+
+      removeCarouselAd: async (displayId: string, adId: string) => {
+        const currentState = get()
+        const updatedDisplays = currentState.hardware.customerDisplays.map(d =>
+          d.id === displayId ? {
+            ...d,
+            carousel: {
+              ...d.carousel,
+              adContent: d.carousel.adContent.filter(ad => ad.id !== adId)
+            }
+          } : d
+        )
+        const updatedHardware = { ...currentState.hardware, customerDisplays: updatedDisplays }
+        set({ hardware: updatedHardware })
+
+        try {
+          await settingsAPI.updateSettings({ hardware: updatedHardware })
+        } catch (error) {
+          console.error('Failed to remove carousel ad:', error)
           set({ hardware: currentState.hardware })
         }
       },
