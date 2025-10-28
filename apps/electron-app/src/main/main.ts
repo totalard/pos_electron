@@ -214,6 +214,16 @@ ipcMain.handle('printer:print', async (_event, data: string) => {
   }
 })
 
+ipcMain.handle('printer:print-template', async (_event, template: any, data: any, businessInfo: any) => {
+  try {
+    const result = await hardwareManager.printReceiptWithTemplate(template, data, businessInfo)
+    return { success: result }
+  } catch (error) {
+    console.error('Template print error:', error)
+    return { success: false, error: String(error) }
+  }
+})
+
 ipcMain.handle('printer:test', async (_event, printerId?: string, useEscPos?: boolean) => {
   try {
     const result = await hardwareManager.testPrinter(printerId, useEscPos)

@@ -177,6 +177,13 @@ export class HardwareManager extends EventEmitter {
   }
 
   /**
+   * Print receipt using template
+   */
+  async printReceiptWithTemplate(template: any, data: any, businessInfo: any): Promise<boolean> {
+    return await this.printerService.printReceiptWithTemplate(template, data, businessInfo)
+  }
+
+  /**
    * Test printer
    */
   async testPrinter(printerId?: string, useEscPos?: boolean): Promise<boolean> {

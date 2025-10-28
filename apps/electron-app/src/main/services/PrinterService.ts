@@ -679,7 +679,41 @@ This is a test receipt.
   }
 
   /**
-   * Print receipt using escpos library
+   * Print receipt using template-based rendering
+   * @param template Receipt template configuration
+   * @param data Receipt or session data
+   * @param businessInfo Business information
+   */
+  async printReceiptWithTemplate(
+    template: any,
+    data: any,
+    businessInfo: any
+  ): Promise<boolean> {
+    if (!this.activePrinter) {
+      throw new Error('No printer connected')
+    }
+
+    try {
+      // Import the template renderer dynamically
+      const { EscPosTemplateRenderer } = await import('./EscPosTemplateRenderer')
+      
+      // Create renderer with paper size from template
+      const renderer = new EscPosTemplateRenderer(template.print?.paperSize || '80mm')
+      
+      // Render the receipt to ESC/POS buffer
+      const buffer = await renderer.renderReceipt(template, data, businessInfo)
+      
+      // Print the buffer
+      return await this.print(buffer)
+    } catch (error) {
+      console.error('Error printing receipt with template:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Print receipt using escpos library (legacy method - kept for compatibility)
+   * @deprecated Use printReceiptWithTemplate instead
    * @param receiptData Receipt data to print
    */
   async printReceipt(receiptData: any): Promise<boolean> {

@@ -70,6 +70,7 @@ export interface IElectronAPI {
     connect: (config: PrinterConfig) => Promise<{ success: boolean; error?: string }>
     disconnect: () => Promise<{ success: boolean; error?: string }>
     print: (data: string) => Promise<{ success: boolean; error?: string }>
+    printTemplate: (template: any, data: any, businessInfo: any) => Promise<{ success: boolean; error?: string }>
     test: (printerId?: string, useEscPos?: boolean) => Promise<{ success: boolean; error?: string }>
     getStatus: () => Promise<{ success: boolean; data?: any; error?: string }>
     getActive: () => Promise<{ success: boolean; data?: DeviceInfo | null; error?: string }>
@@ -116,6 +117,7 @@ const electronAPI: IElectronAPI = {
     connect: (config: PrinterConfig) => ipcRenderer.invoke('printer:connect', config),
     disconnect: () => ipcRenderer.invoke('printer:disconnect'),
     print: (data: string) => ipcRenderer.invoke('printer:print', data),
+    printTemplate: (template: any, data: any, businessInfo: any) => ipcRenderer.invoke('printer:print-template', template, data, businessInfo),
     test: (printerId?: string, useEscPos?: boolean) => ipcRenderer.invoke('printer:test', printerId, useEscPos),
     getStatus: () => ipcRenderer.invoke('printer:status'),
     getActive: () => ipcRenderer.invoke('printer:get-active')
