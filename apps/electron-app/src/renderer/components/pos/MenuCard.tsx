@@ -46,36 +46,35 @@ export function MenuCard({
     <button
       disabled={!available}
       className={`
-        group relative overflow-hidden rounded-2xl p-8 min-h-[180px]
+        group relative overflow-hidden rounded-xl p-8 min-h-[180px]
         transition-all duration-200
         ${available
-          ? 'hover:scale-105 active:scale-100 hover:shadow-2xl active:shadow-lg cursor-pointer'
+          ? 'hover:scale-[1.02] active:scale-[0.98] cursor-pointer'
           : 'opacity-50 cursor-not-allowed'
         }
         ${theme === 'dark'
-          ? 'bg-gray-800/50 border border-gray-700 hover:border-gray-600 active:border-gray-500'
-          : 'bg-white border border-gray-200 hover:border-gray-300 active:border-gray-400'
+          ? 'bg-gray-800 border border-gray-700 hover:border-blue-600'
+          : 'bg-white border border-gray-200 hover:border-blue-500'
         }
         ${className}
       `}
       {...props}
     >
-      {/* Gradient Background */}
+      {/* Subtle hover background */}
       <div
         className={`
-          absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity duration-200
-          bg-gradient-to-br ${gradient}
+          absolute inset-0 opacity-0 group-hover:opacity-5 transition-opacity duration-200
+          ${theme === 'dark' ? 'bg-blue-500' : 'bg-blue-500'}
         `}
       />
 
       {/* Content */}
       <div className="relative flex flex-col items-center text-center gap-4">
-        {/* Icon with gradient */}
+        {/* Icon with flat color */}
         <div className={`
-          w-20 h-20 rounded-2xl flex items-center justify-center
-          bg-gradient-to-br ${gradient}
-          transform group-hover:scale-110 transition-transform duration-200
-          shadow-lg
+          w-20 h-20 rounded-xl flex items-center justify-center
+          ${theme === 'dark' ? 'bg-blue-600' : 'bg-blue-500'}
+          transform group-hover:scale-[1.05] transition-transform duration-200
         `}>
           <div className="text-white">
             {icon}

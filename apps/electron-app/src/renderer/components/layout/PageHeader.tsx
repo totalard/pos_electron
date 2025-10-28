@@ -74,10 +74,10 @@ export function PageHeader({
 
   const gradientClass = gradient
     ? theme === 'dark'
-      ? 'bg-gradient-to-r from-gray-800 via-gray-700 to-gray-800'
-      : 'bg-gradient-to-r from-primary-50 via-white to-primary-50'
+      ? 'bg-gray-800'
+      : 'bg-gray-50'
     : theme === 'dark'
-      ? 'bg-gray-800/50'
+      ? 'bg-gray-800'
       : 'bg-white'
 
   return (
@@ -110,8 +110,8 @@ export function PageHeader({
             <div className={`
               flex-shrink-0 w-12 h-12 rounded-lg flex items-center justify-center
               ${theme === 'dark'
-                ? 'bg-gradient-to-br from-primary-600 to-primary-800'
-                : 'bg-gradient-to-br from-primary-500 to-primary-700'
+                ? 'bg-blue-600'
+                : 'bg-blue-500'
               }
             `}>
               <div className="text-white">

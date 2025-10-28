@@ -120,8 +120,8 @@ export function ProductsScreen({ onBack }: ProductsScreenProps) {
     <div className={`
       h-screen w-screen flex flex-col
       ${theme === 'dark'
-        ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900'
-        : 'bg-gradient-to-br from-gray-50 via-white to-gray-100'
+        ? 'bg-gray-900'
+        : 'bg-gray-50'
       }
     `}>
       {/* Header */}
