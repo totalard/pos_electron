@@ -6,20 +6,17 @@
 import { EventEmitter } from 'events'
 import { getUSBDeviceService, USBDeviceService } from './USBDeviceService'
 import { getPrinterService, PrinterService, PrinterConfig } from './PrinterService'
-import { getScannerService, ScannerService, ScannerConfig } from './ScannerService'
 import { DeviceInfo, DeviceType, HardwareEvent } from './types'
 
 export class HardwareManager extends EventEmitter {
   private usbService: USBDeviceService
   private printerService: PrinterService
-  private scannerService: ScannerService
   private isInitialized = false
 
   constructor() {
     super()
     this.usbService = getUSBDeviceService()
     this.printerService = getPrinterService()
-    this.scannerService = getScannerService()
   }
 
   /**
@@ -79,35 +76,6 @@ export class HardwareManager extends EventEmitter {
         data
       } as HardwareEvent)
     })
-
-    // Scanner events
-    this.scannerService.on('scanner-connected', (device: DeviceInfo) => {
-      this.emit('hardware-event', {
-        type: 'device-connected',
-        device
-      } as HardwareEvent)
-    })
-
-    this.scannerService.on('scanner-disconnected', (device: DeviceInfo) => {
-      this.emit('hardware-event', {
-        type: 'device-disconnected',
-        device
-      } as HardwareEvent)
-    })
-
-    this.scannerService.on('scan-data', (data: any) => {
-      this.emit('hardware-event', {
-        type: 'scan-data',
-        data
-      } as HardwareEvent)
-    })
-
-    this.scannerService.on('scanner-error', (data: any) => {
-      this.emit('hardware-event', {
-        type: 'device-error',
-        data
-      } as HardwareEvent)
-    })
   }
 
   /**
@@ -116,16 +84,13 @@ export class HardwareManager extends EventEmitter {
   async scanAllDevices(): Promise<{
     usb: DeviceInfo[]
     printers: DeviceInfo[]
-    scanners: DeviceInfo[]
   }> {
     const usbDevices = this.usbService.scanDevices()
     const printers = await this.printerService.scanPrinters()
-    const scanners = this.scannerService.scanScanners()
 
     return {
       usb: usbDevices,
-      printers,
-      scanners
+      printers
     }
   }
 
@@ -272,34 +237,6 @@ export class HardwareManager extends EventEmitter {
   }
 
   /**
-   * Connect to scanner
-   */
-  connectScanner(config: ScannerConfig): boolean {
-    return this.scannerService.connect(config)
-  }
-
-  /**
-   * Disconnect scanner
-   */
-  disconnectScanner(): void {
-    this.scannerService.disconnect()
-  }
-
-  /**
-   * Test scanner
-   */
-  testScanner(): boolean {
-    return this.scannerService.testScanner()
-  }
-
-  /**
-   * Get active scanner
-   */
-  getActiveScanner(): DeviceInfo | null {
-    return this.scannerService.getActiveScanner()
-  }
-
-  /**
    * Get all printers
    * Returns both auto-detected printers and manually assigned printer devices
    */
@@ -320,32 +257,11 @@ export class HardwareManager extends EventEmitter {
   }
 
   /**
-   * Get all scanners
-   * Returns both auto-detected scanners and manually assigned scanner devices
-   */
-  getScanners(): DeviceInfo[] {
-    const autoScanners = this.scannerService.getConnectedScanners()
-    const manualScanners = this.usbService.getDevicesByType(DeviceType.SCANNER)
-
-    // Merge both lists, avoiding duplicates by ID
-    const scannerMap = new Map<string, DeviceInfo>()
-
-    // Add auto-detected scanners first
-    autoScanners.forEach(scanner => scannerMap.set(scanner.id, scanner))
-
-    // Add manually assigned scanners (will override if same ID)
-    manualScanners.forEach(scanner => scannerMap.set(scanner.id, scanner))
-
-    return Array.from(scannerMap.values())
-  }
-
-  /**
    * Shutdown hardware manager
    */
   shutdown(): void {
     this.usbService.destroy()
     this.printerService.destroy()
-    this.scannerService.destroy()
     this.removeAllListeners()
     this.isInitialized = false
   }

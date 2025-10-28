@@ -4,7 +4,7 @@
  */
 
 import { create } from 'zustand'
-import type { DeviceInfo, PrinterConfig, ScannerConfig, HardwareEvent } from '../../preload/preload'
+import type { DeviceInfo, PrinterConfig, HardwareEvent } from '../../preload/preload'
 
 // Helper to safely access electronAPI
 const getElectronAPI = () => {
@@ -18,11 +18,9 @@ interface HardwareState {
   // Device lists
   devices: DeviceInfo[]
   printers: DeviceInfo[]
-  scanners: DeviceInfo[]
   
   // Active devices
   activePrinter: DeviceInfo | null
-  activeScanner: DeviceInfo | null
   
   // Status
   isInitialized: boolean
@@ -32,13 +30,6 @@ interface HardwareState {
     paperStatus: 'ok' | 'low' | 'out' | 'unknown'
     error?: string
   } | null
-  
-  // Recent scans
-  recentScans: Array<{
-    barcode: string
-    type: string
-    timestamp: number
-  }>
   
   // Logs
   logs: Array<{
@@ -61,12 +52,6 @@ interface HardwareState {
   testPrinter: (printerId?: string, useEscPos?: boolean) => Promise<boolean>
   updatePrinterStatus: () => Promise<void>
   
-  // Scanner actions
-  scanScanners: () => Promise<void>
-  connectScanner: (config: ScannerConfig) => Promise<boolean>
-  disconnectScanner: () => Promise<void>
-  testScanner: () => Promise<boolean>
-  
   // Event handling
   handleHardwareEvent: (event: HardwareEvent) => void
   
@@ -81,13 +66,10 @@ export const useHardwareStore = create<HardwareState>((set, get) => ({
   // Initial state
   devices: [],
   printers: [],
-  scanners: [],
   activePrinter: null,
-  activeScanner: null,
   isInitialized: false,
   isScanning: false,
   printerStatus: null,
-  recentScans: [],
   logs: [],
 
   // Initialize hardware system
@@ -129,10 +111,9 @@ export const useHardwareStore = create<HardwareState>((set, get) => ({
       if (result.success && result.data) {
         set({
           devices: result.data.usb || [],
-          printers: result.data.printers || [],
-          scanners: result.data.scanners || []
+          printers: result.data.printers || []
         })
-        get().addLog('info', `Found ${result.data.usb?.length || 0} USB devices, ${result.data.printers?.length || 0} printers, ${result.data.scanners?.length || 0} scanners`)
+        get().addLog('info', `Found ${result.data.usb?.length || 0} USB devices, ${result.data.printers?.length || 0} printers`)
       }
     } catch (error) {
       get().addLog('error', `Device scan error: ${String(error)}`)
@@ -287,78 +268,6 @@ export const useHardwareStore = create<HardwareState>((set, get) => ({
     }
   },
 
-  // Scan scanners
-  scanScanners: async () => {
-    try {
-      const api = getElectronAPI()
-      if (!api) return
-      const result = await api.scanner.scan()
-      if (result.success && result.data) {
-        set({ scanners: result.data })
-        get().addLog('info', `Found ${result.data.length} scanners`)
-      }
-    } catch (error) {
-      get().addLog('error', `Scanner scan error: ${String(error)}`)
-    }
-  },
-
-  // Connect to scanner
-  connectScanner: async (config: ScannerConfig) => {
-    try {
-      const api = getElectronAPI()
-      if (!api) return false
-      const result = await api.scanner.connect(config)
-      if (result.success) {
-        const activeResult = await api.scanner.getActive()
-        if (activeResult.success && activeResult.data) {
-          set({ activeScanner: activeResult.data })
-          get().addLog('success', `Connected to scanner: ${activeResult.data.name}`)
-        }
-        return true
-      } else {
-        get().addLog('error', `Scanner connection failed: ${result.error}`)
-        return false
-      }
-    } catch (error) {
-      get().addLog('error', `Scanner connection error: ${String(error)}`)
-      return false
-    }
-  },
-
-  // Disconnect scanner
-  disconnectScanner: async () => {
-    try {
-      const api = getElectronAPI()
-      if (!api) return
-      const result = await api.scanner.disconnect()
-      if (result.success) {
-        set({ activeScanner: null })
-        get().addLog('info', 'Scanner disconnected')
-      }
-    } catch (error) {
-      get().addLog('error', `Scanner disconnect error: ${String(error)}`)
-    }
-  },
-
-  // Test scanner
-  testScanner: async () => {
-    try {
-      const api = getElectronAPI()
-      if (!api) return false
-      const result = await api.scanner.test()
-      if (result.success) {
-        get().addLog('success', 'Scanner is ready. Please scan a barcode.')
-        return true
-      } else {
-        get().addLog('error', `Scanner test failed: ${result.error}`)
-        return false
-      }
-    } catch (error) {
-      get().addLog('error', `Scanner test error: ${String(error)}`)
-      return false
-    }
-  },
-
   // Handle hardware events
   handleHardwareEvent: (event: HardwareEvent) => {
     switch (event.type) {
@@ -379,28 +288,11 @@ export const useHardwareStore = create<HardwareState>((set, get) => ({
           if (state.activePrinter?.id === event.device.id) {
             set({ activePrinter: null, printerStatus: null })
           }
-          if (state.activeScanner?.id === event.device.id) {
-            set({ activeScanner: null })
-          }
         }
         break
       
       case 'device-error':
         get().addLog('error', `Device error: ${event.error || 'Unknown error'}`)
-        break
-      
-      case 'scan-data':
-        if (event.data) {
-          const scan = {
-            barcode: event.data.barcode,
-            type: event.data.type,
-            timestamp: event.data.timestamp
-          }
-          set((state) => ({
-            recentScans: [scan, ...state.recentScans].slice(0, 50) // Keep last 50 scans
-          }))
-          get().addLog('success', `Barcode scanned: ${event.data.barcode}`)
-        }
         break
     }
   },

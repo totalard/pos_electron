@@ -26,15 +26,6 @@ export interface PrinterConfig {
   productId?: number
 }
 
-export interface ScannerConfig {
-  connection: 'USB' | 'Serial' | 'Bluetooth'
-  vendorId?: number
-  productId?: number
-  path?: string
-  prefix?: string
-  suffix?: string
-}
-
 export interface HardwareEvent {
   type: 'device-connected' | 'device-disconnected' | 'device-error' | 'scan-data'
   device?: DeviceInfo
@@ -75,14 +66,6 @@ export interface IElectronAPI {
     getStatus: () => Promise<{ success: boolean; data?: any; error?: string }>
     getActive: () => Promise<{ success: boolean; data?: DeviceInfo | null; error?: string }>
   }
-  
-  scanner: {
-    scan: () => Promise<{ success: boolean; data?: DeviceInfo[]; error?: string }>
-    connect: (config: ScannerConfig) => Promise<{ success: boolean; error?: string }>
-    disconnect: () => Promise<{ success: boolean; error?: string }>
-    test: () => Promise<{ success: boolean; error?: string }>
-    getActive: () => Promise<{ success: boolean; data?: DeviceInfo | null; error?: string }>
-  }
 }
 
 // Expose protected methods that allow the renderer process to use
@@ -121,15 +104,6 @@ const electronAPI: IElectronAPI = {
     test: (printerId?: string, useEscPos?: boolean) => ipcRenderer.invoke('printer:test', printerId, useEscPos),
     getStatus: () => ipcRenderer.invoke('printer:status'),
     getActive: () => ipcRenderer.invoke('printer:get-active')
-  },
-  
-  // Scanner APIs
-  scanner: {
-    scan: () => ipcRenderer.invoke('scanner:scan'),
-    connect: (config: ScannerConfig) => ipcRenderer.invoke('scanner:connect', config),
-    disconnect: () => ipcRenderer.invoke('scanner:disconnect'),
-    test: () => ipcRenderer.invoke('scanner:test'),
-    getActive: () => ipcRenderer.invoke('scanner:get-active')
   }
 }
 

@@ -291,64 +291,6 @@ export function HardwarePanel() {
         </div>
       </FormSection>
 
-      {/* Barcode Scanner Configuration */}
-      <FormSection
-        title="Barcode Scanner"
-        description="Configure barcode scanner settings"
-      >
-        <div className="space-y-4">
-          <Toggle
-            checked={hardware.barcodeScannerEnabled}
-            onChange={(checked) => updateHardwareSettings({ barcodeScannerEnabled: checked })}
-            label="Enable Barcode Scanner"
-            description="Scan product barcodes for quick entry"
-          />
-
-          {hardware.barcodeScannerEnabled && (
-            <>
-              <TouchSelect
-                label="Connection Type"
-                value={hardware.barcodeScannerConnection}
-                onChange={(value) => updateHardwareSettings({ barcodeScannerConnection: value as 'USB' | 'Bluetooth' | 'COM' })}
-                options={[
-                  { value: 'USB', label: 'USB (HID)' },
-                  { value: 'Bluetooth', label: 'Bluetooth' },
-                  { value: 'COM', label: 'Serial Port (COM)' }
-                ]}
-              />
-
-              <TouchSelect
-                label="Scan Mode"
-                value={hardware.barcodeScannerMode}
-                onChange={(value) => updateHardwareSettings({ barcodeScannerMode: value as 'Continuous' | 'Trigger' })}
-                options={[
-                  { value: 'Continuous', label: 'Continuous Scan' },
-                  { value: 'Trigger', label: 'Trigger/Button Scan' }
-                ]}
-                helperText="How the scanner operates"
-              />
-
-              <TextInput
-                type="text"
-                label="Prefix Characters"
-                value={hardware.barcodeScannerPrefix}
-                onChange={(e) => updateHardwareSettings({ barcodeScannerPrefix: e.target.value })}
-                placeholder="Optional prefix"
-                helperText="Characters added before scanned barcode"
-              />
-
-              <TextInput
-                type="text"
-                label="Suffix Characters"
-                value={hardware.barcodeScannerSuffix}
-                onChange={(e) => updateHardwareSettings({ barcodeScannerSuffix: e.target.value })}
-                placeholder="Optional suffix (e.g., Enter)"
-                helperText="Characters added after scanned barcode"
-              />
-            </>
-          )}
-        </div>
-      </FormSection>
 
       {/* Customer Display Configuration */}
       <FormSection

@@ -6,20 +6,17 @@
 import { useEffect, useState } from 'react'
 import { useAppStore } from '../../stores'
 import { useHardwareStore } from '../../stores/hardwareStore'
-import type { DeviceInfo, PrinterConfig, ScannerConfig } from '../../../preload/preload'
+import type { DeviceInfo, PrinterConfig } from '../../../preload/preload'
 
 export function HardwareDeviceManager() {
   const { theme } = useAppStore()
   const {
     devices,
     printers,
-    scanners,
     activePrinter,
-    activeScanner,
     isInitialized,
     isScanning,
     printerStatus,
-    recentScans,
     logs,
     initialize,
     scanDevices,
@@ -27,16 +24,12 @@ export function HardwareDeviceManager() {
     connectPrinter,
     disconnectPrinter,
     testPrinter,
-    scanScanners,
-    connectScanner,
-    disconnectScanner,
-    testScanner,
     clearLogs,
     setDeviceType,
     setEscPosMode
   } = useHardwareStore()
 
-  const [selectedTab, setSelectedTab] = useState<'printers' | 'scanners' | 'devices' | 'logs'>('printers')
+  const [selectedTab, setSelectedTab] = useState<'printers' | 'devices' | 'logs'>('printers')
   const [showConnectDialog, setShowConnectDialog] = useState(false)
   const [selectedDevice, setSelectedDevice] = useState<DeviceInfo | null>(null)
   const [apiAvailable, setApiAvailable] = useState(false)
@@ -62,7 +55,6 @@ export function HardwareDeviceManager() {
   const handleScanDevices = async () => {
     await scanDevices()
     await scanPrinters()
-    await scanScanners()
   }
 
   const handleTestPrinter = async () => {
@@ -85,16 +77,6 @@ export function HardwareDeviceManager() {
       address: printer.address
     }
     await connectPrinter(config)
-  }
-
-  const handleConnectScanner = async (scanner: DeviceInfo) => {
-    const config: ScannerConfig = {
-      connection: scanner.connection as 'USB' | 'Serial' | 'Bluetooth',
-      vendorId: scanner.vendorId,
-      productId: scanner.productId,
-      path: scanner.path
-    }
-    await connectScanner(config)
   }
 
   const getStatusColor = (status: string) => {
@@ -197,18 +179,6 @@ export function HardwareDeviceManager() {
         <div className={`p-4 rounded-lg border ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'}`}>
           <div className="flex items-center justify-between">
             <div>
-              <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>Active Scanner</p>
-              <p className={`text-lg font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                {activeScanner ? activeScanner.name : 'None'}
-              </p>
-            </div>
-            <div className={`w-3 h-3 rounded-full ${activeScanner ? 'bg-green-500' : 'bg-gray-400'}`} />
-          </div>
-        </div>
-
-        <div className={`p-4 rounded-lg border ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'}`}>
-          <div className="flex items-center justify-between">
-            <div>
               <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>Total Devices</p>
               <p className={`text-lg font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
                 {devices.length}
@@ -222,7 +192,7 @@ export function HardwareDeviceManager() {
       {/* Tabs */}
       <div className={`border-b ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'}`}>
         <div className="flex space-x-4">
-          {['printers', 'scanners', 'devices', 'logs'].map((tab) => (
+          {['printers', 'devices', 'logs'].map((tab) => (
             <button
               key={tab}
               onClick={() => setSelectedTab(tab as any)}
@@ -467,123 +437,6 @@ export function HardwareDeviceManager() {
           </div>
         )}
 
-        {/* Scanners Tab */}
-        {selectedTab === 'scanners' && (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className={`text-lg font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                Available Scanners ({scanners.length})
-              </h3>
-              {activeScanner && (
-                <div className="flex space-x-2">
-                  <button
-                    onClick={testScanner}
-                    className={`px-4 py-2 rounded-lg font-medium ${
-                      theme === 'dark'
-                        ? 'bg-green-600 hover:bg-green-700 text-white'
-                        : 'bg-green-500 hover:bg-green-600 text-white'
-                    }`}
-                  >
-                    Test Scanner
-                  </button>
-                  <button
-                    onClick={disconnectScanner}
-                    className={`px-4 py-2 rounded-lg font-medium ${
-                      theme === 'dark'
-                        ? 'bg-red-600 hover:bg-red-700 text-white'
-                        : 'bg-red-500 hover:bg-red-600 text-white'
-                    }`}
-                  >
-                    Disconnect
-                  </button>
-                </div>
-              )}
-            </div>
-
-            {scanners.length === 0 ? (
-              <div className={`text-center py-12 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-                <p>No scanners found. Click "Scan Devices" to search for scanners.</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 gap-4">
-                {scanners.map((scanner) => (
-                  <div
-                    key={scanner.id}
-                    className={`p-4 rounded-lg border ${
-                      activeScanner?.id === scanner.id
-                        ? theme === 'dark'
-                          ? 'bg-blue-900/20 border-blue-500'
-                          : 'bg-blue-50 border-blue-500'
-                        : theme === 'dark'
-                        ? 'bg-gray-800 border-gray-700'
-                        : 'bg-white border-gray-200'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <h4 className={`font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                          {scanner.name}
-                        </h4>
-                        <div className={`text-sm mt-1 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-                          <p>Connection: {scanner.connection}</p>
-                          {scanner.manufacturer && <p>Manufacturer: {scanner.manufacturer}</p>}
-                          {scanner.path && <p>Path: {scanner.path}</p>}
-                          <p className={getStatusColor(scanner.status)}>Status: {scanner.status}</p>
-                        </div>
-                      </div>
-                      {activeScanner?.id !== scanner.id && (
-                        <button
-                          onClick={() => handleConnectScanner(scanner)}
-                          className={`px-4 py-2 rounded-lg font-medium ${
-                            theme === 'dark'
-                              ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                              : 'bg-blue-500 hover:bg-blue-600 text-white'
-                          }`}
-                        >
-                          Connect
-                        </button>
-                      )}
-                      {activeScanner?.id === scanner.id && (
-                        <span className={`px-4 py-2 rounded-lg font-medium ${
-                          theme === 'dark' ? 'bg-green-600 text-white' : 'bg-green-500 text-white'
-                        }`}>
-                          Connected
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Recent Scans */}
-            {recentScans.length > 0 && (
-              <div className={`mt-6 p-4 rounded-lg border ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'}`}>
-                <h4 className={`font-semibold mb-3 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                  Recent Scans ({recentScans.length})
-                </h4>
-                <div className="space-y-2 max-h-64 overflow-y-auto">
-                  {recentScans.slice(0, 10).map((scan, index) => (
-                    <div
-                      key={index}
-                      className={`p-2 rounded ${theme === 'dark' ? 'bg-gray-700' : 'bg-white'}`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className={`font-mono ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                          {scan.barcode}
-                        </span>
-                        <span className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-                          {scan.type} • {new Date(scan.timestamp).toLocaleTimeString()}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
         {/* All Devices Tab */}
         {selectedTab === 'devices' && (
           <div className="space-y-4">
@@ -634,16 +487,6 @@ export function HardwareDeviceManager() {
                               }`}
                             >
                               Mark as Printer
-                            </button>
-                            <button
-                              onClick={() => setDeviceType(device.id, 'scanner')}
-                              className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
-                                theme === 'dark'
-                                  ? 'bg-green-600 hover:bg-green-700 text-white'
-                                  : 'bg-green-500 hover:bg-green-600 text-white'
-                              }`}
-                            >
-                              Mark as Scanner
                             </button>
                           </div>
                         )}

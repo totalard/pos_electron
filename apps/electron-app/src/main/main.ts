@@ -4,7 +4,6 @@ import { fileURLToPath } from 'node:url'
 import { net } from 'electron'
 import { getHardwareManager } from './services/HardwareManager'
 import type { PrinterConfig } from './services/PrinterService'
-import type { ScannerConfig } from './services/ScannerService'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -250,57 +249,6 @@ ipcMain.handle('printer:get-active', async () => {
     return { success: true, data: printer }
   } catch (error) {
     console.error('Get active printer error:', error)
-    return { success: false, error: String(error) }
-  }
-})
-
-// Scanner handlers
-ipcMain.handle('scanner:scan', async () => {
-  try {
-    const scanners = hardwareManager.getScanners()
-    return { success: true, data: scanners }
-  } catch (error) {
-    console.error('Scanner scan error:', error)
-    return { success: false, error: String(error) }
-  }
-})
-
-ipcMain.handle('scanner:connect', async (_event, config: ScannerConfig) => {
-  try {
-    const result = hardwareManager.connectScanner(config)
-    return { success: result }
-  } catch (error) {
-    console.error('Scanner connect error:', error)
-    return { success: false, error: String(error) }
-  }
-})
-
-ipcMain.handle('scanner:disconnect', async () => {
-  try {
-    hardwareManager.disconnectScanner()
-    return { success: true }
-  } catch (error) {
-    console.error('Scanner disconnect error:', error)
-    return { success: false, error: String(error) }
-  }
-})
-
-ipcMain.handle('scanner:test', async () => {
-  try {
-    const result = hardwareManager.testScanner()
-    return { success: result }
-  } catch (error) {
-    console.error('Scanner test error:', error)
-    return { success: false, error: String(error) }
-  }
-})
-
-ipcMain.handle('scanner:get-active', async () => {
-  try {
-    const scanner = hardwareManager.getActiveScanner()
-    return { success: true, data: scanner }
-  } catch (error) {
-    console.error('Get active scanner error:', error)
     return { success: false, error: String(error) }
   }
 })

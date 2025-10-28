@@ -140,13 +140,6 @@ export interface HardwareSettings {
   cashDrawerTrigger: 'Manual' | 'Auto'
   cashDrawerAutoOpen: boolean
 
-  // Barcode Scanner Configuration
-  barcodeScannerEnabled: boolean
-  barcodeScannerConnection: 'USB' | 'Bluetooth' | 'COM'
-  barcodeScannerMode: 'Continuous' | 'Trigger'
-  barcodeScannerPrefix: string
-  barcodeScannerSuffix: string
-
   // Customer Display Configuration
   customerDisplayEnabled: boolean
   customerDisplayType: 'Monitor' | 'Pole Display' | 'Tablet'
@@ -648,13 +641,6 @@ const initialState = {
     cashDrawerConnection: 'Printer' as const,
     cashDrawerTrigger: 'Manual' as const,
     cashDrawerAutoOpen: false,
-
-    // Barcode Scanner Configuration
-    barcodeScannerEnabled: false,
-    barcodeScannerConnection: 'USB' as const,
-    barcodeScannerMode: 'Continuous' as const,
-    barcodeScannerPrefix: '',
-    barcodeScannerSuffix: '',
 
     // Customer Display Configuration
     customerDisplayEnabled: false,
