@@ -88,16 +88,16 @@ export function LockScreen({ onUnlock }: LockScreenProps) {
     <div className={`
       fixed inset-0 z-[100] flex items-center justify-center
       ${theme === 'dark'
-        ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900'
-        : 'bg-gradient-to-br from-blue-50 via-white to-blue-100'
+        ? 'bg-gray-900'
+        : 'bg-gray-50'
       }
     `}>
       <div className="w-full max-w-md p-8">
         {/* Lock Icon and User Info */}
         <div className="text-center mb-8">
           <div className={`
-            w-24 h-24 mx-auto mb-4 rounded-full flex items-center justify-center
-            ${theme === 'dark' ? 'bg-gray-800 border-2 border-gray-700' : 'bg-white border-2 border-gray-200'}
+            w-24 h-24 mx-auto mb-6 rounded-full flex items-center justify-center
+            ${theme === 'dark' ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'}
           `}>
             <svg className={`w-12 h-12 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
@@ -124,26 +124,25 @@ export function LockScreen({ onUnlock }: LockScreenProps) {
           {/* PIN Display */}
           <div className={`
             p-6 rounded-xl text-center
-            ${theme === 'dark' ? 'bg-gray-800/50 border border-gray-700' : 'bg-white border border-gray-200'}
+            ${theme === 'dark' ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'}
           `}>
             <label className={`block text-sm font-medium mb-3 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
               Enter PIN to Unlock
             </label>
-            <div className="flex justify-center gap-2 mb-2">
+            <div className="flex justify-center gap-3 mb-2">
               {[...Array(6)].map((_, i) => (
                 <div
                   key={i}
                   className={`
-                    w-12 h-12 rounded-lg flex items-center justify-center text-2xl font-bold
-                    ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-100'}
+                    w-12 h-12 rounded-lg flex items-center justify-center text-2xl font-bold transition-all duration-200
                     ${i < pin.length 
-                      ? (theme === 'dark' ? 'bg-blue-900/50 border-2 border-blue-600' : 'bg-blue-100 border-2 border-blue-500')
-                      : (theme === 'dark' ? 'border border-gray-600' : 'border border-gray-300')
+                      ? (theme === 'dark' ? 'bg-blue-600 scale-105' : 'bg-blue-500 scale-105')
+                      : (theme === 'dark' ? 'bg-gray-800 border border-gray-600' : 'bg-gray-100 border border-gray-300')
                     }
                   `}
                 >
                   {i < pin.length && (
-                    <span className={theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}>●</span>
+                    <span className="text-white">●</span>
                   )}
                 </div>
               ))}

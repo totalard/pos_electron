@@ -143,32 +143,19 @@ export function Walkthrough({
         fixed inset-0 z-[9999] flex items-center justify-center
         w-screen h-screen overflow-hidden relative
         ${theme === 'dark'
-          ? 'bg-gradient-to-br from-slate-950 to-gray-950'
-          : 'bg-gradient-to-br from-gray-50 to-blue-50'
+          ? 'bg-gray-900'
+          : 'bg-gray-50'
         }
-        transition-colors duration-500
+        transition-colors duration-300
       `}
       role="dialog"
       aria-modal="true"
       aria-labelledby="walkthrough-title"
       style={{
-        animation: 'fadeIn 0.5s ease-out'
+        animation: 'smooth-fade-in 300ms cubic-bezier(0.4, 0, 0.2, 1)'
       }}
     >
-      {/* Animated Background Gradient - Minimal */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className={`
-          absolute top-0 right-0 w-[400px] h-[400px] rounded-full
-          ${theme === 'dark' ? 'bg-blue-600/15' : 'bg-blue-400/10'}
-          blur-3xl animate-float-slow
-        `} />
-        <div className={`
-          absolute bottom-0 left-0 w-[400px] h-[400px] rounded-full
-          ${theme === 'dark' ? 'bg-blue-500/10' : 'bg-blue-300/8'}
-          blur-3xl animate-float-medium
-        `} style={{ animationDelay: '1.5s' }} />
-      </div>
-      {/* CSS Animations */}
+      {/* CSS Animations - Minimal & Fluid */}
       <style>{`
         @keyframes fadeIn {
           from { opacity: 0; }
@@ -178,7 +165,7 @@ export function Walkthrough({
         @keyframes slideInRight {
           from {
             opacity: 0;
-            transform: translateX(100px);
+            transform: translateX(40px);
           }
           to {
             opacity: 1;
@@ -189,7 +176,7 @@ export function Walkthrough({
         @keyframes slideInLeft {
           from {
             opacity: 0;
-            transform: translateX(-100px);
+            transform: translateX(-40px);
           }
           to {
             opacity: 1;
@@ -200,17 +187,12 @@ export function Walkthrough({
         @keyframes scaleIn {
           from {
             opacity: 0;
-            transform: scale(0.9);
+            transform: scale(0.95);
           }
           to {
             opacity: 1;
             transform: scale(1);
           }
-        }
-
-        @keyframes bounce {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-10px); }
         }
 
         /* Respect prefers-reduced-motion */
@@ -225,36 +207,35 @@ export function Walkthrough({
 
       <div className="w-full h-full max-w-6xl mx-auto px-8 py-12 flex flex-col relative z-10">
         {/* Top Bar - Skip Button and Theme Toggle */}
-        <div className="flex justify-between items-center mb-6" style={{ animation: 'fadeIn 0.5s ease-out 0.2s both' }}>
+        <div className="flex justify-between items-center mb-8 animate-smooth-fade-in">
           <div className="w-10" /> {/* Spacer for centering */}
           <Button
             variant="ghost"
             size="md"
             onClick={handleSkip}
             aria-label="Skip walkthrough"
-            className="hover:scale-105 transition-transform duration-200"
+            className="hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
           >
             Skip Tutorial
           </Button>
-          <ThemeToggle size="md" className="backdrop-blur-xl bg-white/10 dark:bg-gray-800/30 rounded-full p-2 shadow-lg hover:scale-110 transition-transform" />
+          <ThemeToggle size="md" className="rounded-lg p-2 hover:scale-105 active:scale-95 transition-all duration-200" />
         </div>
 
-        {/* Main Content Card - Enhanced */}
+        {/* Main Content Card - Minimal */}
         <div
           className={`
-            flex-1 rounded-3xl shadow-2xl overflow-hidden
+            flex-1 rounded-2xl overflow-hidden
             ${theme === 'dark'
-              ? 'bg-gray-800/90 border border-gray-700/50'
-              : 'bg-white/90 border border-gray-200/50'
+              ? 'bg-gray-800 border border-gray-700'
+              : 'bg-white border border-gray-200'
             }
-            backdrop-blur-2xl
           `}
-          style={{ animation: 'scaleIn 0.5s ease-out 0.3s both' }}
+          style={{ animation: 'scaleIn 250ms cubic-bezier(0.4, 0, 0.2, 1) both' }}
         >
-          {/* Step Indicators - Enhanced */}
+          {/* Step Indicators - Minimal */}
           <div className={`
-            flex items-center justify-center gap-3 py-8 border-b
-            ${theme === 'dark' ? 'border-gray-700/50 bg-gray-800/20' : 'border-gray-200/50 bg-gray-50/30'}
+            flex items-center justify-center gap-2 py-6 border-b
+            ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'}
           `}>
             {steps.map((_, index) => (
               <button
@@ -266,17 +247,13 @@ export function Walkthrough({
                   }
                 }}
                 className={`
-                  h-3 rounded-full transition-all duration-500 cursor-pointer
+                  h-2 rounded-full transition-all duration-300 cursor-pointer
                   hover:scale-110
                   ${index === currentStep
-                    ? theme === 'dark'
-                      ? 'w-12 bg-blue-500 shadow-lg shadow-blue-500/30'
-                      : 'w-12 bg-blue-500 shadow-lg shadow-blue-500/20'
+                    ? 'w-8 bg-blue-500'
                     : index < currentStep
-                      ? theme === 'dark'
-                        ? 'w-3 bg-blue-400 hover:bg-blue-300'
-                        : 'w-3 bg-blue-500 hover:bg-blue-600'
-                      : 'w-3 bg-gray-300 hover:bg-gray-400'
+                      ? 'w-2 bg-blue-400 hover:bg-blue-500'
+                      : 'w-2 bg-gray-300 hover:bg-gray-400'
                   }
                 `}
                 aria-label={`Go to step ${index + 1} of ${steps.length}`}
@@ -292,32 +269,32 @@ export function Walkthrough({
               className="w-full max-w-md h-64 mb-8"
               style={{
                 animation: direction === 'forward'
-                  ? 'slideInRight 0.5s ease-out'
-                  : 'slideInLeft 0.5s ease-out'
+                  ? 'slideInRight 300ms cubic-bezier(0.4, 0, 0.2, 1)'
+                  : 'slideInLeft 300ms cubic-bezier(0.4, 0, 0.2, 1)'
               }}
             >
               {getIllustrationComponent(currentStepData.illustration, theme)}
             </div>
 
-            {/* Title - Enhanced */}
+            {/* Title - Minimal */}
             <h2
               id="walkthrough-title"
               className={`
-                text-5xl font-bold text-center mb-6
-                ${theme === 'dark' ? 'text-blue-300' : 'text-blue-700'}
+                text-4xl font-bold text-center mb-4
+                ${theme === 'dark' ? 'text-white' : 'text-gray-900'}
               `}
-              style={{ animation: 'fadeIn 0.5s ease-out 0.2s both' }}
+              style={{ animation: 'fadeIn 300ms cubic-bezier(0.4, 0, 0.2, 1) 100ms both' }}
             >
               {currentStepData.title}
             </h2>
 
-            {/* Description - Enhanced */}
+            {/* Description - Minimal */}
             <p
               className={`
-                text-xl text-center mb-12 leading-relaxed max-w-2xl font-medium
-                ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}
+                text-lg text-center mb-12 leading-relaxed max-w-2xl
+                ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}
               `}
-              style={{ animation: 'fadeIn 0.5s ease-out 0.3s both' }}
+              style={{ animation: 'fadeIn 300ms cubic-bezier(0.4, 0, 0.2, 1) 150ms both' }}
             >
               {currentStepData.description}
             </p>
@@ -326,7 +303,7 @@ export function Walkthrough({
             {isLastStep && showDontShowAgain && (
               <div
                 className="flex items-center justify-center"
-                style={{ animation: 'fadeIn 0.5s ease-out 0.4s both' }}
+                style={{ animation: 'fadeIn 300ms cubic-bezier(0.4, 0, 0.2, 1) 200ms both' }}
               >
                 <label className="flex items-center gap-3 cursor-pointer group">
                   <input
@@ -334,19 +311,19 @@ export function Walkthrough({
                     checked={dontShowAgain}
                     onChange={(e) => setDontShowAgain(e.target.checked)}
                     className={`
-                      w-6 h-6 rounded cursor-pointer transition-all duration-200
+                      w-5 h-5 rounded cursor-pointer transition-all duration-200
                       ${theme === 'dark'
                         ? 'bg-gray-700 border-gray-600'
                         : 'bg-white border-gray-300'
                       }
-                      text-primary-600 focus:ring-2 focus:ring-primary-500
-                      group-hover:scale-110
+                      text-blue-600 focus:ring-2 focus:ring-blue-500/40
+                      group-hover:scale-105
                     `}
                   />
                   <span className={`
-                    text-base font-medium
-                    ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}
-                    group-hover:text-primary-500 transition-colors duration-200
+                    text-sm font-medium
+                    ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}
+                    group-hover:text-blue-500 transition-colors duration-200
                   `}>
                     Don't show this tutorial again
                   </span>
@@ -355,11 +332,10 @@ export function Walkthrough({
             )}
           </div>
 
-          {/* Navigation - Enhanced */}
+          {/* Navigation - Minimal */}
           <div className={`
-            flex items-center justify-between px-12 py-8 border-t
-            ${theme === 'dark' ? 'border-gray-700/50 bg-gray-800/30' : 'border-gray-200/50 bg-gray-50/40'}
-            backdrop-blur-sm
+            flex items-center justify-between px-12 py-6 border-t
+            ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'}
           `}>
             {/* Previous Button */}
             <Button
@@ -373,22 +349,22 @@ export function Walkthrough({
                 </svg>
               }
               aria-label="Previous step"
-              className="hover:scale-105 transition-transform duration-200"
+              className="hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
             >
               Previous
             </Button>
 
-            {/* Step Counter - Enhanced */}
+            {/* Step Counter - Minimal */}
             <div className="flex flex-col items-center gap-1">
               <span className={`
-                text-lg font-bold
-                ${theme === 'dark' ? 'text-blue-300' : 'text-blue-700'}
+                text-base font-semibold
+                ${theme === 'dark' ? 'text-white' : 'text-gray-900'}
               `}>
                 {currentStep + 1} / {steps.length}
               </span>
               <span className={`
                 text-xs font-medium
-                ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}
+                ${theme === 'dark' ? 'text-gray-500' : 'text-gray-500'}
               `}>
                 {Math.round(((currentStep + 1) / steps.length) * 100)}% Complete
               </span>
@@ -407,8 +383,7 @@ export function Walkthrough({
                   </svg>
                 }
                 aria-label="Finish walkthrough"
-                className="hover:scale-105 transition-transform duration-200"
-                style={{ animation: 'bounce 2s ease-in-out infinite' }}
+                className="hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
               >
                 Get Started
               </Button>
@@ -419,7 +394,7 @@ export function Walkthrough({
                 onClick={handleNext}
                 disabled={isAnimating}
                 aria-label="Next step"
-                className="hover:scale-105 transition-transform duration-200"
+                className="hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
               >
                 <span className="flex items-center gap-2">
                   Next

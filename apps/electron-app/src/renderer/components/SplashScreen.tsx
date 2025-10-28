@@ -52,160 +52,112 @@ export function SplashScreen({ onComplete, duration = 3000 }: SplashScreenProps)
   return (
     <div className={`
       fixed inset-0 z-50 flex items-center justify-center overflow-hidden
-      transition-opacity duration-500 ease-in-out
+      transition-opacity duration-300 ease-out
       ${isVisible ? 'opacity-100' : 'opacity-0'}
       ${theme === 'dark' 
-        ? 'bg-gradient-to-br from-slate-950 to-gray-950' 
-        : 'bg-gradient-to-br from-gray-50 to-blue-50'
+        ? 'bg-gray-900' 
+        : 'bg-white'
       }
     `}>
       {/* Theme Toggle - Top Right Corner */}
-      <div className="absolute top-6 right-6 z-50 animate-fade-in">
-        <ThemeToggle size="md" className="backdrop-blur-xl bg-white/10 dark:bg-gray-800/30 rounded-full p-2 shadow-lg hover:scale-110 transition-transform" />
-      </div>
-      {/* Animated Background Gradient - Minimal */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className={`
-          absolute top-0 right-0 w-[400px] h-[400px] rounded-full
-          ${theme === 'dark' ? 'bg-blue-600/15' : 'bg-blue-400/10'}
-          blur-3xl animate-float-slow
-        `} />
-        <div className={`
-          absolute bottom-0 left-0 w-[400px] h-[400px] rounded-full
-          ${theme === 'dark' ? 'bg-blue-500/10' : 'bg-blue-300/8'}
-          blur-3xl animate-float-medium
-        `} style={{ animationDelay: '1.5s' }} />
+      <div className="absolute top-8 right-8 z-50 animate-smooth-fade-in">
+        <ThemeToggle 
+          size="md" 
+          className="rounded-lg p-2 transition-all duration-200 hover:scale-105 active:scale-95" 
+        />
       </div>
 
-      {/* Grid Pattern Background - Minimal */}
-      <div className={`absolute inset-0 ${theme === 'dark' ? 'opacity-[0.02]' : 'opacity-[0.03]'}`} style={{
-        backgroundImage: `
-          radial-gradient(circle at 1px 1px, ${theme === 'dark' ? 'rgba(148, 163, 184, 0.1)' : 'rgba(59, 130, 246, 0.08)'} 1px, transparent 0)
-        `,
-        backgroundSize: '40px 40px'
-      }} />
-
-      {/* Main Content Card - Enhanced */}
+      {/* Main Content - Minimal Flat Design */}
       <div className={`
-        relative z-10 text-center px-8 max-w-2xl
-        backdrop-blur-2xl rounded-3xl p-12
-        border
-        transform transition-all duration-1000 ease-out
+        relative z-10 text-center px-12 max-w-2xl
+        transform transition-all duration-400 ease-out
         ${showContent 
-          ? 'translate-y-0 scale-100 opacity-100' 
-          : 'translate-y-12 scale-95 opacity-0'
-        }
-        ${theme === 'dark'
-          ? 'bg-gray-800/50 border-gray-700/50 shadow-2xl shadow-black/20'
-          : 'bg-white/80 border-white/90 shadow-2xl shadow-blue-500/10'
+          ? 'translate-y-0 opacity-100' 
+          : 'translate-y-8 opacity-0'
         }
       `}>
-        {/* Logo/Icon with Glow - Enhanced */}
+        {/* Logo/Icon - Minimal Flat Design */}
         <div className={`
-          inline-flex items-center justify-center w-28 h-28 rounded-full mb-8
-          transform transition-all duration-1000 ease-out relative
-          ${showContent ? 'rotate-0 scale-100' : 'rotate-12 scale-75'}
-          animate-pulse-glow
+          inline-flex items-center justify-center w-24 h-24 rounded-full mb-10
+          transform transition-all duration-300 ease-out
+          ${showContent ? 'scale-100 opacity-100' : 'scale-90 opacity-0'}
+          ${theme === 'dark'
+            ? 'bg-blue-600'
+            : 'bg-blue-500'
+          }
         `}>
-          {/* Glow Background - Minimal */}
-          <div className={`
-            absolute inset-0 rounded-full opacity-40 blur-xl
-            ${theme === 'dark'
-              ? 'bg-blue-600'
-              : 'bg-blue-500'
-            }
-            animate-glow-pulse
-          `} />
-
-          {/* Icon Container - Enhanced */}
-          <div className={`
-            relative flex items-center justify-center w-28 h-28 rounded-full
-            bg-gradient-to-br
-            ${theme === 'dark'
-              ? 'from-blue-600 to-blue-700 shadow-2xl shadow-blue-900/50'
-              : 'from-blue-500 to-blue-600 shadow-2xl shadow-blue-500/30'
-            }
-          `}>
-            {/* Shopping cart icon for POS system - Enhanced */}
-            <svg
-              className="w-14 h-14 text-white animate-icon-pulse drop-shadow-lg"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={1.8}
-                d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
-              />
-            </svg>
-          </div>
+          {/* Shopping cart icon for POS system */}
+          <svg
+            className="w-12 h-12 text-white"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
+            />
+          </svg>
         </div>
 
-        {/* Main Title with Gradient - Enhanced */}
+        {/* Main Title - Minimal */}
         <h1 className={`
-          text-6xl font-bold mb-3 tracking-tight
-          bg-gradient-to-r bg-clip-text text-transparent
-          transform transition-all duration-1000 ease-out
-          ${showContent ? 'translate-y-0 opacity-100' : 'translate-y-6 opacity-0'}
+          text-5xl font-bold mb-4 tracking-tight
+          transform transition-all duration-300 ease-out
+          ${showContent ? 'opacity-100' : 'opacity-0'}
           ${theme === 'dark' 
-            ? 'from-blue-400 to-blue-300' 
-            : 'from-blue-600 to-blue-700'
+            ? 'text-white' 
+            : 'text-gray-900'
           }
-        `} style={{ animationDelay: '300ms' }}>
+        `}>
           MidLogic POS
         </h1>
 
-        {/* Subtitle Line - Enhanced */}
+        {/* Subtitle Line - Minimal */}
         <div className={`
-          w-16 h-1.5 mx-auto mb-6
+          w-12 h-1 mx-auto mb-8
           rounded-full
-          transform transition-all duration-1000 ease-out
+          transform transition-all duration-300 ease-out
           ${showContent ? 'scale-x-100 opacity-100' : 'scale-x-0 opacity-0'}
           ${theme === 'dark' 
-            ? 'bg-blue-500 shadow-lg shadow-blue-500/30' 
-            : 'bg-blue-500 shadow-lg shadow-blue-500/20'
+            ? 'bg-blue-500' 
+            : 'bg-blue-500'
           }
-        `} style={{ animationDelay: '500ms' }} />
+        `} />
 
-        {/* Descriptive Text - Enhanced */}
+        {/* Descriptive Text - Minimal */}
         <div className={`
-          space-y-3 mb-10
-          transform transition-all duration-1000 ease-out
-          ${showContent ? 'translate-y-0 opacity-100' : 'translate-y-6 opacity-0'}
-        `} style={{ animationDelay: '600ms' }}>
+          space-y-2 mb-12
+          transform transition-all duration-300 ease-out
+          ${showContent ? 'opacity-100' : 'opacity-0'}
+        `}>
           <p className={`
-            text-xl font-bold
-            ${theme === 'dark' ? 'text-white' : 'text-gray-900'}
+            text-lg font-medium
+            ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}
           `}>
             Premium Point of Sale System
           </p>
           <p className={`
-            text-base font-medium
-            ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}
+            text-sm font-normal
+            ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}
           `}>
             Designed for MidLogic Hardware
           </p>
-          <div className={`flex items-center justify-center gap-2 text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-            </svg>
-            <span>Fast • Secure • Reliable</span>
-          </div>
         </div>
 
-        {/* Progress Bar Container - Enhanced */}
+        {/* Progress Bar - Minimal */}
         <div className={`
-          w-full space-y-4 mb-10
-          transform transition-all duration-1000 ease-out
-          ${showContent ? 'translate-y-0 opacity-100' : 'translate-y-6 opacity-0'}
-        `} style={{ animationDelay: '700ms' }}>
+          w-full max-w-md mx-auto space-y-3 mb-12
+          transform transition-all duration-300 ease-out
+          ${showContent ? 'opacity-100' : 'opacity-0'}
+        `}>
           <div
             className={`
-              w-full h-2 rounded-full overflow-hidden backdrop-blur-sm
-              ${theme === 'dark' ? 'bg-gray-700/60 shadow-inner' : 'bg-gray-200/60 shadow-inner'}
+              w-full h-1.5 rounded-full overflow-hidden
+              ${theme === 'dark' ? 'bg-gray-800' : 'bg-gray-200'}
             `}
             role="progressbar"
             aria-valuenow={Math.round(progress)}
@@ -216,27 +168,20 @@ export function SplashScreen({ onComplete, duration = 3000 }: SplashScreenProps)
             <div
               className={`
                 h-full rounded-full transition-all duration-300 ease-out
-                bg-gradient-to-r relative overflow-hidden
-                ${theme === 'dark'
-                  ? 'from-blue-500 to-blue-600 shadow-lg shadow-blue-500/30'
-                  : 'from-blue-500 to-blue-600 shadow-lg shadow-blue-500/20'
-                }
+                ${theme === 'dark' ? 'bg-blue-500' : 'bg-blue-500'}
               `}
               style={{ width: `${progress}%` }}
-            >
-              {/* Shimmer effect */}
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer" />
-            </div>
+            />
           </div>
           <div className="flex items-center justify-between">
             <p className={`
-              text-sm font-semibold
-              ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}
+              text-sm font-medium
+              ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}
             `}>
               Initializing System...
             </p>
             <p className={`
-              text-sm font-bold
+              text-sm font-semibold
               ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}
             `}>
               {Math.round(progress)}%
@@ -244,24 +189,21 @@ export function SplashScreen({ onComplete, duration = 3000 }: SplashScreenProps)
           </div>
         </div>
 
-        {/* Footer Info - Enhanced */}
+        {/* Footer Info - Minimal */}
         <div className={`
           space-y-2 text-center
-          transform transition-all duration-1000 ease-out
-          ${showContent ? 'translate-y-0 opacity-100' : 'translate-y-6 opacity-0'}
-        `} style={{ animationDelay: '900ms' }}>
-          <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full ${theme === 'dark' ? 'bg-gray-700/40' : 'bg-gray-100/60'}`}>
-            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-            <p className={`
-              text-sm font-medium
-              ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}
-            `}>
-              Version 1.0.0
-            </p>
-          </div>
+          transform transition-all duration-300 ease-out
+          ${showContent ? 'opacity-100' : 'opacity-0'}
+        `}>
           <p className={`
             text-xs font-medium
-            ${theme === 'dark' ? 'text-gray-500' : 'text-gray-600'}
+            ${theme === 'dark' ? 'text-gray-500' : 'text-gray-500'}
+          `}>
+            Version 1.0.0
+          </p>
+          <p className={`
+            text-xs font-normal
+            ${theme === 'dark' ? 'text-gray-600' : 'text-gray-400'}
           `}>
             © {currentYear} MidLogic. All rights reserved.
           </p>

@@ -100,7 +100,7 @@ export function Login({ onAuthenticated }: LoginProps) {
   }
 
   return (
-    <div className="h-screen w-screen flex overflow-hidden bg-slate-950">
+    <div className={`h-screen w-screen flex overflow-hidden ${theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'}`}>
       {/* Left Side - Feature Carousel (1/3 width) */}
       <div className="hidden lg:flex lg:w-1/3 w-full h-full">
         <FeatureCarousel />
@@ -109,28 +109,15 @@ export function Login({ onAuthenticated }: LoginProps) {
       {/* Right Side - User Selection / PIN Entry (2/3 width) */}
       <div className={`
         w-full lg:w-2/3 flex items-center justify-center overflow-hidden relative
-        transition-all duration-300
+        transition-colors duration-300
         ${theme === 'dark'
-          ? 'bg-gradient-to-br from-slate-950 to-gray-950'
-          : 'bg-gradient-to-br from-gray-50 to-blue-50'
+          ? 'bg-gray-900'
+          : 'bg-white'
         }
       `}>
         {/* Theme Toggle - Top Right Corner */}
-        <div className="absolute top-6 right-6 z-50 animate-fade-in">
-          <ThemeToggle size="md" className="backdrop-blur-xl bg-white/10 dark:bg-gray-800/30 rounded-full p-2 shadow-lg hover:scale-110 transition-transform" />
-        </div>
-        {/* Animated background gradients - Minimal */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className={`
-            absolute -top-40 -right-40 w-80 h-80 rounded-full
-            blur-3xl animate-float-slow
-            ${theme === 'dark' ? 'bg-blue-600/15' : 'bg-blue-400/10'}
-          `} />
-          <div className={`
-            absolute -bottom-40 -left-40 w-80 h-80 rounded-full
-            blur-3xl animate-float-medium
-            ${theme === 'dark' ? 'bg-blue-500/10' : 'bg-blue-300/8'}
-          `} style={{ animationDelay: '1.5s' }} />
+        <div className="absolute top-8 right-8 z-50 animate-smooth-fade-in">
+          <ThemeToggle size="md" className="rounded-lg p-2 hover:scale-105 active:scale-95 transition-all duration-200" />
         </div>
 
         <div className="w-full max-w-md px-8 py-12 relative z-10">
@@ -175,22 +162,21 @@ export function Login({ onAuthenticated }: LoginProps) {
 
           {/* User Selection Screen */}
           {!isLoadingUsers && !userLoadError && !selectedUser && (
-            <div className="animate-fade-in">
+            <div className="animate-smooth-fade-in">
               <div className="text-center mb-12">
                 <h1 className={`
-                  text-6xl font-bold mb-3 tracking-tight
-                  bg-gradient-to-r bg-clip-text text-transparent
+                  text-5xl font-bold mb-4 tracking-tight
                   ${theme === 'dark'
-                    ? 'from-blue-400 to-blue-300'
-                    : 'from-blue-600 to-blue-700'
+                    ? 'text-white'
+                    : 'text-gray-900'
                   }
                 `}>
                   Welcome Back
                 </h1>
-                <div className={`w-16 h-1.5 mx-auto mb-4 rounded-full ${theme === 'dark' ? 'bg-blue-500' : 'bg-blue-500'}`} />
+                <div className={`w-12 h-1 mx-auto mb-6 rounded-full ${theme === 'dark' ? 'bg-blue-500' : 'bg-blue-500'}`} />
                 <p className={`
-                  text-xl font-medium
-                  ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}
+                  text-lg font-medium
+                  ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}
                 `}>
                   Select your account to continue
                 </p>
@@ -203,60 +189,52 @@ export function Login({ onAuthenticated }: LoginProps) {
                     key={user.id}
                     onClick={() => handleUserSelect(user)}
                     className={`
-                      group flex flex-col items-center p-8 rounded-2xl
-                      backdrop-blur-xl border transition-all duration-300
-                      transform hover:scale-105 active:scale-100
+                      group flex flex-col items-center p-8 rounded-xl
+                      border transition-all duration-200
+                      hover:scale-[1.02] active:scale-[0.98]
                       min-h-[200px] justify-center
-                      animate-scale-in
+                      animate-smooth-scale-in
                       ${theme === 'dark'
-                        ? 'bg-gray-800/40 border-gray-700/50 hover:border-primary-500/50 active:border-primary-600/70 hover:shadow-2xl hover:shadow-primary-900/20'
-                        : 'bg-white/40 border-white/60 hover:border-primary-400/50 active:border-primary-500/70 hover:shadow-2xl hover:shadow-primary-500/10'
+                        ? 'bg-gray-800 border-gray-700 hover:border-blue-600'
+                        : 'bg-white border-gray-200 hover:border-blue-500'
                       }
                     `}
                     style={{ animationDelay: `${index * 100}ms` }}
                     aria-label={`Select user ${user.full_name}`}
                   >
-                    {/* Avatar with Glow - Enhanced */}
-                    <div className="relative mb-3">
-                      <div className={`
-                        absolute inset-0 rounded-full opacity-40 blur-lg
-                        ${theme === 'dark'
-                          ? 'bg-blue-600'
-                          : 'bg-blue-500'
-                        }
-                        group-hover:opacity-60 transition-opacity duration-300
-                      `} />
+                    {/* Avatar - Minimal */}
+                    <div className="mb-4">
                       <Avatar
                         name={user.full_name}
                         color={getAvatarColor(user)}
                         size="xl"
-                        className="relative shadow-xl group-hover:scale-110 group-active:scale-100 transition-transform duration-200"
+                        className="group-hover:scale-105 group-active:scale-100 transition-transform duration-200"
                       />
                     </div>
 
                     {/* Name */}
                     <span className={`
-                      text-base font-semibold mb-2 text-center
+                      text-base font-semibold mb-3 text-center
                       ${theme === 'dark'
-                        ? 'text-gray-100 group-hover:text-primary-300'
-                        : 'text-gray-900 group-hover:text-primary-600'
+                        ? 'text-white group-hover:text-blue-400'
+                        : 'text-gray-900 group-hover:text-blue-600'
                       }
-                      transition-colors
+                      transition-colors duration-200
                     `}>
                       {user.full_name}
                     </span>
 
                     {/* Role Badge */}
                     <span className={`
-                      px-3 py-1.5 text-xs font-semibold rounded-full
-                      transition-all duration-300
+                      px-3 py-1.5 text-xs font-semibold rounded-lg
+                      transition-all duration-200
                       ${user.role === 'admin'
                         ? theme === 'dark'
-                          ? 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/30'
-                          : 'bg-yellow-100/80 text-yellow-700 border border-yellow-300'
+                          ? 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/40'
+                          : 'bg-yellow-100 text-yellow-700 border border-yellow-300'
                         : theme === 'dark'
-                          ? 'bg-primary-500/20 text-primary-300 border border-primary-500/30'
-                          : 'bg-primary-100/80 text-primary-700 border border-primary-300'
+                          ? 'bg-blue-500/20 text-blue-300 border border-blue-500/40'
+                          : 'bg-blue-100 text-blue-700 border border-blue-300'
                       }
                     `}>
                       {user.role === 'admin' ? '👑 Admin' : '👤 User'}
@@ -287,17 +265,17 @@ export function Login({ onAuthenticated }: LoginProps) {
 
           {/* PIN Entry Screen */}
           {!isLoadingUsers && !userLoadError && selectedUser && (
-            <div className="animate-fade-in">
+            <div className="animate-smooth-fade-in">
               {/* Back Button - Touch-safe with minimum 44x44px */}
               <button
                 onClick={handleBackToUserSelection}
                 className={`
                   mb-8 px-4 py-3 min-h-[44px] flex items-center gap-2
-                  rounded-xl transition-all duration-200
-                  group
+                  rounded-lg transition-all duration-200
+                  group hover:scale-[1.02] active:scale-[0.98]
                   ${theme === 'dark'
-                    ? 'text-gray-400 hover:text-white hover:bg-gray-700/50 active:bg-gray-600'
-                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100/80 active:bg-gray-200'
+                    ? 'text-gray-400 hover:text-white hover:bg-gray-800'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
                   }
                 `}
                 aria-label="Back to user selection"
@@ -308,39 +286,31 @@ export function Login({ onAuthenticated }: LoginProps) {
                 <span className="text-sm font-medium">Back</span>
               </button>
 
-              {/* User Info Card - Enhanced */}
+              {/* User Info Card - Minimal */}
               <div className={`
-                text-center mb-10 p-6 rounded-2xl
-                backdrop-blur-xl border
+                text-center mb-10 p-6 rounded-xl
+                border
                 ${theme === 'dark'
-                  ? 'bg-gray-800/40 border-gray-700/50'
-                  : 'bg-white/70 border-white/80'
+                  ? 'bg-gray-800 border-gray-700'
+                  : 'bg-white border-gray-200'
                 }
               `}>
-                <div className="relative min-w-[64px] min-h-[64px] w-16 h-16 mx-auto mb-4">
-                  <div className={`
-                    absolute inset-0 rounded-full opacity-40 blur-lg
-                    ${theme === 'dark'
-                      ? 'bg-blue-600'
-                      : 'bg-blue-500'
-                    }
-                  `} />
+                <div className="w-16 h-16 mx-auto mb-4">
                   <Avatar
                     name={selectedUser.full_name}
                     color={getAvatarColor(selectedUser)}
                     size="lg"
-                    className="relative shadow-xl"
                   />
                 </div>
                 <h2 className={`
                   text-2xl font-bold mb-2
-                  ${theme === 'dark' ? 'text-blue-300' : 'text-blue-700'}
+                  ${theme === 'dark' ? 'text-white' : 'text-gray-900'}
                 `}>
                   {selectedUser.full_name}
                 </h2>
                 <p className={`
                   text-base font-medium
-                  ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}
+                  ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}
                 `}>
                   Enter your 6-digit PIN
                 </p>
@@ -366,26 +336,26 @@ export function Login({ onAuthenticated }: LoginProps) {
               {/* Success Overlay */}
               {showSuccess && (
                 <div className={`
-                  fixed inset-0 flex items-center justify-center backdrop-blur-sm z-50
-                  ${theme === 'dark' ? 'bg-black/40' : 'bg-white/40'}
+                  fixed inset-0 flex items-center justify-center z-50
+                  ${theme === 'dark' ? 'bg-black/50' : 'bg-white/50'}
                 `}>
                   <div className={`
-                    animate-scale-in flex flex-col items-center justify-center
-                    rounded-3xl p-8 backdrop-blur-xl border
+                    animate-smooth-scale-in flex flex-col items-center justify-center
+                    rounded-2xl p-8 border
                     ${theme === 'dark'
-                      ? 'bg-gray-800/50 border-gray-700/50'
-                      : 'bg-white/60 border-white/80'
+                      ? 'bg-gray-800 border-gray-700'
+                      : 'bg-white border-gray-200'
                     }
                   `}>
                     <div className={`
                       w-16 h-16 rounded-full flex items-center justify-center mb-4
-                      bg-gradient-to-br from-green-400 to-green-600 animate-icon-pulse
+                      bg-green-500
                     `}>
                       <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                       </svg>
                     </div>
-                    <p className={`text-lg font-semibold ${theme === 'dark' ? 'text-green-300' : 'text-green-600'}`}>
+                    <p className={`text-lg font-semibold ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`}>
                       Authentication Successful!
                     </p>
                   </div>

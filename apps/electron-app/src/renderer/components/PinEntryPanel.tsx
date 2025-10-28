@@ -232,10 +232,10 @@ export function PinEntryPanel({
       {/* Error Message */}
       {error && (
         <div className={`
-          mb-6 p-4 rounded-xl backdrop-blur-xl border
+          mb-6 p-4 rounded-lg border
           ${theme === 'dark'
-            ? 'bg-red-500/10 border-red-500/30 text-red-300'
-            : 'bg-red-50/80 border-red-200 text-red-700'
+            ? 'bg-red-500/10 border-red-500/40 text-red-300'
+            : 'bg-red-50 border-red-200 text-red-700'
           }
         `}>
           <div className="flex items-start gap-3">
@@ -268,8 +268,8 @@ export function PinEntryPanel({
       {isLoading && (
         <div className="mb-6 flex justify-center">
           <div className={`
-            animate-spin rounded-full h-8 w-8 border-b-2
-            ${theme === 'dark' ? 'border-blue-400' : 'border-blue-600'}
+            animate-smooth-spin rounded-full h-8 w-8 border-2 border-transparent
+            ${theme === 'dark' ? 'border-t-blue-400' : 'border-t-blue-600'}
           `} />
         </div>
       )}
@@ -280,13 +280,12 @@ export function PinEntryPanel({
           className={`
             fixed top-0 right-0 h-full z-50
             w-80 sm:w-96 md:w-[420px] lg:w-[480px]
-            transform transition-transform duration-300 ease-in-out
+            transform transition-transform duration-300 ease-out
             ${keypadVisible ? 'translate-x-0' : 'translate-x-full'}
             ${theme === 'dark'
-              ? 'bg-gray-900/95 border-l border-gray-700'
-              : 'bg-white/95 border-l border-gray-200'
+              ? 'bg-gray-900 border-l border-gray-700'
+              : 'bg-white border-l border-gray-200'
             }
-            backdrop-blur-xl shadow-2xl
           `}
         >
           <div className="h-full flex flex-col">
@@ -304,21 +303,21 @@ export function PinEntryPanel({
             <div className="flex-1 flex flex-col justify-center px-6 pb-6">
               {/* PIN Dots Display - Grouped with keypad */}
               <div className={`
-                flex justify-center items-center gap-3 sm:gap-4 mb-8 p-4 sm:p-6 rounded-2xl
-                backdrop-blur-xl border
+                flex justify-center items-center gap-3 sm:gap-4 mb-8 p-4 sm:p-6 rounded-xl
+                border
                 ${theme === 'dark'
-                  ? 'bg-gray-800/50 border-gray-700/50'
-                  : 'bg-white/80 border-gray-200'
+                  ? 'bg-gray-800 border-gray-700'
+                  : 'bg-white border-gray-200'
                 }
               `}>
                 {Array.from({ length: pinLength }).map((_, index) => (
                   <div
                     key={index}
                     className={`
-                      w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 rounded-full transition-all duration-300 ease-out
+                      w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 rounded-full transition-all duration-200 ease-out
                       ${index < pin.length
-                        ? `${theme === 'dark' ? 'bg-blue-500 shadow-lg shadow-blue-500/50' : 'bg-blue-600 shadow-lg shadow-blue-500/30'} scale-125 animate-pulse-once`
-                        : `border-2 ${theme === 'dark' ? 'border-gray-600 bg-gray-800/50' : 'border-gray-300 bg-gray-50'}`
+                        ? `${theme === 'dark' ? 'bg-blue-500' : 'bg-blue-600'} scale-110 animate-pulse-once`
+                        : `border-2 ${theme === 'dark' ? 'border-gray-600 bg-gray-800' : 'border-gray-300 bg-gray-50'}`
                       }
                     `}
                     style={{
@@ -344,10 +343,10 @@ export function PinEntryPanel({
             {/* User Instructions - Moved to bottom */}
             <div className="px-6 pb-6">
               <div className={`
-                p-3 sm:p-4 rounded-xl border
+                p-3 sm:p-4 rounded-lg border
                 ${theme === 'dark'
-                  ? 'bg-blue-900/20 border-blue-700/30'
-                  : 'bg-blue-50/80 border-blue-200'
+                  ? 'bg-blue-900/20 border-blue-700/40'
+                  : 'bg-blue-50 border-blue-200'
                 }
               `}>
                 <div className="flex items-start gap-2 sm:gap-3">

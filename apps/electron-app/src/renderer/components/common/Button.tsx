@@ -52,28 +52,29 @@ export function Button({
     lg: 'px-8 py-4 text-lg min-h-[48px]'
   }
 
-  // Variant classes with theme support
+  // Variant classes with theme support - Flat Design
   const variantClasses = {
     primary: theme === 'dark'
-      ? 'bg-primary-600 hover:bg-primary-700 active:bg-primary-800 text-white'
-      : 'bg-primary-500 hover:bg-primary-600 active:bg-primary-700 text-white',
+      ? 'bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white'
+      : 'bg-blue-500 hover:bg-blue-600 active:bg-blue-700 text-white',
     secondary: theme === 'dark'
-      ? 'bg-gray-600 hover:bg-gray-500 active:bg-gray-700 text-white'
-      : 'bg-gray-200 hover:bg-gray-300 active:bg-gray-400 text-gray-900',
+      ? 'bg-gray-700 hover:bg-gray-600 active:bg-gray-800 text-white border border-gray-600'
+      : 'bg-gray-100 hover:bg-gray-200 active:bg-gray-300 text-gray-900 border border-gray-200',
     danger: theme === 'dark'
-      ? 'bg-red-600 hover:bg-red-700 active:bg-red-800 text-white'
+      ? 'bg-red-600 hover:bg-red-500 active:bg-red-700 text-white'
       : 'bg-red-500 hover:bg-red-600 active:bg-red-700 text-white',
     ghost: theme === 'dark'
-      ? 'bg-transparent hover:bg-gray-700 active:bg-gray-600 text-gray-300 border border-gray-600'
-      : 'bg-transparent hover:bg-gray-100 active:bg-gray-200 text-gray-700 border border-gray-300'
+      ? 'bg-transparent hover:bg-gray-800 active:bg-gray-700 text-gray-300 border border-gray-700'
+      : 'bg-transparent hover:bg-gray-50 active:bg-gray-100 text-gray-700 border border-gray-300'
   }
 
   const baseClasses = `
     rounded-lg font-medium
-    transition-all duration-200
+    transition-all duration-200 ease-out
+    hover:scale-[1.02] active:scale-[0.98]
     focus:outline-none focus:ring-2 focus:ring-offset-2
-    ${variant === 'primary' ? 'focus:ring-primary-500' : 'focus:ring-gray-500'}
-    disabled:opacity-50 disabled:cursor-not-allowed
+    ${variant === 'primary' ? 'focus:ring-blue-500/40' : 'focus:ring-gray-500/40'}
+    disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100
     flex items-center justify-center gap-2
     ${fullWidth ? 'w-full' : ''}
     ${sizeClasses[size]}
@@ -90,8 +91,8 @@ export function Button({
       {isLoading ? (
         <>
           <div className={`
-            animate-spin rounded-full h-5 w-5 border-b-2
-            ${variant === 'primary' || variant === 'danger' ? 'border-white' : 'border-current'}
+            animate-smooth-spin rounded-full h-5 w-5 border-2 border-transparent
+            ${variant === 'primary' || variant === 'danger' ? 'border-t-white' : 'border-t-current'}
           `} />
           {children && <span>Loading...</span>}
         </>
