@@ -1,0 +1,191 @@
+name: Build Multi-Platform Release
+
+on:
+  push:
+    branches: [ main, master ]
+    tags:
+      - 'v*'
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    name: Build for Windows
+    runs-on: windows-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+      
+      - name: Install pnpm
+        run: npm install -g pnpm
+      
+      - name: Install Node dependencies
+        run: pnpm install
+      
+      - name: Setup Python virtual environment
+        run: |
+          cd apps/python-backend
+          python -m venv venv
+          venv\Scripts\activate
+          pip install --upgrade pip
+          pip install -r requirements.txt
+      
+      - name: Build Python backend
+        run: |
+          cd apps/electron-app
+          node scripts/build-python-server.js
+      
+      - name: Build Electron app
+        run: |
+          cd apps/electron-app
+          pnpm exec vite build
+          pnpm exec electron-builder --win --x64
+      
+      - name: Upload Windows artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: windows-installers
+          path: |
+            apps/electron-app/release/*.exe
+            apps/electron-app/release/*.msi
+          retention-days: 30
+
+  build-linux:
+    name: Build for Linux
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+      
+      - name: Install pnpm
+        run: npm install -g pnpm
+      
+      - name: Install Node dependencies
+        run: pnpm install
+      
+      - name: Setup Python virtual environment
+        run: |
+          cd apps/python-backend
+          python3 -m venv venv
+          source venv/bin/activate
+          pip install --upgrade pip
+          pip install -r requirements.txt
+      
+      - name: Build Python backend
+        run: |
+          cd apps/electron-app
+          node scripts/build-python-server.js
+      
+      - name: Build Electron app
+        run: |
+          cd apps/electron-app
+          pnpm exec vite build
+          pnpm exec electron-builder --linux --x64
+      
+      - name: Upload Linux artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: linux-installers
+          path: |
+            apps/electron-app/release/*.AppImage
+            apps/electron-app/release/*.deb
+            apps/electron-app/release/*.rpm
+          retention-days: 30
+
+  build-macos:
+    name: Build for macOS
+    runs-on: macos-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+      
+      - name: Install pnpm
+        run: npm install -g pnpm
+      
+      - name: Install Node dependencies
+        run: pnpm install
+      
+      - name: Setup Python virtual environment
+        run: |
+          cd apps/python-backend
+          python3 -m venv venv
+          source venv/bin/activate
+          pip install --upgrade pip
+          pip install -r requirements.txt
+      
+      - name: Build Python backend
+        run: |
+          cd apps/electron-app
+          node scripts/build-python-server.js
+      
+      - name: Build Electron app
+        run: |
+          cd apps/electron-app
+          pnpm exec vite build
+          pnpm exec electron-builder --mac --x64
+      
+      - name: Upload macOS artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: macos-installers
+          path: |
+            apps/electron-app/release/*.dmg
+            apps/electron-app/release/*.zip
+          retention-days: 30
+
+  create-release:
+    name: Create GitHub Release
+    needs: [build-windows, build-linux, build-macos]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v3
+      
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            windows-installers/*
+            linux-installers/*
+            macos-installers/*
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+

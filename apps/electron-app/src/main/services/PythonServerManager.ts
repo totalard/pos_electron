@@ -28,7 +28,9 @@ export class PythonServerManager {
     } else {
       // In production, use the bundled executable
       const resourcesPath = process.resourcesPath
-      const serverPath = path.join(resourcesPath, 'python-server', 'pos-server', 'pos-server.exe')
+      const isWindows = process.platform === 'win32'
+      const executableName = isWindows ? 'pos-server.exe' : 'pos-server'
+      const serverPath = path.join(resourcesPath, 'python-server', 'pos-server', executableName)
       return serverPath
     }
   }
@@ -132,11 +134,27 @@ export class PythonServerManager {
 
     console.log('Starting production server:', serverExePath)
     console.log('Data path:', dataPath)
+    console.log('Platform:', process.platform)
 
     // Ensure data directory exists
     const fs = require('fs')
     if (!fs.existsSync(dataPath)) {
       fs.mkdirSync(dataPath, { recursive: true })
+    }
+
+    // Check if server executable exists
+    if (!fs.existsSync(serverExePath)) {
+      throw new Error(`Python server executable not found at: ${serverExePath}`)
+    }
+
+    // On Linux/Mac, ensure the executable has execute permissions
+    if (process.platform !== 'win32') {
+      try {
+        fs.chmodSync(serverExePath, 0o755)
+        console.log('Set executable permissions on server binary')
+      } catch (error) {
+        console.warn('Failed to set executable permissions:', error)
+      }
     }
 
     this.serverProcess = spawn(

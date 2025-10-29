@@ -54,6 +54,8 @@ console.log('');
 // Determine the platform
 const platform = process.platform;
 const isWindows = platform === 'win32';
+const isLinux = platform === 'linux';
+const isMac = platform === 'darwin';
 const venvPath = isWindows
   ? path.join(backendDir, 'venv', 'Scripts')
   : path.join(backendDir, 'venv', 'bin');
@@ -62,6 +64,19 @@ const pipExe = isWindows ? 'pip.exe' : 'pip';
 
 console.log('🔧 Platform:', platform);
 console.log('🐍 Virtual environment:', venvPath);
+console.log('');
+
+// Warning about cross-compilation
+console.log('⚠️  IMPORTANT: PyInstaller cannot cross-compile!');
+console.log('   This build will create an executable for:', platform);
+if (isWindows) {
+  console.log('   Output: pos-server.exe (Windows only)');
+} else if (isLinux) {
+  console.log('   Output: pos-server (Linux only)');
+} else if (isMac) {
+  console.log('   Output: pos-server (macOS only)');
+}
+console.log('   To build for other platforms, run this script on that platform.');
 console.log('');
 
 // Check if virtual environment exists

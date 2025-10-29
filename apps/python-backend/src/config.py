@@ -42,6 +42,7 @@ class Settings(BaseSettings):
         """Pydantic configuration"""
         env_file = ".env"
         case_sensitive = True
+        extra = "ignore"  # Ignore extra environment variables
 
 
 settings = Settings()
