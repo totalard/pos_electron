@@ -3,12 +3,14 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { net } from 'electron'
 import { getHardwareManager } from './services/HardwareManager'
+import { getPythonServerManager } from './services/PythonServerManager'
 import type { PrinterConfig } from './services/PrinterService'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 let mainWindow: BrowserWindow | null = null
 let hardwareManager = getHardwareManager()
+let pythonServerManager = getPythonServerManager()
 
 const createWindow = () => {
   // Create the browser window in fullscreen mode without decorations
@@ -254,7 +256,22 @@ ipcMain.handle('printer:get-active', async () => {
 })
 
 // This method will be called when Electron has finished initialization
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
+  // Start Python server first
+  try {
+    console.log('Starting Python backend server...')
+    await pythonServerManager.start()
+    console.log('Python backend server started successfully')
+  } catch (error) {
+    console.error('Failed to start Python backend server:', error)
+    // Show error dialog to user
+    const { dialog } = require('electron')
+    dialog.showErrorBox(
+      'Server Error',
+      'Failed to start the backend server. The application may not function correctly.\n\n' + String(error)
+    )
+  }
+
   createWindow()
 
   // On macOS, re-create window when dock icon is clicked and no windows are open
@@ -273,8 +290,23 @@ app.on('window-all-closed', () => {
 })
 
 // Handle any additional app events here
-app.on('before-quit', () => {
-  // Cleanup hardware manager before quitting
-  hardwareManager.shutdown()
+app.on('before-quit', async (event) => {
+  // Prevent default quit to allow cleanup
+  event.preventDefault()
+
+  try {
+    // Cleanup hardware manager
+    hardwareManager.shutdown()
+
+    // Stop Python server
+    console.log('Stopping Python backend server...')
+    await pythonServerManager.stop()
+    console.log('Python backend server stopped')
+  } catch (error) {
+    console.error('Error during cleanup:', error)
+  } finally {
+    // Now actually quit
+    app.exit(0)
+  }
 })
 

@@ -2,14 +2,23 @@
   "name": "electron-app",
   "version": "1.0.0",
   "description": "POS Electron Application",
+  "author": {
+    "name": "POS System",
+    "email": "support@possystem.com"
+  },
+  "homepage": "https://github.com/yourusername/pos_electron",
   "main": "dist/main/main.js",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build && electron-builder",
+    "build:python": "node scripts/build-python-server.js",
+    "build:win": "npm run build:python && tsc && vite build && electron-builder --win --x64",
+    "build:linux": "npm run build:python && tsc && vite build && electron-builder --linux --x64",
+    "build:all": "npm run build:python && tsc && vite build && electron-builder --win --linux --x64",
     "preview": "vite preview",
     "type-check": "tsc --noEmit",
     "lint": "eslint . --ext .ts,.tsx",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist release"
   },
   "dependencies": {
     "@serialport/parser-readline": "^13.0.0",
@@ -40,5 +49,83 @@
     "vite": "^6.0.7",
     "vite-plugin-electron": "^0.29.0",
     "vite-plugin-electron-renderer": "^0.14.6"
+  },
+  "build": {
+    "appId": "com.pos.electron",
+    "productName": "POS System",
+    "npmRebuild": false,
+    "nodeGypRebuild": false,
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "files": [
+      "dist/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "../python-backend/dist/pos-server",
+        "to": "python-server/pos-server",
+        "filter": ["**/*"]
+      }
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        },
+        {
+          "target": "portable",
+          "arch": ["x64"]
+        }
+      ],
+      "icon": "build/icon.png",
+      "artifactName": "${productName}-${version}-Windows-${arch}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "POS System",
+      "installerIcon": "build/icon.png",
+      "uninstallerIcon": "build/icon.png",
+      "installerHeaderIcon": "build/icon.png",
+      "license": "../../LICENSE",
+      "deleteAppDataOnUninstall": false
+    },
+    "linux": {
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": ["x64"]
+        },
+        {
+          "target": "deb",
+          "arch": ["x64"]
+        },
+        {
+          "target": "rpm",
+          "arch": ["x64"]
+        }
+      ],
+      "icon": "build/icon.png",
+      "category": "Office",
+      "artifactName": "${productName}-${version}-Linux-${arch}.${ext}",
+      "desktop": {
+        "Name": "POS System",
+        "Comment": "Point of Sale System",
+        "Categories": "Office;Finance;",
+        "Terminal": false
+      }
+    },
+    "deb": {
+      "depends": ["gconf2", "gconf-service", "libnotify4", "libappindicator1", "libxtst6", "libnss3"]
+    },
+    "rpm": {
+      "depends": ["libXScrnSaver"]
+    }
   }
 }
