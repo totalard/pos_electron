@@ -3,7 +3,7 @@
 ###############################################################################
 # Multi-Platform Build Script for POS Electron Application
 # This script builds the complete application with embedded Python server
-# Supports: Windows, Linux
+# Supports: Windows (via Wine), Linux
 ###############################################################################
 
 set -e  # Exit on error
@@ -21,6 +21,7 @@ echo ""
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Get script directory
@@ -82,21 +83,79 @@ echo ""
 
 cd "$SCRIPT_DIR"
 
-# Step 3: Build Python server with PyInstaller
+# Step 3: Build Python server executables
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "Step 3: Building Python server executable"
+echo "Step 3: Building Python server executables"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
 
-cd apps/electron-app
-node scripts/build-python-server.js
+# Determine which Python backends to build
+BUILD_LINUX_PYTHON=false
+BUILD_WINDOWS_PYTHON=false
 
-if [ $? -ne 0 ]; then
-    echo -e "${RED}❌ Failed to build Python server${NC}"
-    exit 1
+case "$BUILD_TARGET" in
+    windows|win)
+        BUILD_WINDOWS_PYTHON=true
+        ;;
+    linux)
+        BUILD_LINUX_PYTHON=true
+        ;;
+    all)
+        BUILD_LINUX_PYTHON=true
+        BUILD_WINDOWS_PYTHON=true
+        ;;
+esac
+
+# Build Linux Python backend
+if [ "$BUILD_LINUX_PYTHON" = true ]; then
+    echo -e "${BLUE}Building Linux Python backend...${NC}"
+    cd apps/electron-app
+    node scripts/build-python-server.js
+
+    if [ $? -ne 0 ]; then
+        echo -e "${RED}❌ Failed to build Linux Python server${NC}"
+        exit 1
+    fi
+
+    # Rename to indicate it's for Linux
+    cd ../python-backend/dist
+    if [ -d "pos-server" ]; then
+        mv pos-server pos-server-linux
+        echo -e "${GREEN}✅ Linux Python server built successfully${NC}"
+    fi
+    cd "$SCRIPT_DIR"
+    echo ""
 fi
 
-echo -e "${GREEN}✅ Python server built successfully${NC}"
+# Build Windows Python backend (using Wine)
+if [ "$BUILD_WINDOWS_PYTHON" = true ]; then
+    echo -e "${BLUE}Building Windows Python backend (using Wine)...${NC}"
+
+    # Check if Wine is installed
+    if ! command -v wine &> /dev/null; then
+        echo -e "${RED}❌ Error: Wine is not installed${NC}"
+        echo "Please install Wine to build Windows executables on Linux"
+        echo "  sudo dpkg --add-architecture i386"
+        echo "  sudo apt-get update"
+        echo "  sudo apt-get install -y wine64 wine32"
+        exit 1
+    fi
+
+    echo "Wine version: $(wine --version)"
+
+    # Use the build-python-windows.sh script
+    if [ -f "scripts/build-python-windows.sh" ]; then
+        bash scripts/build-python-windows.sh
+    else
+        echo -e "${YELLOW}⚠️  Windows Python build script not found${NC}"
+        echo "Skipping Windows Python backend build"
+    fi
+
+    cd "$SCRIPT_DIR"
+    echo ""
+fi
+
+echo -e "${GREEN}✅ Python server(s) built successfully${NC}"
 echo ""
 
 cd "$SCRIPT_DIR"

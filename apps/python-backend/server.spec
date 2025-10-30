@@ -18,6 +18,14 @@ uploads_path = project_root / 'uploads'
 # Collect package metadata
 from PyInstaller.utils.hooks import copy_metadata
 
+# Helper function to safely copy metadata
+def safe_copy_metadata(package_name):
+    try:
+        return copy_metadata(package_name)
+    except Exception:
+        print(f"Warning: Could not copy metadata for {package_name}")
+        return []
+
 # Collect all Python files from src directory
 a = Analysis(
     ['run_server.py'],
@@ -30,7 +38,7 @@ a = Analysis(
         (str(data_path), 'data'),
         # Include uploads directory
         (str(uploads_path), 'uploads'),
-    ] + copy_metadata('tortoise-orm') + copy_metadata('fastapi') + copy_metadata('uvicorn') + copy_metadata('pydantic'),
+    ] + safe_copy_metadata('tortoise-orm') + safe_copy_metadata('fastapi') + safe_copy_metadata('uvicorn') + safe_copy_metadata('pydantic'),
     hiddenimports=[
         # FastAPI and dependencies
         'fastapi',

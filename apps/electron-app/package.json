@@ -63,14 +63,14 @@
       "dist/**/*",
       "package.json"
     ],
-    "extraResources": [
-      {
-        "from": "../python-backend/dist/pos-server",
-        "to": "python-server/pos-server",
-        "filter": ["**/*"]
-      }
-    ],
     "win": {
+      "extraResources": [
+        {
+          "from": "../python-backend/dist/pos-server-windows",
+          "to": "python-server/pos-server",
+          "filter": ["**/*"]
+        }
+      ],
       "target": [
         {
           "target": "nsis",
@@ -92,6 +92,13 @@
       "deleteAppDataOnUninstall": false
     },
     "linux": {
+      "extraResources": [
+        {
+          "from": "../python-backend/dist/pos-server-linux",
+          "to": "python-server/pos-server",
+          "filter": ["**/*"]
+        }
+      ],
       "target": [
         {
           "target": "AppImage",
